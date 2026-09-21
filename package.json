@@ -1,0 +1,10 @@
+{
+  "name": "happybirthday-tome",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "test": "node --test",
+    "check": "node --check dist/app.js && node --check dist/core.js"
+  }
+}

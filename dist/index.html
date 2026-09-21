@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fcf4f7">
+  <meta name="description" content="自分のために、思いっきりふーっ。声やタップでろうそくを消す、ちいさな誕生日パーティー。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>自分に、おめでとう。 | happybirthday-tome</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <main class="party">
+    <header class="masthead"><a href="./" aria-label="最初から">HAPPY BIRTHDAY <span>TO ME.</span></a><span class="edition">ひとりでも、主役。</span></header>
+    <section class="intro" aria-labelledby="title"><p class="eyebrow">本日の主役、入場です。</p><h1 id="title">自分に、<br class="mobile-break">おめでとう<span class="title-dot">。</span></h1><p>願いごとをひとつ。あとは、思いっきりふーっ。</p></section>
+    <div class="party-layout">
+      <section class="stage" aria-label="バースデーケーキ">
+        <div class="stage-top"><span class="stage-tag">YOUR BIRTHDAY CAKE</span><span id="counter" class="counter">あと <strong id="remaining">5</strong> 本</span></div>
+        <div class="wish"><p id="dedication">今日の主役へ</p><h2 id="cake-heading">願いごと、決まった？</h2></div>
+        <div class="bubble-space"><div id="bubble" class="bubble" aria-hidden="true">ふーっ<span>！</span></div></div>
+        <button id="cake-button" class="cake-button" type="button" aria-label="ケーキをタップしてろうそくを消す" disabled>
+          <svg id="cake" viewBox="0 0 360 340" role="img" aria-labelledby="cake-title"><title id="cake-title">5本のろうそくが立ったケーキ</title>
+            <ellipse cx="180" cy="295" rx="163" ry="28" fill="#dcd6ee"/>
+            <ellipse cx="180" cy="286" rx="164" ry="27" fill="#ffffff" stroke="#372157" stroke-width="2"/>
+            <path d="M32 199v63c0 79 296 79 296 0v-63Z" fill="#c6b3fa" stroke="#372157" stroke-width="2"/>
+            <path d="M33 242c65 43 228 43 294 0v16c-65 45-229 45-294 0Z" fill="#fff1b9"/>
+            <path d="M32 199v24q10 22 21 0v11q12 22 23 0v10q12 22 24 0v9q12 19 24 0v7q13 20 25 0v5q15 18 29 0v-2q14 24 29 0v-3q13 18 26-2v-7q12 19 25-3v-10q13 18 24-4v-10q13 14 24-8v-11q12 10 22-9v-27Z" fill="#fff6de"/>
+            <ellipse cx="180" cy="199" rx="148" ry="62" fill="#fff6de" stroke="#372157" stroke-width="2"/>
+            <ellipse cx="180" cy="199" rx="135" ry="52" fill="none" stroke="#edcbcd" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/>
+            <g id="candles"></g>
+            <path d="m167 285 13-8 13 8-13 8Z" fill="#fa466b"/><path d="m167 285-10-6v12Zm26 0 10-6v12Z" fill="#fa466b"/>
+          </svg>
+        </button>
+        <p class="stage-caption" id="stage-caption">ろうそくも、気持ちも、準備万端。</p>
+        <div class="volume-area"><div class="volume-label"><span id="meter-label">声のボリューム</span><span>小さく → 大きく</span></div><div id="meter" class="meter" role="meter" aria-label="声の大きさ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="meter-fill"></div></div></div>
+      </section>
+      <section class="controls" aria-label="パーティーの準備">
+        <form id="setup" autocomplete="off">
+          <h2>きょうは、あなたの日。</h2>
+          <label for="name">なんて呼ぼう？ <span>省略OK</span></label><input id="name" type="text" maxlength="30" placeholder="呼び名を入れてね" autocomplete="off" spellcheck="false">
+          <label for="count">ろうそくの本数 <span>1〜99本</span></label><div class="number-field"><input id="count" type="number" min="1" max="99" step="1" value="5" inputmode="numeric" required autocomplete="off"><span>本</span></div>
+          <p class="field-note">年齢じゃなくても。好きな本数でどうぞ。</p>
+          <button id="start" class="primary" type="submit">パーティーをスタート <span aria-hidden="true">✦</span></button>
+        </form>
+        <div class="play-controls"><button id="resume" class="primary" type="button" hidden>タップして再開</button><button id="fallback" class="secondary" type="button" hidden>マイクを使わずに始める</button><button id="tap" class="secondary" type="button" hidden>タップで消す</button><button id="reset" class="text-button" type="button" hidden>もう一度、火をつける</button></div>
+        <p id="status" class="status" role="status" aria-live="polite">スタートすると、マイクの許可を確認します。</p>
+        <div class="how-to"><span aria-hidden="true">✳</span><p>小さな声で、少しずつ。<br>大きな声で、ぜんぶ一気に。<br><span>マイクなしでも、タップで遊べます。</span></p></div>
+        <aside class="sound-note"><p>音が聞こえないときは</p><span>マナーモード・消音設定と音量を確認してください。</span><button id="sound-test" class="text-button" type="button" hidden>確認音をもう一度鳴らす</button></aside>
+        <p class="privacy">名前・本数・マイクの音は保存・送信しません。</p>
+      </section>
+    </div>
+    <footer>今日くらい、自分を甘やかそう。 <span aria-hidden="true">✦</span></footer>
+  </main>
+</body>
+</html>
