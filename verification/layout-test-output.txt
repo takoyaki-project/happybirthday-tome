@@ -1,0 +1,9 @@
+﻿PASS 390×844: input and started screens fit without scrolling
+PASS card copy switches and name/count/start controls disappear
+PASS cake stays at x=18, y=506.296875, width=354, height=226.15625
+PASS bubble and remaining count appear together
+PASS 99 candles fit and retain the same cake position
+PASS completion hides bubble and count together, without moving cake
+PASS microphone denial remains usable and fits in the fixed card
+PASS sound check reveals mute-mode guidance when requested
+PASS no browser runtime errors or external app requests

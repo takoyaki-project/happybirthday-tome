@@ -1,7 +1,7 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['setup', 'name', 'count', 'start', 'resume', 'fallback', 'tap', 'reset', 'status', 'sound-test', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'stage-caption', 'meter', 'meter-fill', 'meter-label'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let total = 5;
@@ -17,25 +17,32 @@ let timer = 0;
 let ignoreUntil = 0;
 let tapOnly = false;
 
-function status(message) { ui.status.textContent = message; }
+function status(message, visible = false) {
+  ui.status.textContent = message;
+  ui.status.classList[visible ? 'add' : 'remove']('notice');
+}
 function meter(level) {
-  const percent = Math.round(Math.min(1, level) * 100);
-  ui['meter-fill'].style.width = percent + '%';
-  ui.meter.setAttribute('aria-valuenow', percent);
   ui.bubble.style.setProperty('--energy', Math.min(1, level));
+}
+// The bubble and remaining count always share this single visibility boundary.
+// When singing is added, change the readiness condition here after song completion.
+function updateBlowCue() {
+  ui['blow-cue'].hidden = !['preparing', 'active'].includes(phase);
 }
 function controls() {
   const locked = phase !== 'idle';
-  ui.name.disabled = ui.count.disabled = locked;
-  ui.start.hidden = locked && phase !== 'preparing';
-  ui.start.disabled = phase === 'preparing';
-  ui.start.textContent = phase === 'preparing' ? '準備しています…' : 'パーティーをスタート ✦';
+  ui.start.textContent = 'パーティスタート';
+  ui.dedication.textContent = '今日の主役へ';
+  ui['cake-heading'].textContent = phase === 'complete' ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
+  ui.setup.hidden = locked;
+  ui.started.hidden = !locked;
+  ui.name.disabled = ui.count.disabled = ui.start.disabled = locked;
   ui.resume.hidden = phase !== 'paused';
   ui.fallback.hidden = phase !== 'preparing';
-  ui.tap.hidden = phase !== 'active';
   ui.reset.hidden = !['active', 'complete', 'paused'].includes(phase);
   ui['cake-button'].disabled = phase !== 'active';
   ui['sound-test'].hidden = !['active', 'complete'].includes(phase);
+  updateBlowCue();
 }
 function element(tag, attrs, parent) {
   const node = document.createElementNS(svgNS, tag);
@@ -64,10 +71,7 @@ function updateCount() {
   ui['cake-title'].textContent = `${total}本のろうそく。火がついているのは${remaining}本。`;
   ui['cake-button'].setAttribute('aria-label', `ケーキをタップして消す。あと${remaining}本`);
 }
-function updateName() {
-  const name = ui.name.value.trim();
-  ui.dedication.textContent = name ? `${name}さんへ` : '今日の主役へ';
-}
+
 function releaseMic() {
   cancelAnimationFrame(frame);
   frame = 0;
@@ -124,15 +128,13 @@ function prepareSound() {
     return ctx;
   } catch { return null; }
 }
-function activateTap(message) {
+function activateTap() {
   stopPending();
   releaseMic();
   tapOnly = true;
   phase = 'active';
   controls();
-  ui['meter-label'].textContent = 'タップであそぶ';
-  ui['stage-caption'].textContent = 'ケーキか「タップで消す」を押してね。';
-  status(message);
+  status('マイクはオフです。ケーキをタップして消せます。', true);
 }
 function pause() {
   if (!['active', 'preparing'].includes(phase)) return;
@@ -140,8 +142,7 @@ function pause() {
   phase = 'paused';
   releaseAudio();
   controls();
-  ui['stage-caption'].textContent = '願いごとは、そのままに。';
-  status('一時停止しました。タップして再開すると、音とマイクを準備し直します。');
+  status('一時停止中。タップして再開してください。');
 }
 function extinguish(all = false) {
   if (phase !== 'active') return;
@@ -158,12 +159,7 @@ function extinguish(all = false) {
   phase = 'complete';
   stopPending();
   releaseAudio();
-  document.querySelector('.stage').classList.add('complete');
-  ui['cake-heading'].textContent = 'ぜんぶ消えた。おめでとう！';
-  ui.bubble.textContent = 'やったー！';
-  ui['stage-caption'].textContent = 'その願いごと、かないますように。';
-  ui['meter-label'].textContent = 'ろうそく、ぜんぶ消えました';
-  status('大成功！ お誕生日おめでとう。');
+  status('すべてのろうそくが消えました。');
   controls();
 }
 function listen(ctx, ticket) {
@@ -189,7 +185,6 @@ function listen(ctx, ticket) {
       noiseSamples.sort((a, b) => a - b);
       detector = createBlowDetector(noiseSamples[Math.floor(noiseSamples.length / 2)] || 0);
       status('準備OK！ 小さな声で少しずつ、大きな声で一気に。');
-      ui['stage-caption'].textContent = '願いごとをして、ふーっとどうぞ。';
     }
     if (detector && now >= ignoreUntil) {
       const action = detector.update(level, elapsed);
@@ -203,10 +198,9 @@ function start(resuming = false) {
   if ((!resuming && phase !== 'idle') || (resuming && phase !== 'paused')) return;
   if (!resuming) {
     const count = validCount(ui.count.value);
-    if (count === null) { status('ろうそくは1〜99の整数で入力してね。'); return; }
+    if (count === null) { status('ろうそくは1〜99の整数で入力してね。', true); return; }
     total = count;
     renderCake();
-    updateName();
     tapOnly = false;
   }
   stopPending();
@@ -214,18 +208,19 @@ function start(resuming = false) {
   phase = 'preparing';
   controls();
   const ctx = prepareSound();
-  if (resuming && tapOnly) { activateTap('タップで再開しました。'); return; }
+  document.activeElement?.blur();
+  if (resuming && tapOnly) { activateTap(); return; }
   if (!ctx || !window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-    activateTap('マイクを使えない環境です。タップで遊べます。'); return;
+    activateTap(); return;
   }
-  status('マイクの許可を選んでね。音が聞こえない場合はマナーモードと音量を確認してください。');
+  status('マイクの許可を確認しています。');
   timer = window.setTimeout(() => {
-    if (ticket === generation && phase === 'preparing') activateTap('マイクの準備が終わらないため、タップで遊べるようにしました。');
+    if (ticket === generation && phase === 'preparing') activateTap();
   }, 15000);
   let request;
   try {
     request = navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}, video: false});
-  } catch { activateTap('マイクを使えませんでした。タップで遊べます。'); return; }
+  } catch { activateTap(); return; }
   void request.then(async (incoming) => {
     if (ticket !== generation || phase !== 'preparing' || document.hidden) {
       incoming.getTracks().forEach(track => track.stop());
@@ -246,18 +241,17 @@ function start(resuming = false) {
       source = ctx.createMediaStreamSource(incoming);
       source.connect(analyser); // Never connect microphone input to speakers.
       for (const track of incoming.getAudioTracks()) {
-        track.onended = () => { if (phase === 'active') activateTap('マイクが切断されました。タップで続きを遊べます。'); };
+        track.onended = () => { if (phase === 'active') activateTap(); };
         track.onmute = () => { if (phase === 'active') pause(); };
       }
       phase = 'active';
       tapOnly = false;
-      ui['meter-label'].textContent = '声のボリューム';
       status('周りの音を確認中。少しだけ静かに待ってね。');
       controls();
       listen(ctx, ticket);
-    } catch { activateTap('マイクを準備できませんでした。タップで遊べます。'); }
+    } catch { activateTap(); }
   }).catch(() => {
-    if (ticket === generation && phase === 'preparing') activateTap('マイクはオフです。ケーキか「タップで消す」を押してね。');
+    if (ticket === generation && phase === 'preparing') activateTap();
   });
 }
 function reset() {
@@ -265,32 +259,22 @@ function reset() {
   stopPending();
   releaseAudio();
   tapOnly = false;
-  document.querySelector('.stage').classList.remove('complete');
-  ui.bubble.replaceChildren(document.createTextNode('ふーっ'));
-  const mark = document.createElement('span');
-  mark.textContent = '！';
-  ui.bubble.append(mark);
-  ui['cake-heading'].textContent = '願いごと、決まった？';
-  ui['stage-caption'].textContent = 'ろうそくも、気持ちも、準備万端。';
-  ui['meter-label'].textContent = '声のボリューム';
   renderCake();
   controls();
   status('スタートすると、マイクの許可を確認します。');
 }
 ui.setup.addEventListener('submit', event => { event.preventDefault(); start(); });
 ui.resume.addEventListener('click', () => start(true));
-ui.fallback.addEventListener('click', () => activateTap('マイクなしで始めました。タップで消してね。'));
-ui.tap.addEventListener('click', () => extinguish());
+ui.fallback.addEventListener('click', () => activateTap());
 ui['cake-button'].addEventListener('click', () => extinguish());
 ui.reset.addEventListener('click', reset);
-ui.name.addEventListener('input', updateName);
 ui.count.addEventListener('input', () => {
   const count = validCount(ui.count.value);
   if (phase === 'idle' && count !== null) { total = count; renderCake(); }
 });
 ui['sound-test'].addEventListener('click', () => {
-  if (!prepareSound()) status('音を準備できませんでした。音がなくてもタップで遊べます。');
-  else status('確認音を鳴らしました。聞こえない場合はマナーモード・消音設定と音量を確認してください。');
+  if (!prepareSound()) status('音を準備できませんでした。ケーキをタップして遊べます。', true);
+  else status('音が出ないときは、マナーモード・消音設定と音量を確認してください。', true);
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { pause(); releaseAudio(); }

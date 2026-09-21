@@ -60,7 +60,7 @@ function harness(getUserMedia, withAudio = true) {
     get, document, contexts, timers, requested: () => requested,
     submit() { get('setup').events.submit({preventDefault() {}}); },
     count(n) { get('count').value = String(n); get('count').events.input(); },
-    name(text) { get('name').value = text; get('name').events.input(); },
+    name(text) { get('name').value = text; get('name').events.input?.(); },
     hide() { document.hidden = true; document.events.visibilitychange(); },
     show() { document.hidden = false; document.events.visibilitychange(); },
     frames(n, volume = 0) {
@@ -82,7 +82,7 @@ test('nothing requests audio until start; count 99 renders 99 candle groups', ()
   app.count(99);
   assert.equal(app.get('candles').children.length, 99);
   app.name('<img src=x onerror=alert(1)>');
-  assert.equal(app.get('dedication').textContent, '<img src=x onerror=alert(1)>さんへ');
+  assert.equal(app.get('dedication').textContent, '今日の主役へ');
   assert.equal(app.get('dedication').children.length, 0);
 });
 test('microphone denial falls back to taps, completes all 99, and allows reset', async () => {
@@ -90,8 +90,8 @@ test('microphone denial falls back to taps, completes all 99, and allows reset',
   app.count(99);
   app.submit();
   await flush();
-  assert.equal(app.get('tap').hidden, false);
-  app.get('tap').click();
+  assert.equal(app.get('cake-button').disabled, false);
+  app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 79);
   for (let i=0; i<4; i++) app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 0);
@@ -103,7 +103,7 @@ test('microphone denial falls back to taps, completes all 99, and allows reset',
 });
 test('missing audio support also allows tap completion', () => {
   const app = harness(() => { throw new Error('must not request'); }, false);
-  app.count(1); app.submit(); app.get('tap').click();
+  app.count(1); app.submit(); app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 0);
 });
 test('invalid counts never start microphone', () => {
@@ -120,7 +120,7 @@ test('late permission after choosing fallback is stopped and never activates mic
   app.get('fallback').click();
   grant(mic.stream); await flush();
   assert.equal(mic.track.stopped, true);
-  assert.equal(app.get('tap').hidden, false);
+  assert.equal(app.get('cake-button').disabled, false);
 });
 test('microphone permission timeout falls back without keeping a late stream', async () => {
   let grant;
@@ -130,7 +130,7 @@ test('microphone permission timeout falls back without keeping a late stream', a
   [...app.timers.values()].find(t => t.delay === 15000).callback();
   grant(mic.stream); await flush();
   assert.equal(mic.track.stopped, true);
-  assert.equal(app.get('tap').hidden, false);
+  assert.equal(app.get('cake-button').disabled, false);
 });
 test('hide during permission prompt ignores and stops the late stream', async () => {
   let grant;
@@ -143,7 +143,7 @@ test('hide during permission prompt ignores and stops the late stream', async ()
 test('hide releases microphone; explicit resume keeps remaining candle count', async () => {
   const mics = [microphone(), microphone()]; let index = 0;
   const app = harness(() => Promise.resolve(mics[index++].stream));
-  app.submit(); await flush(); app.get('tap').click();
+  app.submit(); await flush(); app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 4);
   app.hide();
   assert.equal(mics[0].track.stopped, true);
@@ -153,13 +153,13 @@ test('hide releases microphone; explicit resume keeps remaining candle count', a
   app.get('resume').click(); await flush();
   assert.equal(app.requested(), 2);
   assert.equal(app.get('remaining').textContent, 4);
-  assert.equal(app.get('tap').hidden, false);
+  assert.equal(app.get('cake-button').disabled, false);
 });
 test('microphone disconnection switches to taps', async () => {
   const mic = microphone();
   const app = harness(() => Promise.resolve(mic.stream));
   app.submit(); await flush(); mic.track.onended();
-  assert.equal(app.get('meter-label').textContent, 'タップであそぶ');
+  assert.match(app.get('status').textContent, /マイクはオフ/);
   assert.equal(mic.track.stopped, true);
 });
 test('calibration ignores start tone, gentle voice removes some, loud voice removes all', async () => {
@@ -188,4 +188,60 @@ test('app code has no data persistence, network calls, recording or HTML interpo
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
   assert.match(html, /connect-src 'none'/);
   assert.doesNotMatch(html, /(?:src|href)="https?:/);
+});
+
+
+test('before start: setup visible, started card and shared blow cue hidden', () => {
+  const app = harness(() => Promise.reject());
+  assert.equal(app.get('setup').hidden, false);
+  assert.equal(app.get('started').hidden, true);
+  assert.equal(app.get('start').textContent, 'パーティスタート');
+  assert.equal(app.get('blow-cue').hidden, true);
+});
+test('start immediately replaces only card content and reveals shared blow cue', () => {
+  const app = harness(() => new Promise(() => {}));
+  app.name('テスト'); app.count(99); app.submit();
+  assert.equal(app.get('setup').hidden, true);
+  assert.equal(app.get('started').hidden, false);
+  assert.equal(app.get('name').disabled, true);
+  assert.equal(app.get('count').disabled, true);
+  assert.equal(app.get('start').disabled, true);
+  assert.equal(app.get('dedication').textContent, '今日の主役へ');
+  assert.equal(app.get('cake-heading').textContent, '願いごと、決まった？');
+  assert.equal(app.get('blow-cue').hidden, false);
+});
+test('allowed and denied microphones preserve the exact started card copy', async () => {
+  for (const grant of [true, false]) {
+    const mic = microphone();
+    const app = harness(() => grant ? Promise.resolve(mic.stream) : Promise.reject());
+    app.submit(); await flush(); app.frames(110);
+    assert.equal(app.get('setup').hidden, true);
+    assert.equal(app.get('started').hidden, false);
+    assert.equal(app.get('dedication').textContent, '今日の主役へ');
+    assert.equal(app.get('cake-heading').textContent, '願いごと、決まった？');
+    assert.equal(app.get('blow-cue').hidden, false);
+  }
+});
+test('pause hides both cue children; resume shows both; completion hides both', async () => {
+  const app = harness(() => Promise.reject());
+  app.count(1); app.submit(); await flush();
+  assert.equal(app.get('blow-cue').hidden, false);
+  app.hide(); assert.equal(app.get('blow-cue').hidden, true);
+  app.show(); app.get('resume').click();
+  assert.equal(app.get('blow-cue').hidden, false);
+  app.get('cake-button').click();
+  assert.equal(app.get('blow-cue').hidden, true);
+  app.get('reset').click();
+  assert.equal(app.get('setup').hidden, false);
+  assert.equal(app.get('started').hidden, true);
+  assert.equal(app.get('blow-cue').hidden, true);
+  assert.equal(app.get('start').textContent, 'パーティスタート');
+});
+test('copy is exact, old catchphrases are removed, bubble and count have one parent', async () => {
+  const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
+  for (const text of ['HAPPY BIRTHDAY TO ME.', 'ひとりでも、主役。', '本日の主役、入場です。', '自分に、おめでとう。', 'パーティスタート', '今日の主役へ', '願いごと、決まった？', '願いごとをひとつ。あとは、思いっきりふーっ。']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
+  assert.doesNotMatch(html, /YOUR BIRTHDAY CAKE|きょうは、あなたの日|年齢じゃなくても|準備万端|今日くらい|<header|<footer/);
+  assert.match(html, /id="blow-cue"[^]*id="bubble"[^]*id="counter"[^]*id="remaining"/);
+  assert.equal((code.match(/ui\['blow-cue'\]\.hidden =/g) || []).length, 1);
+  assert.doesNotMatch(code, /ui\.(bubble|counter)\.hidden/);
 });
