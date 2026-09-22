@@ -78,7 +78,7 @@ try {
     const visible = id => !!document.getElementById(id).getClientRects().length;
     return {
       width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,
-      gauge:rect('meter'),gaugeVisible:visible('meter'),cake:rect('cake'),card:(() => {const r = document.querySelector('.message-card').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};})(),
+      gauge:rect('meter'),gaugeVisible:visible('meter'),cake:rect('cake'),card:(() => {const r = document.querySelector('.message-card').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};})(),startButton:rect('start'),
       setup:visible('setup'),started:visible('started'),name:visible('name'),count:visible('count'),start:visible('start'),bubble:visible('bubble'),counter:visible('counter'),
       dedication:document.getElementById('dedication').textContent,heading:document.getElementById('cake-heading').textContent,
       wish:document.getElementById('message-slot').textContent,
@@ -100,6 +100,7 @@ try {
   const before = await read();
   checkFits(before, false);
   assert.ok(before.setup && before.name && before.count && before.start);
+  assert.ok(before.startButton.bottom <= before.card.bottom - 16, 'start button has card-bottom clearance');
   assert.ok(!before.started && !before.bubble && !before.counter);
   for (const text of ['本日の主役、入場です。','自分に、おめでとう。','パーティスタート']) assert.ok(before.visibleText.includes(text));
   await screenshot('before-390x844.png');
@@ -122,6 +123,7 @@ try {
   await screenshot('after-390x844.png');
   console.log('PASS 390×844: input and started screens fit without scrolling');
   console.log('PASS card copy switches and name/count/start controls disappear');
+  console.log('PASS start button has clearance below it inside the input card');
   console.log(`PASS cake stays at x=${before.cake.x}, y=${before.cake.y}, width=${before.cake.width}, height=${before.cake.height}`);
   console.log('PASS bubble and remaining count appear together');
   console.log('PASS voice gauge appears only while waiting to blow; cake position is fixed');

@@ -28,7 +28,15 @@
       "x": 16,
       "y": 107,
       "width": 358,
-      "height": 320
+      "height": 336,
+      "bottom": 443
+    },
+    "startButton": {
+      "x": 41,
+      "y": 374,
+      "width": 308,
+      "height": 44,
+      "bottom": 418
     },
     "setup": true,
     "started": false,
@@ -67,7 +75,15 @@
       "x": 16,
       "y": 107,
       "width": 358,
-      "height": 320
+      "height": 336,
+      "bottom": 443
+    },
+    "startButton": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
     },
     "setup": false,
     "started": true,
@@ -106,7 +122,15 @@
       "x": 16,
       "y": 107,
       "width": 358,
-      "height": 320
+      "height": 336,
+      "bottom": 443
+    },
+    "startButton": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
     },
     "setup": false,
     "started": true,
@@ -145,7 +169,15 @@
       "x": 16,
       "y": 107,
       "width": 358,
-      "height": 320
+      "height": 336,
+      "bottom": 443
+    },
+    "startButton": {
+      "x": 41,
+      "y": 374,
+      "width": 308,
+      "height": 44,
+      "bottom": 418
     },
     "setup": true,
     "started": false,
@@ -184,7 +216,15 @@
       "x": 16,
       "y": 107,
       "width": 358,
-      "height": 320
+      "height": 336,
+      "bottom": 443
+    },
+    "startButton": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
     },
     "setup": false,
     "started": true,
@@ -223,7 +263,15 @@
       "x": 16,
       "y": 107,
       "width": 358,
-      "height": 320
+      "height": 336,
+      "bottom": 443
+    },
+    "startButton": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
     },
     "setup": false,
     "started": true,
@@ -262,7 +310,15 @@
       "x": 16,
       "y": 107,
       "width": 358,
-      "height": 320
+      "height": 336,
+      "bottom": 443
+    },
+    "startButton": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
     },
     "setup": false,
     "started": true,

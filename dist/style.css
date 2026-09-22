@@ -32,7 +32,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--color-accen
 .brand h1 span { color: var(--color-emphasis); }
 .brand p { margin: var(--space-1) 0 0; font-size: var(--font-small); line-height: 1.5; }
 
-.message-card { position: relative; height: 320px; padding: var(--space-3); border: 1px solid var(--color-accent); border-radius: var(--radius); background: var(--color-background); box-shadow: 0 var(--space-1) 0 var(--color-accent); }
+.message-card { position: relative; height: 336px; padding: var(--space-3); border: 1px solid var(--color-accent); border-radius: var(--radius); background: var(--color-background); box-shadow: 0 var(--space-1) 0 var(--color-accent); }
 #setup { height: 100%; display: flex; flex-direction: column; gap: var(--space-1); }
 .card-heading { text-align: center; }
 .card-heading p { margin: 0 0 var(--space-1); font-size: var(--font-small); line-height: 1.5; }
@@ -57,7 +57,7 @@ input { width: 100%; height: 44px; min-width: 0; padding: var(--space-1) var(--s
 .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; }
 .status.notice { right: var(--space-3); bottom: calc(var(--space-3) + 44px); left: var(--space-3); width: auto; height: auto; clip-path: none; margin: 0; font-size: var(--font-small); line-height: 1.6; text-align: center; }
 
-.stage { position: relative; height: 360px; margin-top: var(--space-2); }
+.stage { position: relative; height: 360px; margin-top: 0; }
 .blow-cue { position: absolute; z-index: 1; inset: 0 0 auto; display: flex; height: 64px; align-items: center; justify-content: center; gap: var(--space-4); pointer-events: none; }
 .bubble { --energy: 0; position: relative; padding: var(--space-1) var(--space-2); border: 2px solid var(--color-text); border-radius: var(--radius); background: var(--color-background); box-shadow: 3px 3px 0 var(--color-accent); color: var(--color-text); font-size: var(--font-medium); font-weight: 900; transform: rotate(-8deg) scale(calc(1 + var(--energy) * .4)); transition: transform 90ms linear; }
 .bubble::after { position: absolute; bottom: -7px; left: var(--space-2); width: 12px; height: 12px; content: ""; border-right: 2px solid var(--color-text); border-bottom: 2px solid var(--color-text); background: var(--color-background); transform: rotate(30deg); }
