@@ -116,8 +116,14 @@ body[data-scene="song"], body[data-scene="blackout"] { background: var(--color-d
 .party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }
 .celebration-copy { color: var(--color-text); }
 .celebration-copy h2 { margin: 0 0 var(--space-1); font-size: var(--font-medium); line-height: 1.4; }
-.celebration-copy p { max-width: calc(var(--space-4) * 7); max-height: calc(var(--font-small) * 4.8); margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: var(--font-small); line-height: 1.6; }
+.celebration-copy > p:not(.audio-note) { max-width: calc(var(--space-4) * 7); max-height: calc(var(--font-small) * 4.8); margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: var(--font-small); line-height: 1.6; }
+.audio-note { max-width: calc(var(--space-4) * 7); margin: var(--space-2) auto 0; color: var(--color-text); font-size: var(--font-small); line-height: 1.5; }
 .blackout-copy { color: var(--color-dark-text); font-size: var(--font-small); line-height: 1.5; }
+.mob-crowd { position: absolute; z-index: 3; top: calc(var(--space-4) * 12 + var(--space-2)); right: 0; left: 0; height: calc(var(--space-4) * 4); overflow: hidden; pointer-events: none; }
+.mob { position: absolute; bottom: var(--mob-rise); left: var(--mob-x); display: grid; place-items: center; transform: translateX(-50%); animation: mob-arrive 360ms ease-out both; }
+.mob-face { font-size: var(--font-medium); line-height: 1; filter: drop-shadow(0 var(--space-1) 0 var(--color-shadow)); }
+.mob-shout { position: absolute; bottom: calc(100% + var(--space-1)); left: 50%; padding: 3px 6px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); color: var(--color-text); font-size: 11px; font-weight: 700; line-height: 1.25; white-space: nowrap; transform: translateX(-50%); }
+@keyframes mob-arrive { from { opacity: 0; transform: translate(-50%, var(--space-3)); } to { opacity: 1; transform: translate(-50%, 0); } }
 body[data-scene="song"] .volume-label, body[data-scene="song"] .counter { color: var(--color-dark-text); }
 body[data-scene="song"] .bubble { border-color: var(--color-dark-text); background: var(--color-dark-background); box-shadow: 3px 3px 0 var(--color-dark-emphasis); color: var(--color-dark-text); }
 body[data-scene="song"] .bubble::after { border-color: var(--color-dark-text); background: var(--color-dark-background); }

@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 import * as core from '../dist/core.js';
+import * as celebration from '../dist/celebration.js';
+const messageData = JSON.parse(await readFile(new URL('../messages.json', import.meta.url), 'utf8'));
 const code = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8')).replace(/^\uFEFF?import[^\n]+\n|^import[^\n]+\n/gm, '');
 
 class Element {
@@ -50,7 +52,7 @@ function harness(getUserMedia, withAudio = true) {
     addEventListener(name, callback) { this.events[name] = callback; }
   };
   const context = {
-    ...core, document, window, navigator: {mediaDevices: {getUserMedia: (...args) => { requested++; return getUserMedia(...args); }}},
+    ...core, ...celebration, messageData, document, window, navigator: {mediaDevices: {getUserMedia: (...args) => { requested++; return getUserMedia(...args); }}},
     performance: {now: () => now}, Float32Array,
     setTimeout: window.setTimeout, clearTimeout: id => timers.delete(id),
     requestAnimationFrame: cb => { raf.set(++id, cb); return id; }, cancelAnimationFrame: id => raf.delete(id)

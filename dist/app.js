@@ -1,8 +1,10 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 import { BLOW_SENSITIVITY } from './core.js';
+import messageData from '../messages.json' with {type: 'json'};
+import { chooseCelebrationMessage, keepLatestMobs } from './celebration.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-message', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -19,6 +21,9 @@ let timer = 0;
 let ignoreUntil = 0;
 let tapOnly = false;
 let showDebugValue = true;
+let recentMessageIds = [];
+let currentCelebrationMessage = '';
+let mobTimer = 0;
 const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
@@ -62,7 +67,8 @@ function controls() {
   const complete = ['blackout', 'celebrate'].includes(scene);
   ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
   ui['message-slot'].textContent = complete ? completionMessage(ui.name.value) : WISH_MESSAGE;
-  ui['celebration-message'].textContent = complete ? completionMessage(ui.name.value) : '';
+  ui['celebration-message'].textContent = complete ? (currentCelebrationMessage || completionMessage(ui.name.value)) : '';
+  ui['celebration-title'].textContent = scene === 'celebrate' ? `${ui.name.value.trim() || 'あなた'}さん、おめでとう！` : 'ぜんぶ消えた。おめでとう！';
   ui.setup.hidden = !entry;
   ui.started.hidden = entry;
   ui.name.disabled = ui.count.disabled = ui.start.disabled = locked;
@@ -74,6 +80,8 @@ function controls() {
   ui['song-lyrics'].hidden = scene !== 'song';
   ui['blackout-copy'].hidden = scene !== 'blackout';
   ui['celebration-copy'].hidden = scene !== 'celebrate';
+  ui['audio-note'].hidden = scene !== 'celebrate';
+  ui['mob-crowd'].hidden = scene !== 'celebrate';
   ui.smoke.hidden = scene !== 'blackout';
   updateBlowCue();
   updateGauge();
@@ -178,6 +186,55 @@ function pause() {
   controls();
   status('一時停止中。タップして再開してください。');
 }
+function clearMobs() {
+  clearTimeout(mobTimer);
+  mobTimer = 0;
+  ui['mob-crowd'].replaceChildren();
+}
+function addMob() {
+  const mob = document.createElement('div');
+  mob.className = 'mob';
+  mob.style.setProperty('--mob-x', `${8 + Math.random() * 84}%`);
+  mob.style.setProperty('--mob-rise', `${Math.floor(Math.random() * 3) * 24}px`);
+  const face = document.createElement('span');
+  face.className = 'mob-face';
+  face.textContent = ['🥳', '👏', '🎉'][Math.floor(Math.random() * 3)];
+  const shout = document.createElement('span');
+  shout.className = 'mob-shout';
+  shout.textContent = messageData.mobShouts[Math.floor(Math.random() * messageData.mobShouts.length)];
+  mob.append(face, shout);
+  const next = keepLatestMobs([...ui['mob-crowd'].children], [mob]);
+  ui['mob-crowd'].replaceChildren(...next);
+}
+function startMobs() {
+  clearMobs();
+  for (let i = 0; i < 10; i++) addMob();
+  const addLater = () => {
+    if (scene !== 'celebrate' || ui['mob-crowd'].children.length >= 40) return;
+    addMob();
+    mobTimer = window.setTimeout(addLater, 300);
+  };
+  mobTimer = window.setTimeout(addLater, 300);
+}
+function speakCelebration(message) {
+  if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  try {
+    window.speechSynthesis.cancel();
+    const utterance = new window.SpeechSynthesisUtterance(message);
+    utterance.lang = 'ja-JP';
+    window.speechSynthesis.speak(utterance);
+  } catch { /* The on-screen message remains available when speech is unavailable. */ }
+}
+function beginCelebration() {
+  const selected = chooseCelebrationMessage(messageData.messages, messageData.readAloudPrefix, ui.name.value, recentMessageIds);
+  recentMessageIds = selected.recentIds;
+  currentCelebrationMessage = selected.text;
+  scene = 'celebrate';
+  status('すべてのろうそくが消えました。');
+  controls();
+  startMobs();
+  speakCelebration(selected.speechText);
+}
 function extinguish(all = false) {
   if (phase !== 'active') return;
   const amount = all ? remaining : Math.min(remaining, Math.max(1, Math.ceil(total / 5)));
@@ -198,9 +255,7 @@ function extinguish(all = false) {
   controls();
   timer = window.setTimeout(() => {
     if (scene !== 'blackout') return;
-    scene = 'celebrate';
-    status('すべてのろうそくが消えました。');
-    controls();
+    beginCelebration();
   }, 1000);
 }
 function listen(ctx, ticket) {
@@ -304,6 +359,9 @@ function reset() {
   scene = 'entry';
   phase = 'idle';
   stopPending();
+  clearMobs();
+  window.speechSynthesis?.cancel?.();
+  currentCelebrationMessage = '';
   releaseAudio();
   tapOnly = false;
   renderCake();

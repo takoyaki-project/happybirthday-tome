@@ -3,20 +3,21 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 const root = process.cwd();
 const output = path.join(root, 'verification');
-const profile = path.join(root, '.qa', 'edge-profile');
+const profile = path.join(tmpdir(), `happybirthday-tome-edge-profile-${process.pid}`);
 await mkdir(output, {recursive: true});
 await mkdir(profile, {recursive: true});
 await unlink(path.join(profile, 'DevToolsActivePort')).catch(error => { if (error.code !== 'ENOENT') throw error; });
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
-  if (!['/', '/index.html', '/app.js', '/core.js', '/style.css'].includes(pathname)) { res.writeHead(404).end(); return; }
+  if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/messages.json', '/style.css'].includes(pathname)) { res.writeHead(404).end(); return; }
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
-  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', css: 'text/css; charset=utf-8'};
+  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8'};
   res.writeHead(200, {'Content-Type': types[file.split('.').pop()], 'Cache-Control': 'no-store'}).end(await readFile(path.join(root, 'dist', file)));
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -67,7 +68,7 @@ try {
     if (await evaluate("document.querySelectorAll('.candle').length===5")) break;
     await sleep(100);
   }
-  const read = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};const visible=id=>!!document.getElementById(id).getClientRects().length;return{scene:document.body.dataset.scene,width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,cake:rect('cake'),cakeVisible:visible('cake'),bubble:visible('bubble'),counter:visible('counter'),gauge:visible('meter'),lyrics:visible('song-lyrics'),smoke:visible('smoke'),celebration:visible('celebration-copy'),setup:visible('setup'),message:document.getElementById('celebration-message').textContent,candleCount:document.querySelectorAll('.candle').length,outCount:document.querySelectorAll('.candle.out').length,background:getComputedStyle(document.body).backgroundColor};})()");
+  const read = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};const visible=id=>!!document.getElementById(id).getClientRects().length;return{scene:document.body.dataset.scene,width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,cake:rect('cake'),cakeVisible:visible('cake'),bubble:visible('bubble'),counter:visible('counter'),gauge:visible('meter'),lyrics:visible('song-lyrics'),smoke:visible('smoke'),celebration:visible('celebration-copy'),setup:visible('setup'),message:document.getElementById('celebration-message').textContent,mobCount:document.querySelectorAll('.mob').length,candleCount:document.querySelectorAll('.candle').length,outCount:document.querySelectorAll('.candle.out').length,background:getComputedStyle(document.body).backgroundColor};})()");
   const screenshot = async name => {
     const shot = await send('Page.captureScreenshot', {format: 'png', captureBeyondViewport: false});
     await writeFile(path.join(output, name), Buffer.from(shot.data, 'base64'));
@@ -117,8 +118,8 @@ try {
   await sleep(1100);
   const celebrate = await read();
   fits(celebrate);
-  assert.equal(celebrate.scene, 'celebrate'); assert.ok(celebrate.cakeVisible && celebrate.celebration); assert.equal(celebrate.outCount, 5);
-  assert.match(celebrate.message, /けいこさんが今日の主役/);
+  assert.equal(celebrate.scene, 'celebrate'); assert.ok(celebrate.cakeVisible && celebrate.celebration); assert.equal(celebrate.outCount, 5); assert.ok(celebrate.mobCount >= 10 && celebrate.mobCount <= 40);
+  assert.match(celebrate.message, /けいこ/);
   assert.deepEqual(celebrate.cake, song.cake);
   await screenshot('celebrate-390x844.png');
 
@@ -138,7 +139,7 @@ try {
   console.log('PASS song shows lyrics, cue, count, gauge, and a dark readable scene');
   console.log('PASS microphone fallback control does not overlap the lyrics');
   console.log('PASS blackout keeps the cake fixed, hides the cue, shows smoke, and transitions within 1.5 seconds');
-  console.log('PASS celebration keeps the cake fixed and shows the name-ready message');
+  console.log('PASS celebration keeps the cake fixed and shows a messages.json message with 10 or more mobs');
   console.log('PASS reset returns celebration to entry; 99 candles fit in song');
   console.log('PASS no browser runtime errors or external app requests');
   await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrate, song99, errors}, null, 2));
