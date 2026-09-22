@@ -170,9 +170,9 @@ test('calibration subtracts room noise; normal voice fills the meter in about on
   assert.equal(app.get('remaining').textContent, 99);
   app.frames(70, 0);
   assert.equal(app.get('meter').attributes['aria-valuenow'], 0);
-  app.frames(50, .04);
+  app.frames(50, core.BLOW_SENSITIVITY.meterFullDelta);
   assert.equal(app.get('meter').attributes['aria-valuenow'], 100);
-  assert.equal(app.get('debug-value').textContent, '0.040');
+  assert.equal(app.get('debug-value').textContent, core.BLOW_SENSITIVITY.meterFullDelta.toFixed(3));
   assert.equal(app.get('remaining').textContent, 79);
   app.get('debug-toggle').click();
   assert.equal(app.get('debug-value').hidden, true);

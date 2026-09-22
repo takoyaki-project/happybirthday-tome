@@ -30,10 +30,10 @@ export function rms(samples) {
 
 export const BLOW_SENSITIVITY = Object.freeze({
   calibrationMs: 800,
-  meterFullDelta: .04,
+  meterFullDelta: .012,
   meterSmoothing: .06,
   meterFullThreshold: .92,
-  gentleDelta: .018,
+  gentleDelta: .010,
   strongDelta: .10,
   gentleHoldMs: 240,
   strongHoldMs: 180,
