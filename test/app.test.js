@@ -169,11 +169,16 @@ test('calibration ignores start tone, gentle voice removes some, loud voice remo
   app.frames(30, .2);
   assert.equal(app.get('remaining').textContent, 99);
   app.frames(70, 0);
+  assert.equal(app.get('meter').attributes['aria-valuenow'], 0);
   app.frames(20, .04);
+  assert.ok(app.get('meter').attributes['aria-valuenow'] > 0);
+  assert.ok(parseFloat(app.get('meter-fill').style.width) > 0);
   assert.equal(app.get('remaining').textContent, 79);
   app.frames(20, .18);
   assert.equal(app.get('remaining').textContent, 0);
   assert.equal(mic.track.stopped, true);
+  assert.equal(app.get('meter').attributes['aria-valuenow'], 0);
+  assert.equal(app.get('meter-fill').style.width, '0%');
 });
 test('an interrupted audio context pauses and releases the microphone', async () => {
   const mic = microphone();
@@ -197,6 +202,7 @@ test('before start: setup visible, started card and shared blow cue hidden', () 
   assert.equal(app.get('started').hidden, true);
   assert.equal(app.get('start').textContent, 'パーティスタート');
   assert.equal(app.get('blow-cue').hidden, true);
+  assert.equal(app.get('volume-area').hidden, true);
 });
 test('start immediately replaces only card content and reveals shared blow cue', () => {
   const app = harness(() => new Promise(() => {}));
@@ -209,6 +215,7 @@ test('start immediately replaces only card content and reveals shared blow cue',
   assert.equal(app.get('dedication').textContent, '今日の主役へ');
   assert.equal(app.get('cake-heading').textContent, '願いごと、決まった？');
   assert.equal(app.get('blow-cue').hidden, false);
+  assert.equal(app.get('volume-area').hidden, false);
 });
 test('allowed and denied microphones preserve the exact started card copy', async () => {
   for (const grant of [true, false]) {
@@ -231,11 +238,25 @@ test('pause hides both cue children; resume shows both; completion hides both', 
   assert.equal(app.get('blow-cue').hidden, false);
   app.get('cake-button').click();
   assert.equal(app.get('blow-cue').hidden, true);
+  assert.equal(app.get('volume-area').hidden, true);
+  assert.equal(app.get('cake-heading').textContent, 'ぜんぶ消えた。おめでとう！');
+  assert.match(app.get('message-slot').textContent, /今日の主役/);
   app.get('reset').click();
   assert.equal(app.get('setup').hidden, false);
   assert.equal(app.get('started').hidden, true);
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('start').textContent, 'パーティスタート');
+});
+test('completion message uses the entered name, replaces the wish copy, and caps at 40 characters', async () => {
+  for (const name of ['けいこ', 'あ'.repeat(16), 'あ'.repeat(18)]) {
+    const app = harness(() => Promise.reject());
+    app.name(name); app.count(1); app.submit(); await flush();
+    app.get('cake-button').click();
+    const message = app.get('message-slot').textContent;
+    assert.ok(message.length <= 40);
+    assert.doesNotMatch(message, /願いごと/);
+    if (name === 'けいこ') assert.match(message, /けいこさん/);
+  }
 });
 test('copy is exact, old catchphrases are removed, bubble and count have one parent', async () => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
@@ -244,4 +265,12 @@ test('copy is exact, old catchphrases are removed, bubble and count have one par
   assert.match(html, /id="blow-cue"[^]*id="bubble"[^]*id="counter"[^]*id="remaining"/);
   assert.equal((code.match(/ui\['blow-cue'\]\.hidden =/g) || []).length, 1);
   assert.doesNotMatch(code, /ui\.(bubble|counter)\.hidden/);
+  assert.match(html, /id="volume-area"[^>]*hidden/);
+  assert.match(html, /aria-label="音の確認"/);
+  assert.match(html, /aria-label="もう一度、火をつける"/);
+  const css = await readFile(new URL('../dist/style.css', import.meta.url), 'utf8');
+  assert.match(css, /\.icon-button \{[^}]*width: 44px;[^}]*height: 44px;/);
+  assert.match(css, /--space-1: 8px;[\s\S]*--space-2: 16px;[\s\S]*--space-3: 24px;[\s\S]*--space-4: 40px;/);
+  assert.match(css, /--font-large:[^;]+;[\s\S]*--font-medium:[^;]+;[\s\S]*--font-small:[^;]+;/);
+  assert.match(css, /--color-background:[^;]+;[\s\S]*--color-text:[^;]+;[\s\S]*--color-accent:[^;]+;[\s\S]*--color-emphasis:[^;]+;/);
 });

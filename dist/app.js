@@ -1,7 +1,7 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let total = 5;
@@ -16,12 +16,18 @@ let generation = 0;
 let timer = 0;
 let ignoreUntil = 0;
 let tapOnly = false;
+const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
+const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
+const MAX_MESSAGE_LENGTH = 40;
 
 function status(message, visible = false) {
   ui.status.textContent = message;
   ui.status.classList[visible ? 'add' : 'remove']('notice');
 }
 function meter(level) {
+  const percent = Math.round(Math.max(0, Math.min(1, level)) * 100);
+  ui['meter-fill'].style.width = percent + '%';
+  ui.meter.setAttribute('aria-valuenow', percent);
   ui.bubble.style.setProperty('--energy', Math.min(1, level));
 }
 // The bubble and remaining count always share this single visibility boundary.
@@ -29,11 +35,20 @@ function meter(level) {
 function updateBlowCue() {
   ui['blow-cue'].hidden = !['preparing', 'active'].includes(phase);
 }
+function updateGauge() {
+  ui['volume-area'].hidden = !['preparing', 'active'].includes(phase);
+}
+function completionMessage(name, template = CELEBRATION_TEMPLATE) {
+  const displayName = name.trim() || 'あなた';
+  return Array.from(template.replace('{name}', displayName)).slice(0, MAX_MESSAGE_LENGTH).join('');
+}
 function controls() {
   const locked = phase !== 'idle';
   ui.start.textContent = 'パーティスタート';
   ui.dedication.textContent = '今日の主役へ';
-  ui['cake-heading'].textContent = phase === 'complete' ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
+  const complete = phase === 'complete';
+  ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
+  ui['message-slot'].textContent = complete ? completionMessage(ui.name.value) : WISH_MESSAGE;
   ui.setup.hidden = locked;
   ui.started.hidden = !locked;
   ui.name.disabled = ui.count.disabled = ui.start.disabled = locked;
@@ -43,6 +58,7 @@ function controls() {
   ui['cake-button'].disabled = phase !== 'active';
   ui['sound-test'].hidden = !['active', 'complete'].includes(phase);
   updateBlowCue();
+  updateGauge();
 }
 function element(tag, attrs, parent) {
   const node = document.createElementNS(svgNS, tag);
@@ -54,13 +70,13 @@ function renderCake() {
   ui.candles.replaceChildren();
   candles = candleLayout(total).map(({x, y, height, width}, i) => {
     const group = element('g', {class: 'candle', transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`}, ui.candles);
-    element('ellipse', {cx: 0, cy: 1, rx: width, ry: 2.5, fill: '#ddc6bb'}, group);
-    element('rect', {x: -width / 2, y: -height, width, height, rx: 2, fill: ['#fa466b', '#6841bb', '#268886'][i % 3]}, group);
-    element('path', {d: `M${-width/2} ${-height+9}l${width} -4m${-width} 15l${width} -4`, stroke: '#fff6de', 'stroke-width': 2}, group);
-    element('path', {class: 'wick', d: `M0 ${-height}v-5`, stroke: '#372157', 'stroke-width': 1.5}, group);
+    element('ellipse', {cx: 0, cy: 1, rx: width, ry: 2.5, fill: 'var(--color-text)'}, group);
+    element('rect', {x: -width / 2, y: -height, width, height, rx: 2, fill: ['var(--color-emphasis)', 'var(--color-accent)'][i % 2]}, group);
+    element('path', {d: `M${-width/2} ${-height+9}l${width} -4m${-width} 15l${width} -4`, stroke: 'var(--color-background)', 'stroke-width': 2}, group);
+    element('path', {class: 'wick', d: `M0 ${-height}v-5`, stroke: 'var(--color-text)', 'stroke-width': 1.5}, group);
     const flame = element('g', {class: 'flame'}, group);
-    element('path', {d: `M0 ${-height-18}C-10 ${-height-8} -6 ${-height-2} 0 ${-height-3}C7 ${-height-3} 7 ${-height-10} 0 ${-height-18}`, fill: '#fb8b32'}, flame);
-    element('ellipse', {cx: 0, cy: -height-7, rx: 2, ry: 4, fill: '#ffe689'}, flame);
+    element('path', {d: `M0 ${-height-18}C-10 ${-height-8} -6 ${-height-2} 0 ${-height-3}C7 ${-height-3} 7 ${-height-10} 0 ${-height-18}`, fill: 'var(--color-emphasis)'}, flame);
+    element('ellipse', {cx: 0, cy: -height-7, rx: 2, ry: 4, fill: 'var(--color-background)'}, flame);
     return group;
   });
   remaining = total;

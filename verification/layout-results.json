@@ -9,18 +9,26 @@
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
+    "gauge": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
+    },
+    "gaugeVisible": false,
     "cake": {
-      "x": 18,
-      "y": 506,
-      "width": 354,
-      "height": 226.15625,
-      "bottom": 732.15625
+      "x": 16,
+      "y": 515,
+      "width": 358,
+      "height": 228.71875,
+      "bottom": 743.71875
     },
     "card": {
-      "x": 18,
-      "y": 89,
-      "width": 354,
-      "height": 350
+      "x": 16,
+      "y": 107,
+      "width": 358,
+      "height": 320
     },
     "setup": true,
     "started": false,
@@ -40,18 +48,26 @@
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
+    "gauge": {
+      "x": 32,
+      "y": 792,
+      "width": 326,
+      "height": 8,
+      "bottom": 800
+    },
+    "gaugeVisible": true,
     "cake": {
-      "x": 18,
-      "y": 506,
-      "width": 354,
-      "height": 226.15625,
-      "bottom": 732.15625
+      "x": 16,
+      "y": 515,
+      "width": 358,
+      "height": 228.71875,
+      "bottom": 743.71875
     },
     "card": {
-      "x": 18,
-      "y": 89,
-      "width": 354,
-      "height": 350
+      "x": 16,
+      "y": 107,
+      "width": 358,
+      "height": 320
     },
     "setup": false,
     "started": true,
@@ -64,25 +80,72 @@
     "heading": "願いごと、決まった？",
     "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
     "candleCount": 5,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。\nあとは、思いっきりふーっ。\n\n準備OK！ 小さな声で少しずつ、大きな声で一気に。\n\nふーっ！\nあと 5 本"
+    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。あとは、思いっきりふーっ。\n\n準備OK！ 小さな声で少しずつ、大きな声で一気に。\n\nふーっ！\nあと 5 本\n声のボリューム\n小さく ー 大きく"
+  },
+  "completedFive": {
+    "width": 390,
+    "height": 844,
+    "scrollWidth": 390,
+    "scrollHeight": 844,
+    "gauge": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
+    },
+    "gaugeVisible": false,
+    "cake": {
+      "x": 16,
+      "y": 515,
+      "width": 358,
+      "height": 228.71875,
+      "bottom": 743.71875
+    },
+    "card": {
+      "x": 16,
+      "y": 107,
+      "width": 358,
+      "height": 320
+    },
+    "setup": false,
+    "started": true,
+    "name": false,
+    "count": false,
+    "start": false,
+    "bubble": false,
+    "counter": false,
+    "dedication": "今日の主役へ",
+    "heading": "ぜんぶ消えた。おめでとう！",
+    "wish": "けいこさんが今日の主役！大きな拍手を送りましょう。",
+    "candleCount": 5,
+    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\nぜんぶ消えた。おめでとう！\n\nけいこさんが今日の主役！大きな拍手を送りましょう。\n\nすべてのろうそくが消えました。"
   },
   "before99": {
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
+    "gauge": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
+    },
+    "gaugeVisible": false,
     "cake": {
-      "x": 18,
-      "y": 506,
-      "width": 354,
-      "height": 226.15625,
-      "bottom": 732.15625
+      "x": 16,
+      "y": 515,
+      "width": 358,
+      "height": 228.71875,
+      "bottom": 743.71875
     },
     "card": {
-      "x": 18,
-      "y": 89,
-      "width": 354,
-      "height": 350
+      "x": 16,
+      "y": 107,
+      "width": 358,
+      "height": 320
     },
     "setup": true,
     "started": false,
@@ -102,18 +165,26 @@
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
+    "gauge": {
+      "x": 32,
+      "y": 792,
+      "width": 326,
+      "height": 8,
+      "bottom": 800
+    },
+    "gaugeVisible": true,
     "cake": {
-      "x": 18,
-      "y": 506,
-      "width": 354,
-      "height": 226.15625,
-      "bottom": 732.15625
+      "x": 16,
+      "y": 515,
+      "width": 358,
+      "height": 228.71875,
+      "bottom": 743.71875
     },
     "card": {
-      "x": 18,
-      "y": 89,
-      "width": 354,
-      "height": 350
+      "x": 16,
+      "y": 107,
+      "width": 358,
+      "height": 320
     },
     "setup": false,
     "started": true,
@@ -126,25 +197,33 @@
     "heading": "願いごと、決まった？",
     "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
     "candleCount": 99,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。\nあとは、思いっきりふーっ。\n\n準備OK！ 小さな声で少しずつ、大きな声で一気に。\n\nふーっ！\nあと 99 本"
+    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。あとは、思いっきりふーっ。\n\n準備OK！ 小さな声で少しずつ、大きな声で一気に。\n\nふーっ！\nあと 99 本\n声のボリューム\n小さく ー 大きく"
   },
   "completed": {
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
+    "gauge": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "bottom": 0
+    },
+    "gaugeVisible": false,
     "cake": {
-      "x": 18,
-      "y": 506,
-      "width": 354,
-      "height": 226.15625,
-      "bottom": 732.15625
+      "x": 16,
+      "y": 515,
+      "width": 358,
+      "height": 228.71875,
+      "bottom": 743.71875
     },
     "card": {
-      "x": 18,
-      "y": 89,
-      "width": 354,
-      "height": 350
+      "x": 16,
+      "y": 107,
+      "width": 358,
+      "height": 320
     },
     "setup": false,
     "started": true,
@@ -155,27 +234,35 @@
     "counter": false,
     "dedication": "今日の主役へ",
     "heading": "ぜんぶ消えた。おめでとう！",
-    "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
+    "wish": "けいこさんが今日の主役！大きな拍手を送りましょう。",
     "candleCount": 99,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\nぜんぶ消えた。おめでとう！\n\n願いごとをひとつ。\nあとは、思いっきりふーっ。\n\nすべてのろうそくが消えました。"
+    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\nぜんぶ消えた。おめでとう！\n\nけいこさんが今日の主役！大きな拍手を送りましょう。\n\nすべてのろうそくが消えました。"
   },
   "denied": {
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
+    "gauge": {
+      "x": 32,
+      "y": 792,
+      "width": 326,
+      "height": 8,
+      "bottom": 800
+    },
+    "gaugeVisible": true,
     "cake": {
-      "x": 18,
-      "y": 506,
-      "width": 354,
-      "height": 226.15625,
-      "bottom": 732.15625
+      "x": 16,
+      "y": 515,
+      "width": 358,
+      "height": 228.71875,
+      "bottom": 743.71875
     },
     "card": {
-      "x": 18,
-      "y": 89,
-      "width": 354,
-      "height": 350
+      "x": 16,
+      "y": 107,
+      "width": 358,
+      "height": 320
     },
     "setup": false,
     "started": true,
@@ -188,7 +275,7 @@
     "heading": "願いごと、決まった？",
     "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
     "candleCount": 99,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。\nあとは、思いっきりふーっ。\n\nマイクはオフです。ケーキをタップして消せます。\n\nふーっ！\nあと 99 本"
+    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。あとは、思いっきりふーっ。\n\nマイクはオフです。ケーキをタップして消せます。\n\nふーっ！\nあと 99 本\n声のボリューム\n小さく ー 大きく"
   },
   "errors": []
 }
