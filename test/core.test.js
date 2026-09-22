@@ -33,6 +33,11 @@ test('silence and short claps do not extinguish candles', () => {
 test('gentle sustained sound extinguishes a portion, with cooldown', () => {
   assert.deepEqual(play(.04, 1000), ['some']);
 });
+test('small, normal, and loud calibrated dummy blows have distinct outcomes', () => {
+  assert.deepEqual(play(.02, 240), ['some']);
+  assert.deepEqual(play(.04, 1000), ['some']);
+  assert.deepEqual(play(.18, 180), ['all']);
+});
 test('loud sustained sound extinguishes all within 180 ms', () => {
   assert.deepEqual(play(.16, 180), ['all']);
 });
