@@ -113,6 +113,7 @@ body[data-scene="song"], body[data-scene="blackout"] { background: var(--color-d
 .song-lyrics { margin: 0; color: var(--color-dark-text); font-size: var(--font-large); font-weight: 900; line-height: 1.4; }
 .scene-controls { position: absolute; z-index: 4; top: 0; right: 0; display: flex; flex-direction: column; align-items: end; gap: var(--space-1); max-width: 100%; }
 .scene-controls .primary, .scene-controls .secondary { width: auto; min-width: calc(var(--space-4) * 4); }
+.party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }
 .celebration-copy { color: var(--color-text); }
 .celebration-copy h2 { margin: 0 0 var(--space-1); font-size: var(--font-medium); line-height: 1.4; }
 .celebration-copy p { max-width: calc(var(--space-4) * 7); max-height: calc(var(--font-small) * 4.8); margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: var(--font-small); line-height: 1.6; }

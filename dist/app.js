@@ -56,6 +56,7 @@ function controls() {
   const locked = !entry;
   document.body.dataset.scene = scene;
   ui.party.dataset.scene = scene;
+  ui.party.dataset.micState = phase;
   ui.start.textContent = 'パーティスタート';
   ui.dedication.textContent = '今日の主役へ';
   const complete = ['blackout', 'celebrate'].includes(scene);

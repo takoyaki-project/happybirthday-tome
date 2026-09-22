@@ -94,6 +94,18 @@ try {
   assert.equal(song.background, 'rgb(23, 17, 37)');
   await screenshot('song-390x844.png');
 
+  await evaluate("window.__testMic=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=()=>new Promise(()=>{});document.getElementById('reset').click();document.getElementById('start').click()");
+  await sleep(100);
+  const fallbackLayout = await evaluate("(()=>{const fallback=document.getElementById('fallback').getBoundingClientRect();const lyrics=document.getElementById('song-lyrics').getBoundingClientRect();return{visible:!!document.getElementById('fallback').getClientRects().length,fallbackTop:fallback.top,lyricsBottom:lyrics.bottom};})()");
+  assert.ok(fallbackLayout.visible && fallbackLayout.fallbackTop >= fallbackLayout.lyricsBottom);
+  await screenshot('song-fallback-390x844.png');
+  await evaluate("document.getElementById('reset').click();navigator.mediaDevices.getUserMedia=window.__testMic;document.getElementById('start').click()");
+  for (let i = 0; i < 40; i++) {
+    if (await evaluate("!document.getElementById('cake-button').disabled")) break;
+    await sleep(100);
+  }
+  await sleep(2000);
+
   await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
   await sleep(100);
   const blackout = await read();
@@ -124,6 +136,7 @@ try {
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
   console.log('PASS entry hides the cake and fits at 390×844');
   console.log('PASS song shows lyrics, cue, count, gauge, and a dark readable scene');
+  console.log('PASS microphone fallback control does not overlap the lyrics');
   console.log('PASS blackout keeps the cake fixed, hides the cue, shows smoke, and transitions within 1.5 seconds');
   console.log('PASS celebration keeps the cake fixed and shows the name-ready message');
   console.log('PASS reset returns celebration to entry; 99 candles fit in song');
