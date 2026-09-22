@@ -11,6 +11,16 @@
   --color-text: #372157;
   --color-accent: #6841bb;
   --color-emphasis: #fa466b;
+  --color-card: #ffffff;
+  --color-input: #fcfafd;
+  --color-border: #dfd0e0;
+  --color-input-border: #c9bacc;
+  --color-shadow: #eee2ec;
+  --color-cake-plate: #dcd6ee;
+  --color-cake-side: #c6b3fa;
+  --color-cake-cream: #fff6de;
+  --color-cake-stripe: #fff1b9;
+  --color-cake-dots: #edcbcd;
   --radius: 16px;
   color-scheme: light;
   font-family: ui-rounded, "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif;
@@ -32,14 +42,14 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--color-accen
 .brand h1 span { color: var(--color-emphasis); }
 .brand p { margin: var(--space-1) 0 0; font-size: var(--font-small); line-height: 1.5; }
 
-.message-card { position: relative; height: 336px; padding: var(--space-3); border: 1px solid var(--color-accent); border-radius: var(--radius); background: var(--color-background); box-shadow: 0 var(--space-1) 0 var(--color-accent); }
+.message-card { position: relative; height: 336px; padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); box-shadow: 0 var(--space-1) 0 var(--color-shadow); }
 #setup { height: 100%; display: flex; flex-direction: column; gap: var(--space-1); }
 .card-heading { text-align: center; }
 .card-heading p { margin: 0 0 var(--space-1); font-size: var(--font-small); line-height: 1.5; }
 .card-heading h2 { margin: 0; font-size: var(--font-medium); font-weight: 900; line-height: 1.45; }
 .field label { display: flex; justify-content: space-between; gap: var(--space-1); margin-bottom: var(--space-1); font-size: var(--font-small); font-weight: 700; line-height: 1.5; }
 .field label span { font-weight: 400; }
-input { width: 100%; height: 44px; min-width: 0; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-accent); border-radius: var(--radius); background: var(--color-background); color: var(--color-text); font-size: var(--font-small); }
+input { width: 100%; height: 44px; min-width: 0; padding: var(--space-1) var(--space-2); border: 1px solid var(--color-input-border); border-radius: var(--radius); background: var(--color-input); color: var(--color-text); font-size: var(--font-small); }
 .number-field { position: relative; }
 .number-field input { padding-right: var(--space-4); }
 .number-field > span { position: absolute; top: var(--space-2); right: var(--space-2); font-size: var(--font-small); pointer-events: none; }
