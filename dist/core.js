@@ -28,10 +28,21 @@ export function rms(samples) {
   return Math.sqrt(power / samples.length);
 }
 
+export const BLOW_SENSITIVITY = Object.freeze({
+  calibrationMs: 800,
+  meterFullDelta: .04,
+  meterSmoothing: .06,
+  meterFullThreshold: .92,
+  gentleDelta: .018,
+  strongDelta: .10,
+  gentleHoldMs: 240,
+  strongHoldMs: 180,
+  gentleCooldownMs: 950
+});
+
 // A short sustained signal is required; a single click must not blow out candles.
-export function createBlowDetector(noise = 0) {
-  const small = Math.max(.018, Math.min(.065, noise * 3));
-  const large = Math.max(.10, Math.min(.22, noise * 7));
+export function createBlowDetector(config = BLOW_SENSITIVITY) {
+  const {gentleDelta: small, strongDelta: large, gentleHoldMs, strongHoldMs, gentleCooldownMs} = config;
   let gentleMs = 0;
   let strongMs = 0;
   let cooldown = 0;
@@ -42,13 +53,13 @@ export function createBlowDetector(noise = 0) {
       cooldown = Math.max(0, cooldown - dt);
       strongMs = level >= large ? strongMs + dt : 0;
       gentleMs = level >= small ? gentleMs + dt : 0;
-      if (strongMs >= 180) {
+      if (strongMs >= strongHoldMs) {
         strongMs = gentleMs = 0;
         return 'all';
       }
-      if (gentleMs >= 240 && cooldown === 0) {
+      if (gentleMs >= gentleHoldMs && cooldown === 0) {
         gentleMs = 0;
-        cooldown = 950;
+        cooldown = gentleCooldownMs;
         return 'some';
       }
       return null;

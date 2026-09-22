@@ -1,6 +1,6 @@
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validCount, candleLayout, rms, createBlowDetector } from '../dist/core.js';
+import { validCount, candleLayout, rms, BLOW_SENSITIVITY, createBlowDetector } from '../dist/core.js';
 
 test('only whole candle counts 1–99 are accepted', () => {
   for (const value of ['', ' ', 0, 100, -1, 1.5, 'no', Infinity]) assert.equal(validCount(value), null);
@@ -41,8 +41,11 @@ test('loud sound bypasses the gentle-blow cooldown', () => {
   assert.deepEqual(play(.04, 240, detector), ['some']);
   assert.deepEqual(play(.16, 180, detector), ['all']);
 });
-test('room noise calibration rejects steady background sound', () => {
-  assert.deepEqual(play(.025, 2000, createBlowDetector(.025)), []);
+test('microphone sensitivity is centralized and uses calibrated delta values', () => {
+  assert.equal(BLOW_SENSITIVITY.calibrationMs, 800);
+  assert.ok(BLOW_SENSITIVITY.gentleDelta < BLOW_SENSITIVITY.meterFullDelta);
+  assert.ok(BLOW_SENSITIVITY.strongDelta > BLOW_SENSITIVITY.meterFullDelta);
+  assert.deepEqual(play(0, 2000, createBlowDetector(BLOW_SENSITIVITY)), []);
 });
 test('a long animation gap cannot count as a sustained blow', () => {
   assert.equal(createBlowDetector().update(.2, 10000), null);

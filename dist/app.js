@@ -1,7 +1,8 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
+import { BLOW_SENSITIVITY } from './core.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let total = 5;
@@ -16,6 +17,7 @@ let generation = 0;
 let timer = 0;
 let ignoreUntil = 0;
 let tapOnly = false;
+let showDebugValue = true;
 const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
@@ -24,11 +26,12 @@ function status(message, visible = false) {
   ui.status.textContent = message;
   ui.status.classList[visible ? 'add' : 'remove']('notice');
 }
-function meter(level) {
+function meter(level, measuredLevel = 0) {
   const percent = Math.round(Math.max(0, Math.min(1, level)) * 100);
   ui['meter-fill'].style.width = percent + '%';
   ui.meter.setAttribute('aria-valuenow', percent);
   ui.bubble.style.setProperty('--energy', Math.min(1, level));
+  ui['debug-value'].textContent = measuredLevel.toFixed(3);
 }
 // The bubble and remaining count always share this single visibility boundary.
 // When singing is added, change the readiness condition here after song completion.
@@ -36,7 +39,12 @@ function updateBlowCue() {
   ui['blow-cue'].hidden = !['preparing', 'active'].includes(phase);
 }
 function updateGauge() {
-  ui['volume-area'].hidden = !['preparing', 'active'].includes(phase);
+  const waiting = ['preparing', 'active'].includes(phase);
+  ui['volume-area'].hidden = !waiting;
+  ui['debug-toggle'].hidden = !waiting;
+  ui['debug-value'].hidden = !waiting || !showDebugValue;
+  ui['debug-toggle'].setAttribute('aria-pressed', String(showDebugValue));
+  ui['debug-toggle'].setAttribute('aria-label', showDebugValue ? '現在の音量の数値を隠す' : '現在の音量の数値を表示する');
 }
 function completionMessage(name, template = CELEBRATION_TEMPLATE) {
   const displayName = name.trim() || 'あなた';
@@ -184,9 +192,10 @@ function listen(ctx, ticket) {
   let detector = null;
   let previous = performance.now();
   let level = 0;
+  let baseline = 0;
   // Wait for the confirmation tone to finish, then measure the room for 800 ms.
   const calibrateFrom = Math.max(ignoreUntil, performance.now() + 100);
-  const readyAt = calibrateFrom + 800;
+  const readyAt = calibrateFrom + BLOW_SENSITIVITY.calibrationMs;
   function tick(now) {
     if (ticket !== generation || phase !== 'active' || !analyser || audio !== ctx) return;
     const elapsed = now - previous;
@@ -194,16 +203,19 @@ function listen(ctx, ticket) {
     if (ctx.state !== 'running') { pause(); return; }
     analyser.getFloatTimeDomainData(samples);
     const raw = rms(samples);
-    level += (raw - level) * .3;
-    meter(level / .14);
     if (now >= calibrateFrom && now < readyAt) noiseSamples.push(raw);
     if (now >= readyAt && !detector) {
       noiseSamples.sort((a, b) => a - b);
-      detector = createBlowDetector(noiseSamples[Math.floor(noiseSamples.length / 2)] || 0);
+      baseline = noiseSamples[Math.floor(noiseSamples.length / 2)] || 0;
+      detector = createBlowDetector(BLOW_SENSITIVITY);
       status('準備OK！ 小さな声で少しずつ、大きな声で一気に。');
     }
+    const delta = detector ? Math.max(0, raw - baseline) : 0;
+    level += (delta - level) * BLOW_SENSITIVITY.meterSmoothing;
+    const normalized = level / BLOW_SENSITIVITY.meterFullDelta;
+    meter(normalized >= BLOW_SENSITIVITY.meterFullThreshold ? 1 : normalized, delta);
     if (detector && now >= ignoreUntil) {
-      const action = detector.update(level, elapsed);
+      const action = detector.update(delta, elapsed);
       if (action) extinguish(action === 'all');
     }
     if (phase === 'active') frame = requestAnimationFrame(tick);
@@ -291,6 +303,10 @@ ui.count.addEventListener('input', () => {
 ui['sound-test'].addEventListener('click', () => {
   if (!prepareSound()) status('音を準備できませんでした。ケーキをタップして遊べます。', true);
   else status('音が出ないときは、マナーモード・消音設定と音量を確認してください。', true);
+});
+ui['debug-toggle'].addEventListener('click', () => {
+  showDebugValue = !showDebugValue;
+  updateGauge();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { pause(); releaseAudio(); }

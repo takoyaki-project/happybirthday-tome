@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 import * as core from '../dist/core.js';
-const code = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8')).replace(/^\uFEFF?import[^\n]+\n/, '');
+const code = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8')).replace(/^\uFEFF?import[^\n]+\n|^import[^\n]+\n/gm, '');
 
 class Element {
   constructor() {
@@ -162,7 +162,7 @@ test('microphone disconnection switches to taps', async () => {
   assert.match(app.get('status').textContent, /マイクはオフ/);
   assert.equal(mic.track.stopped, true);
 });
-test('calibration ignores start tone, gentle voice removes some, loud voice removes all', async () => {
+test('calibration subtracts room noise; normal voice fills the meter in about one second, gentle voice removes some, and loud voice removes all', async () => {
   const mic = microphone();
   const app = harness(() => Promise.resolve(mic.stream));
   app.count(99); app.submit(); await flush();
@@ -170,10 +170,16 @@ test('calibration ignores start tone, gentle voice removes some, loud voice remo
   assert.equal(app.get('remaining').textContent, 99);
   app.frames(70, 0);
   assert.equal(app.get('meter').attributes['aria-valuenow'], 0);
-  app.frames(20, .04);
-  assert.ok(app.get('meter').attributes['aria-valuenow'] > 0);
-  assert.ok(parseFloat(app.get('meter-fill').style.width) > 0);
+  app.frames(50, .04);
+  assert.equal(app.get('meter').attributes['aria-valuenow'], 100);
+  assert.equal(app.get('debug-value').textContent, '0.040');
   assert.equal(app.get('remaining').textContent, 79);
+  app.get('debug-toggle').click();
+  assert.equal(app.get('debug-value').hidden, true);
+  assert.equal(app.get('debug-toggle').attributes['aria-pressed'], 'false');
+  app.get('debug-toggle').click();
+  assert.equal(app.get('debug-value').hidden, false);
+  assert.ok(parseFloat(app.get('meter-fill').style.width) > 0);
   app.frames(20, .18);
   assert.equal(app.get('remaining').textContent, 0);
   assert.equal(mic.track.stopped, true);

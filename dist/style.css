@@ -53,6 +53,7 @@ input { width: 100%; height: 44px; min-width: 0; padding: var(--space-1) var(--s
 .utility-controls { position: absolute; right: var(--space-2); bottom: var(--space-2); display: flex; gap: var(--space-1); }
 .icon-button { display: grid; width: 44px; height: 44px; place-items: center; padding: var(--space-1); border: 0; border-radius: var(--radius); background: var(--color-background); color: var(--color-text); }
 .icon-button svg { width: var(--space-3); height: var(--space-3); fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.debug-toggle { font-size: var(--font-small); font-weight: 900; }
 .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); margin: 0; }
 .status.notice { right: var(--space-3); bottom: calc(var(--space-3) + 44px); left: var(--space-3); width: auto; height: auto; clip-path: none; margin: 0; font-size: var(--font-small); line-height: 1.6; text-align: center; }
 
@@ -67,6 +68,7 @@ input { width: 100%; height: 44px; min-width: 0; padding: var(--space-1) var(--s
 #cake { display: block; width: 100%; height: auto; }
 .volume-area { position: absolute; top: 320px; right: var(--space-2); left: var(--space-2); }
 .volume-label { display: flex; justify-content: space-between; gap: var(--space-2); margin-bottom: var(--space-1); color: var(--color-text); font-size: var(--font-small); font-weight: 700; line-height: 1.5; }
+.volume-label output { color: var(--color-emphasis); font-variant-numeric: tabular-nums; }
 .meter { height: var(--space-1); overflow: hidden; border-radius: var(--radius); background: var(--color-accent); }
 .meter > div { width: 0; height: 100%; border-radius: inherit; background: var(--color-emphasis); transition: width 90ms linear; }
 .flame { transform-box: fill-box; transform-origin: center bottom; animation: flicker 900ms ease-in-out infinite alternate; }
