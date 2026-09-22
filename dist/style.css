@@ -21,6 +21,10 @@
   --color-cake-cream: #fff6de;
   --color-cake-stripe: #fff1b9;
   --color-cake-dots: #edcbcd;
+  --color-dark-background: #171125;
+  --color-dark-text: #fff6de;
+  --color-dark-flame: #ffd678;
+  --color-dark-emphasis: #ff8ca2;
   --radius: 16px;
   color-scheme: light;
   font-family: ui-rounded, "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif;
@@ -95,3 +99,31 @@ input { width: 100%; height: 44px; min-width: 0; padding: var(--space-1) var(--s
   .volume-area { top: 300px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* Stage 2 scenes share this fixed stage; entry is the only scene without a cake. */
+body[data-scene="song"], body[data-scene="blackout"] { background: var(--color-dark-background); }
+.party[data-scene="entry"] .stage { display: none; }
+.party:not([data-scene="entry"]) { min-height: 100svh; padding: var(--space-3) var(--space-2) var(--space-2); }
+.party:not([data-scene="entry"]) .brand, .party:not([data-scene="entry"]) .message-card { display: none; }
+.party:not([data-scene="entry"]) .stage { height: calc(100svh - var(--space-4)); margin: 0; }
+.party:not([data-scene="entry"]) .cake-button { top: calc(var(--space-4) * 4 + var(--space-2)); }
+.party:not([data-scene="entry"]) .blow-cue { top: calc(var(--space-4) + var(--space-3)); }
+.party:not([data-scene="entry"]) .volume-area { top: calc(var(--space-4) * 11 + var(--space-3)); }
+.scene-copy { position: absolute; z-index: 2; top: var(--space-1); right: calc(44px + var(--space-3)); left: var(--space-3); text-align: center; }
+.song-lyrics { margin: 0; color: var(--color-dark-text); font-size: var(--font-large); font-weight: 900; line-height: 1.4; }
+.scene-controls { position: absolute; z-index: 4; top: 0; right: 0; display: flex; flex-wrap: wrap; justify-content: end; gap: var(--space-1); max-width: 100%; }
+.scene-controls .primary, .scene-controls .secondary { width: auto; min-width: calc(var(--space-4) * 4); }
+.celebration-copy { color: var(--color-text); }
+.celebration-copy h2 { margin: 0 0 var(--space-1); font-size: var(--font-medium); line-height: 1.4; }
+.celebration-copy p { max-width: calc(var(--space-4) * 7); max-height: calc(var(--font-small) * 4.8); margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: var(--font-small); line-height: 1.6; }
+.blackout-copy { color: var(--color-dark-text); font-size: var(--font-small); line-height: 1.5; }
+body[data-scene="song"] .volume-label, body[data-scene="song"] .counter { color: var(--color-dark-text); }
+body[data-scene="song"] .bubble { border-color: var(--color-dark-text); background: var(--color-dark-background); box-shadow: 3px 3px 0 var(--color-dark-emphasis); color: var(--color-dark-text); }
+body[data-scene="song"] .bubble::after { border-color: var(--color-dark-text); background: var(--color-dark-background); }
+body[data-scene="song"] .meter { background: #4b3b63; }
+body[data-scene="song"] .meter > div { background: var(--color-dark-emphasis); }
+body[data-scene="blackout"] .cake-button { opacity: .04; }
+.smoke { position: absolute; z-index: 3; top: calc(var(--space-4) * 5); left: 0; width: 100%; display: flex; justify-content: center; gap: var(--space-3); }
+.smoke span { display: block; width: 2px; height: var(--space-3); border-radius: var(--radius); background: var(--color-dark-text); opacity: .7; animation: smoke 700ms ease-out infinite alternate; }
+.smoke span:nth-child(2n) { animation-delay: -350ms; }
+@keyframes smoke { from { transform: translateY(0); opacity: .65; } to { transform: translateY(calc(var(--space-2) * -1)); opacity: .1; } }

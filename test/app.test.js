@@ -7,7 +7,7 @@ const code = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8')
 
 class Element {
   constructor() {
-    this.children = []; this.events = {}; this.attributes = {}; this.value = ''; this.hidden = false;
+    this.children = []; this.events = {}; this.attributes = {}; this.dataset = {}; this.value = ''; this.hidden = false;
     this.style = {setProperty() {}};
     this.classes = new Set();
     this.classList = {add: c => this.classes.add(c), remove: c => this.classes.delete(c), contains: c => this.classes.has(c)};
@@ -40,7 +40,7 @@ function harness(getUserMedia, withAudio = true) {
     createAnalyser() { return {...node(), getFloatTimeDomainData(samples) { for (let i=0;i<samples.length;i++) samples[i] = i % 2 ? signal : -signal; }}; }
   }
   const document = {
-    hidden: false, events: {}, getElementById: get, querySelector: get,
+    hidden: false, events: {}, body: new Element(), getElementById: get, querySelector: get,
     createElementNS: () => new Element(), createElement: () => new Element(), createTextNode: text => ({textContent: text}),
     addEventListener(name, callback) { this.events[name] = callback; }
   };
@@ -63,6 +63,7 @@ function harness(getUserMedia, withAudio = true) {
     name(text) { get('name').value = text; get('name').events.input?.(); },
     hide() { document.hidden = true; document.events.visibilitychange(); },
     show() { document.hidden = false; document.events.visibilitychange(); },
+    runTimer(delay) { [...timers.values()].find(timer => timer.delay === delay)?.callback(); },
     frames(n, volume = 0) {
       signal = volume;
       for (let i=0; i<n; i++) { now += 20; const callbacks = [...raf.values()]; raf.clear(); callbacks.forEach(cb => cb(now)); }
@@ -247,11 +248,26 @@ test('pause hides both cue children; resume shows both; completion hides both', 
   assert.equal(app.get('volume-area').hidden, true);
   assert.equal(app.get('cake-heading').textContent, 'ぜんぶ消えた。おめでとう！');
   assert.match(app.get('message-slot').textContent, /今日の主役/);
+  assert.equal(app.document.body.dataset.scene, 'blackout');
+  app.runTimer(1000);
+  assert.equal(app.document.body.dataset.scene, 'celebrate');
   app.get('reset').click();
   assert.equal(app.get('setup').hidden, false);
   assert.equal(app.get('started').hidden, true);
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('start').textContent, 'パーティスタート');
+});
+test('stage 2 uses one scene state for entry, song, blackout, celebration, and entry again', async () => {
+  const app = harness(() => Promise.reject());
+  assert.equal(app.document.body.dataset.scene, 'entry');
+  app.count(1); app.submit(); await flush();
+  assert.equal(app.document.body.dataset.scene, 'song');
+  app.get('cake-button').click();
+  assert.equal(app.document.body.dataset.scene, 'blackout');
+  app.runTimer(1000);
+  assert.equal(app.document.body.dataset.scene, 'celebrate');
+  app.get('reset').click();
+  assert.equal(app.document.body.dataset.scene, 'entry');
 });
 test('completion message uses the entered name, replaces the wish copy, and caps at 40 characters', async () => {
   for (const name of ['けいこ', 'あ'.repeat(16), 'あ'.repeat(18)]) {

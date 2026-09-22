@@ -2,9 +2,10 @@
 
 import { BLOW_SENSITIVITY } from './core.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-message', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
+let scene = 'entry';
 let total = 5;
 let remaining = 5;
 let candles = [];
@@ -36,10 +37,10 @@ function meter(level, measuredLevel = 0) {
 // The bubble and remaining count always share this single visibility boundary.
 // When singing is added, change the readiness condition here after song completion.
 function updateBlowCue() {
-  ui['blow-cue'].hidden = !['preparing', 'active'].includes(phase);
+  ui['blow-cue'].hidden = !(scene === 'song' && ['preparing', 'active'].includes(phase));
 }
 function updateGauge() {
-  const waiting = ['preparing', 'active'].includes(phase);
+  const waiting = scene === 'song' && ['preparing', 'active'].includes(phase);
   ui['volume-area'].hidden = !waiting;
   ui['debug-toggle'].hidden = !waiting;
   ui['debug-value'].hidden = !waiting || !showDebugValue;
@@ -51,20 +52,28 @@ function completionMessage(name, template = CELEBRATION_TEMPLATE) {
   return Array.from(template.replace('{name}', displayName)).slice(0, MAX_MESSAGE_LENGTH).join('');
 }
 function controls() {
-  const locked = phase !== 'idle';
+  const entry = scene === 'entry';
+  const locked = !entry;
+  document.body.dataset.scene = scene;
+  ui.party.dataset.scene = scene;
   ui.start.textContent = 'パーティスタート';
   ui.dedication.textContent = '今日の主役へ';
-  const complete = phase === 'complete';
+  const complete = ['blackout', 'celebrate'].includes(scene);
   ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
   ui['message-slot'].textContent = complete ? completionMessage(ui.name.value) : WISH_MESSAGE;
-  ui.setup.hidden = locked;
-  ui.started.hidden = !locked;
+  ui['celebration-message'].textContent = complete ? completionMessage(ui.name.value) : '';
+  ui.setup.hidden = !entry;
+  ui.started.hidden = entry;
   ui.name.disabled = ui.count.disabled = ui.start.disabled = locked;
   ui.resume.hidden = phase !== 'paused';
-  ui.fallback.hidden = phase !== 'preparing';
-  ui.reset.hidden = !['active', 'complete', 'paused'].includes(phase);
-  ui['cake-button'].disabled = phase !== 'active';
-  ui['sound-test'].hidden = !['active', 'complete'].includes(phase);
+  ui.fallback.hidden = scene !== 'song' || phase !== 'preparing';
+  ui.reset.hidden = entry;
+  ui['cake-button'].disabled = scene !== 'song' || phase !== 'active';
+  ui['sound-test'].hidden = scene !== 'song' || !['active', 'complete'].includes(phase);
+  ui['song-lyrics'].hidden = scene !== 'song';
+  ui['blackout-copy'].hidden = scene !== 'blackout';
+  ui['celebration-copy'].hidden = scene !== 'celebrate';
+  ui.smoke.hidden = scene !== 'blackout';
   updateBlowCue();
   updateGauge();
 }
@@ -183,8 +192,15 @@ function extinguish(all = false) {
   phase = 'complete';
   stopPending();
   releaseAudio();
-  status('すべてのろうそくが消えました。');
+  scene = 'blackout';
+  status('しーっ。願いごとの時間。');
   controls();
+  timer = window.setTimeout(() => {
+    if (scene !== 'blackout') return;
+    scene = 'celebrate';
+    status('すべてのろうそくが消えました。');
+    controls();
+  }, 1000);
 }
 function listen(ctx, ticket) {
   const samples = new Float32Array(analyser.fftSize);
@@ -230,6 +246,7 @@ function start(resuming = false) {
     total = count;
     renderCake();
     tapOnly = false;
+    scene = 'song';
   }
   stopPending();
   const ticket = generation;
@@ -283,6 +300,7 @@ function start(resuming = false) {
   });
 }
 function reset() {
+  scene = 'entry';
   phase = 'idle';
   stopPending();
   releaseAudio();

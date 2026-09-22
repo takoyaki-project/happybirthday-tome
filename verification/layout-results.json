@@ -4,334 +4,135 @@
     "width": 390,
     "height": 844
   },
-  "before": {
+  "entry": {
+    "scene": "entry",
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
-    "gauge": {
+    "cake": {
       "x": 0,
       "y": 0,
       "width": 0,
       "height": 0,
       "bottom": 0
     },
-    "gaugeVisible": false,
-    "cake": {
-      "x": 16,
-      "y": 515,
-      "width": 358,
-      "height": 228.71875,
-      "bottom": 743.71875
-    },
-    "card": {
-      "x": 16,
-      "y": 107,
-      "width": 358,
-      "height": 336,
-      "bottom": 443
-    },
-    "startButton": {
-      "x": 41,
-      "y": 374,
-      "width": 308,
-      "height": 44,
-      "bottom": 418
-    },
+    "cakeVisible": false,
+    "bubble": false,
+    "counter": false,
+    "gauge": false,
+    "lyrics": false,
+    "smoke": false,
+    "celebration": false,
     "setup": true,
-    "started": false,
-    "name": true,
-    "count": true,
-    "start": true,
-    "bubble": false,
-    "counter": false,
-    "dedication": "今日の主役へ",
-    "heading": "願いごと、決まった？",
-    "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
+    "message": "",
     "candleCount": 5,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n本日の主役、入場です。\n\n自分に、おめでとう。\n名前\nろうそくの本数\n1〜99本\n本\nパーティスタート"
+    "outCount": 0,
+    "background": "rgb(252, 244, 247)"
   },
-  "after": {
+  "song": {
+    "scene": "song",
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
-    "gauge": {
-      "x": 32,
-      "y": 792,
-      "width": 326,
-      "height": 8,
-      "bottom": 800
-    },
-    "gaugeVisible": true,
     "cake": {
       "x": 16,
-      "y": 515,
+      "y": 200,
       "width": 358,
       "height": 228.71875,
-      "bottom": 743.71875
+      "bottom": 428.71875
     },
-    "card": {
-      "x": 16,
-      "y": 107,
-      "width": 358,
-      "height": 336,
-      "bottom": 443
-    },
-    "startButton": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
-    "setup": false,
-    "started": true,
-    "name": false,
-    "count": false,
-    "start": false,
+    "cakeVisible": true,
     "bubble": true,
     "counter": true,
-    "dedication": "今日の主役へ",
-    "heading": "願いごと、決まった？",
-    "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
+    "gauge": true,
+    "lyrics": true,
+    "smoke": false,
+    "celebration": false,
+    "setup": false,
+    "message": "",
     "candleCount": 5,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。あとは、思いっきりふーっ。\n\n数\n\n準備OK！ 小さな声で少しずつ、大きな声で一気に。\n\nふーっ！\nあと 5 本\n声のボリューム 0.000\n小さく ー 大きく"
+    "outCount": 0,
+    "background": "rgb(23, 17, 37)"
   },
-  "completedFive": {
+  "blackout": {
+    "scene": "blackout",
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
-    "gauge": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
-    "gaugeVisible": false,
     "cake": {
       "x": 16,
-      "y": 515,
+      "y": 200,
       "width": 358,
       "height": 228.71875,
-      "bottom": 743.71875
+      "bottom": 428.71875
     },
-    "card": {
-      "x": 16,
-      "y": 107,
-      "width": 358,
-      "height": 336,
-      "bottom": 443
-    },
-    "startButton": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
-    "setup": false,
-    "started": true,
-    "name": false,
-    "count": false,
-    "start": false,
+    "cakeVisible": true,
     "bubble": false,
     "counter": false,
-    "dedication": "今日の主役へ",
-    "heading": "ぜんぶ消えた。おめでとう！",
-    "wish": "けいこさんが今日の主役！大きな拍手を送りましょう。",
+    "gauge": false,
+    "lyrics": false,
+    "smoke": true,
+    "celebration": false,
+    "setup": false,
+    "message": "けいこさんが今日の主役！大きな拍手を送りましょう。",
     "candleCount": 5,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\nぜんぶ消えた。おめでとう！\n\nけいこさんが今日の主役！大きな拍手を送りましょう。\n\nすべてのろうそくが消えました。"
+    "outCount": 5,
+    "background": "rgb(23, 17, 37)"
   },
-  "before99": {
+  "celebrate": {
+    "scene": "celebrate",
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
-    "gauge": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
-    "gaugeVisible": false,
     "cake": {
       "x": 16,
-      "y": 515,
+      "y": 200,
       "width": 358,
       "height": 228.71875,
-      "bottom": 743.71875
+      "bottom": 428.71875
     },
-    "card": {
-      "x": 16,
-      "y": 107,
-      "width": 358,
-      "height": 336,
-      "bottom": 443
-    },
-    "startButton": {
-      "x": 41,
-      "y": 374,
-      "width": 308,
-      "height": 44,
-      "bottom": 418
-    },
-    "setup": true,
-    "started": false,
-    "name": true,
-    "count": true,
-    "start": true,
+    "cakeVisible": true,
     "bubble": false,
     "counter": false,
-    "dedication": "今日の主役へ",
-    "heading": "願いごと、決まった？",
-    "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
-    "candleCount": 99,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n本日の主役、入場です。\n\n自分に、おめでとう。\n名前\nろうそくの本数\n1〜99本\n本\nパーティスタート\n\nスタートすると、マイクの許可を確認します。"
+    "gauge": false,
+    "lyrics": false,
+    "smoke": false,
+    "celebration": true,
+    "setup": false,
+    "message": "けいこさんが今日の主役！大きな拍手を送りましょう。",
+    "candleCount": 5,
+    "outCount": 5,
+    "background": "rgb(252, 244, 247)"
   },
-  "after99": {
+  "song99": {
+    "scene": "song",
     "width": 390,
     "height": 844,
     "scrollWidth": 390,
     "scrollHeight": 844,
-    "gauge": {
-      "x": 32,
-      "y": 792,
-      "width": 326,
-      "height": 8,
-      "bottom": 800
-    },
-    "gaugeVisible": true,
     "cake": {
       "x": 16,
-      "y": 515,
+      "y": 200,
       "width": 358,
       "height": 228.71875,
-      "bottom": 743.71875
+      "bottom": 428.71875
     },
-    "card": {
-      "x": 16,
-      "y": 107,
-      "width": 358,
-      "height": 336,
-      "bottom": 443
-    },
-    "startButton": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
-    "setup": false,
-    "started": true,
-    "name": false,
-    "count": false,
-    "start": false,
+    "cakeVisible": true,
     "bubble": true,
     "counter": true,
-    "dedication": "今日の主役へ",
-    "heading": "願いごと、決まった？",
-    "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
-    "candleCount": 99,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。あとは、思いっきりふーっ。\n\n数\n\n準備OK！ 小さな声で少しずつ、大きな声で一気に。\n\nふーっ！\nあと 99 本\n声のボリューム 0.000\n小さく ー 大きく"
-  },
-  "completed": {
-    "width": 390,
-    "height": 844,
-    "scrollWidth": 390,
-    "scrollHeight": 844,
-    "gauge": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
-    "gaugeVisible": false,
-    "cake": {
-      "x": 16,
-      "y": 515,
-      "width": 358,
-      "height": 228.71875,
-      "bottom": 743.71875
-    },
-    "card": {
-      "x": 16,
-      "y": 107,
-      "width": 358,
-      "height": 336,
-      "bottom": 443
-    },
-    "startButton": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
+    "gauge": true,
+    "lyrics": true,
+    "smoke": false,
+    "celebration": false,
     "setup": false,
-    "started": true,
-    "name": false,
-    "count": false,
-    "start": false,
-    "bubble": false,
-    "counter": false,
-    "dedication": "今日の主役へ",
-    "heading": "ぜんぶ消えた。おめでとう！",
-    "wish": "けいこさんが今日の主役！大きな拍手を送りましょう。",
+    "message": "",
     "candleCount": 99,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\nぜんぶ消えた。おめでとう！\n\nけいこさんが今日の主役！大きな拍手を送りましょう。\n\nすべてのろうそくが消えました。"
-  },
-  "denied": {
-    "width": 390,
-    "height": 844,
-    "scrollWidth": 390,
-    "scrollHeight": 844,
-    "gauge": {
-      "x": 32,
-      "y": 792,
-      "width": 326,
-      "height": 8,
-      "bottom": 800
-    },
-    "gaugeVisible": true,
-    "cake": {
-      "x": 16,
-      "y": 515,
-      "width": 358,
-      "height": 228.71875,
-      "bottom": 743.71875
-    },
-    "card": {
-      "x": 16,
-      "y": 107,
-      "width": 358,
-      "height": 336,
-      "bottom": 443
-    },
-    "startButton": {
-      "x": 0,
-      "y": 0,
-      "width": 0,
-      "height": 0,
-      "bottom": 0
-    },
-    "setup": false,
-    "started": true,
-    "name": false,
-    "count": false,
-    "start": false,
-    "bubble": true,
-    "counter": true,
-    "dedication": "今日の主役へ",
-    "heading": "願いごと、決まった？",
-    "wish": "願いごとをひとつ。あとは、思いっきりふーっ。",
-    "candleCount": 99,
-    "visibleText": "HAPPY BIRTHDAY TO ME.\n\nひとりでも、主役。\n\n今日の主役へ\n\n願いごと、決まった？\n\n願いごとをひとつ。あとは、思いっきりふーっ。\n\n数\n\nマイクはオフです。ケーキをタップして消せます。\n\nふーっ！\nあと 99 本\n声のボリューム 0.000\n小さく ー 大きく"
+    "outCount": 0,
+    "background": "rgb(23, 17, 37)"
   },
   "errors": []
 }
