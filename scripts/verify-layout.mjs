@@ -132,7 +132,7 @@ try {
   await screenshot('celebrate-40-390x844.png');
 
   const setCelebrationCopy = async (title, message) => {
-    await evaluate(`document.getElementById('celebration-title').textContent=${JSON.stringify(title)};document.getElementById('celebration-message').textContent=${JSON.stringify(message)}`);
+    await evaluate(`document.getElementById('celebration-title').textContent=${JSON.stringify(title)};document.getElementById('celebration-message').textContent=${JSON.stringify(message)};document.getElementById('party').classList.toggle('long-celebration-message',Array.from(${JSON.stringify(message)}).length>30)`);
     await sleep(100);
   };
   await setCelebrationCopy('おめでとう！', '最高！');

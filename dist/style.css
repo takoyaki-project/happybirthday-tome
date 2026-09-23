@@ -119,6 +119,9 @@ body[data-scene="celebrate"] { overflow: hidden; }
 .celebration-copy { color: var(--color-text); }
 .celebration-copy h2 { max-height: 2.4em; margin: 0 0 var(--space-2); overflow: hidden; overflow-wrap: anywhere; font-size: clamp(24px, 7.2vw, 28px); font-weight: 900; letter-spacing: .04em; line-height: 1.2; }
 .celebration-copy > p { min-height: 3.75em; max-width: calc(var(--space-4) * 8); max-height: 3.75em; margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-height: 1.25; text-wrap: balance; }
+.party.long-celebration-message .scene-copy { right: var(--space-3); }
+.party.long-celebration-message .celebration-copy h2 { font-size: clamp(20px, 5.2vw, 21px); }
+.party.long-celebration-message .celebration-copy > p { max-width: none; font-size: clamp(24px, 6.6vw, 26px); }
 .celebration-message.celebration-pop { animation: celebration-pop 520ms cubic-bezier(.19,.9,.27,1.15) both; }
 @keyframes celebration-pop { 0% { opacity: 0; transform: scale(.65); } 58% { opacity: 1; transform: scale(1.14); } 100% { opacity: 1; transform: scale(1); } }
 .audio-note { position: absolute; z-index: 5; top: 64%; right: var(--space-3); left: var(--space-3); margin: 0; color: var(--color-text); font-size: 10px; line-height: 1.35; opacity: .58; text-align: center; }

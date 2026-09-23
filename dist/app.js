@@ -93,6 +93,7 @@ function controls() {
   document.body.dataset.scene = scene;
   ui.party.dataset.scene = scene;
   ui.party.dataset.micState = phase;
+  ui.party.classList[scene === 'celebrate' && Array.from(currentCelebrationMessage).length > 30 ? 'add' : 'remove']('long-celebration-message');
   ui.start.textContent = 'パーティスタート';
   ui.dedication.textContent = '今日の主役へ';
   const complete = ['blackout', 'celebrate'].includes(scene);
