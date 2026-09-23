@@ -1,7 +1,7 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 import { BLOW_SENSITIVITY } from './core.js';
-import messageData from '../messages.json' with {type: 'json'};
+import messageData from './messages.json' with {type: 'json'};
 import { chooseCelebrationMessage, keepLatestMobs } from './celebration.js';
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
