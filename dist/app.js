@@ -1,7 +1,6 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 import { BLOW_SENSITIVITY } from './core.js';
-import messageData from './messages.json' with {type: 'json'};
 import { chooseCelebrationMessage, keepLatestMobs } from './celebration.js';
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
@@ -24,9 +23,24 @@ let showDebugValue = true;
 let recentMessageIds = [];
 let currentCelebrationMessage = '';
 let mobTimer = 0;
+let messageData = null;
 const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
+
+// JSON module imports are not supported by every iPhone Safari version.
+// This reads only our own bundled data file and never sends user data.
+async function loadMessageData() {
+  if (!window.fetch) return;
+  try {
+    const response = await window.fetch('./messages.json');
+    if (!response.ok) throw new Error('messages unavailable');
+    const data = await response.json();
+    if (!Array.isArray(data.messages) || !Array.isArray(data.mobShouts)) throw new Error('messages invalid');
+    messageData = data;
+  } catch { /* The candle game remains usable if static copy cannot be read. */ }
+}
+void loadMessageData();
 
 function status(message, visible = false) {
   ui.status.textContent = message;
@@ -201,7 +215,8 @@ function addMob() {
   face.textContent = ['🥳', '👏', '🎉'][Math.floor(Math.random() * 3)];
   const shout = document.createElement('span');
   shout.className = 'mob-shout';
-  shout.textContent = messageData.mobShouts[Math.floor(Math.random() * messageData.mobShouts.length)];
+  const shouts = messageData?.mobShouts?.length ? messageData.mobShouts : ['おめでとー！'];
+  shout.textContent = shouts[Math.floor(Math.random() * shouts.length)];
   mob.append(face, shout);
   const next = keepLatestMobs([...ui['mob-crowd'].children], [mob]);
   ui['mob-crowd'].replaceChildren(...next);
@@ -226,7 +241,9 @@ function speakCelebration(message) {
   } catch { /* The on-screen message remains available when speech is unavailable. */ }
 }
 function beginCelebration() {
-  const selected = chooseCelebrationMessage(messageData.messages, messageData.readAloudPrefix, ui.name.value, recentMessageIds);
+  const selected = messageData
+    ? chooseCelebrationMessage(messageData.messages, messageData.readAloudPrefix, ui.name.value, recentMessageIds)
+    : {text: completionMessage(ui.name.value), speechText: completionMessage(ui.name.value), recentIds: recentMessageIds};
   recentMessageIds = selected.recentIds;
   currentCelebrationMessage = selected.text;
   scene = 'celebrate';

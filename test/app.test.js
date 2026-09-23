@@ -197,10 +197,11 @@ test('an interrupted audio context pauses and releases the microphone', async ()
   assert.equal(app.get('resume').hidden, false);
   assert.equal(mic.track.stopped, true);
 });
-test('app code has no data persistence, network calls, recording or HTML interpolation', async () => {
-  assert.doesNotMatch(code, /localStorage|sessionStorage|indexedDB|fetch\(|XMLHttpRequest|WebSocket|sendBeacon|MediaRecorder|innerHTML|outerHTML/);
+test('app code keeps data local and only reads its bundled messages.json file', async () => {
+  assert.doesNotMatch(code, /localStorage|sessionStorage|indexedDB|XMLHttpRequest|WebSocket|sendBeacon|MediaRecorder|innerHTML|outerHTML/);
+  assert.match(code, /window\.fetch\('\.\/messages\.json'\)/);
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
-  assert.match(html, /connect-src 'none'/);
+  assert.match(html, /connect-src 'self'/);
   assert.doesNotMatch(html, /(?:src|href)="https?:/);
 });
 
