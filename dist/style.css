@@ -118,8 +118,8 @@ body[data-scene="celebrate"] { overflow: hidden; }
 .party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }
 .party[data-scene="celebrate"] .scene-copy { right: calc(var(--space-1) - var(--space-2)); left: calc(var(--space-1) - var(--space-2)); }
 .celebration-copy { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); box-shadow: 0 var(--space-1) 0 var(--color-shadow); color: var(--color-text); }
-.celebration-copy h2 { max-height: 2.4em; margin: 0 0 var(--space-2); overflow: hidden; font-size: clamp(24px, 7.2vw, 28px); font-weight: 900; letter-spacing: .04em; line-break: strict; line-height: 1.2; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; }
-.celebration-copy > p { margin: 0; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-break: strict; line-height: 1.25; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; }
+.celebration-copy h2 { max-height: 2.4em; margin: 0 0 var(--space-2); overflow: hidden; font-size: clamp(24px, 7.2vw, 28px); font-weight: 900; letter-spacing: .04em; line-break: strict; line-height: 1.2; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; word-break: auto-phrase; }
+.celebration-copy > p { margin: 0; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-break: strict; line-height: 1.25; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; word-break: auto-phrase; }
 .party.long-celebration-message .celebration-copy h2 { font-size: 18px; }
 .party.long-celebration-message .celebration-copy > p { font-size: 22px; }
 .celebration-message.celebration-pop { animation: celebration-pop 520ms cubic-bezier(.19,.9,.27,1.15) both; }
