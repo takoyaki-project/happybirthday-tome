@@ -1,7 +1,6 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 import { BLOW_SENSITIVITY } from './core.js';
-import { chooseCelebrationMessage, keepLatestMobs } from './celebration.js';
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
@@ -27,6 +26,8 @@ let messageData = null;
 const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
+const RECENT_MESSAGE_LIMIT = 5;
+const MAX_MOBS = 40;
 
 // JSON module imports are not supported by every iPhone Safari version.
 // This reads only our own bundled data file and never sends user data.
@@ -41,6 +42,17 @@ async function loadMessageData() {
   } catch { /* The candle game remains usable if static copy cannot be read. */ }
 }
 void loadMessageData();
+
+function chooseCelebrationMessage(messages, readAloudPrefix, name, recentIds = []) {
+  const displayName = name.trim() || 'あなた';
+  const safe = messages.map((template, id) => ({id, template})).filter(({template}) => !/\d+歳/.test(template));
+  const options = safe.filter(({id}) => !recentIds.includes(id));
+  const selected = (options.length ? options : safe)[Math.floor(Math.random() * (options.length || safe.length))];
+  const text = selected.template.includes('{name}') ? selected.template.replaceAll('{name}', displayName) : selected.template;
+  const prefix = readAloudPrefix.replace('{name}', displayName);
+  return {id: selected.id, text: Array.from(text).slice(0, MAX_MESSAGE_LENGTH).join(''), speechText: Array.from(selected.template.includes('{name}') ? text : `${prefix}${text}`).slice(0, MAX_MESSAGE_LENGTH).join(''), recentIds: [...recentIds, selected.id].slice(-RECENT_MESSAGE_LIMIT)};
+}
+function keepLatestMobs(mobs, additions) { return [...mobs, ...additions].slice(-MAX_MOBS); }
 
 function status(message, visible = false) {
   ui.status.textContent = message;
