@@ -73,7 +73,7 @@ try {
   const screenshot = async name => {
     await evaluate('window.scrollTo(0,0)');
     assert.equal(await evaluate('scrollY'), 0);
-    const shot = await send('Page.captureScreenshot', {format: 'png', captureBeyondViewport: false});
+    const shot = await send('Page.captureScreenshot', {format: 'png', clip: {x: 0, y: 0, width: 390, height: 844, scale: 1}, captureBeyondViewport: true});
     await writeFile(path.join(output, name), Buffer.from(shot.data, 'base64'));
   };
   const fits = state => {
