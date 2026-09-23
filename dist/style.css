@@ -116,12 +116,12 @@ body[data-scene="celebrate"] { overflow: hidden; }
 .scene-controls { position: absolute; z-index: 4; top: 0; right: 0; display: flex; flex-direction: column; align-items: end; gap: var(--space-1); max-width: 100%; }
 .scene-controls .primary, .scene-controls .secondary { width: auto; min-width: calc(var(--space-4) * 4); }
 .party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }
-.party[data-scene="celebrate"] .scene-copy { right: 2%; left: 2%; }
+.party[data-scene="celebrate"] .scene-copy { right: calc(var(--space-1) - var(--space-2)); left: calc(var(--space-1) - var(--space-2)); }
 .celebration-copy { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); box-shadow: 0 var(--space-1) 0 var(--color-shadow); color: var(--color-text); }
 .celebration-copy h2 { max-height: 2.4em; margin: 0 0 var(--space-2); overflow: hidden; font-size: clamp(24px, 7.2vw, 28px); font-weight: 900; letter-spacing: .04em; line-break: strict; line-height: 1.2; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; }
 .celebration-copy > p { margin: 0; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-break: strict; line-height: 1.25; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; }
-.party.long-celebration-message .celebration-copy h2 { font-size: clamp(18px, 4.8vw, 19px); }
-.party.long-celebration-message .celebration-copy > p { font-size: 23px; }
+.party.long-celebration-message .celebration-copy h2 { font-size: 18px; }
+.party.long-celebration-message .celebration-copy > p { font-size: 22px; }
 .celebration-message.celebration-pop { animation: celebration-pop 520ms cubic-bezier(.19,.9,.27,1.15) both; }
 @keyframes celebration-pop { 0% { opacity: 0; transform: scale(.65); } 58% { opacity: 1; transform: scale(1.14); } 100% { opacity: 1; transform: scale(1); } }
 .audio-note { position: absolute; z-index: 5; top: calc(var(--space-4) * 12 + var(--space-3)); right: var(--space-3); left: var(--space-3); margin: 0; color: var(--color-text); font-size: 10px; line-height: 1.35; opacity: .58; text-align: center; }
