@@ -108,7 +108,7 @@ body[data-scene="celebrate"] { overflow: hidden; }
 .party:not([data-scene="entry"]) .brand, .party:not([data-scene="entry"]) .message-card { display: none; }
 .party:not([data-scene="entry"]) .stage { height: calc(100svh - var(--space-4)); margin: 0; }
 .party:not([data-scene="entry"]) .cake-button { top: calc(var(--space-4) * 4 + var(--space-2)); }
-.party[data-scene="celebrate"] .cake-button { top: calc(var(--space-4) * 5 + var(--space-2)); }
+.party[data-scene="celebrate"] .cake-button { top: calc(var(--space-4) * 6); }
 .party:not([data-scene="entry"]) .blow-cue { top: calc(var(--space-4) * 2 + var(--space-3)); }
 .party:not([data-scene="entry"]) .volume-area { top: calc(var(--space-4) * 11 + var(--space-3)); }
 .scene-copy { position: absolute; z-index: 4; top: var(--space-2); right: calc(44px + var(--space-3)); left: var(--space-3); text-align: center; }
@@ -121,7 +121,7 @@ body[data-scene="celebrate"] { overflow: hidden; }
 .celebration-copy > p { min-height: 3.75em; max-width: calc(var(--space-4) * 8); max-height: 3.75em; margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-height: 1.25; text-wrap: balance; }
 .celebration-message.celebration-pop { animation: celebration-pop 520ms cubic-bezier(.19,.9,.27,1.15) both; }
 @keyframes celebration-pop { 0% { opacity: 0; transform: scale(.65); } 58% { opacity: 1; transform: scale(1.14); } 100% { opacity: 1; transform: scale(1); } }
-.audio-note { position: absolute; z-index: 5; top: 61%; right: var(--space-3); left: var(--space-3); margin: 0; color: var(--color-text); font-size: 10px; line-height: 1.35; opacity: .58; text-align: center; }
+.audio-note { position: absolute; z-index: 5; top: 64%; right: var(--space-3); left: var(--space-3); margin: 0; color: var(--color-text); font-size: 10px; line-height: 1.35; opacity: .58; text-align: center; }
 .blackout-copy { color: var(--color-dark-text); font-size: var(--font-small); line-height: 1.5; }
 .mob-crowd { position: absolute; z-index: 3; top: 66%; right: 0; bottom: 0; left: 0; overflow: hidden; pointer-events: none; }
 .mob { position: absolute; z-index: var(--mob-layer); bottom: var(--mob-bottom); left: var(--mob-x); display: grid; place-items: center; opacity: 0; transform: translate(-50%, 120%) scale(var(--mob-scale)); transform-origin: center bottom; animation: mob-arrive 300ms cubic-bezier(.19,.9,.27,1.15) var(--mob-delay) forwards; }
