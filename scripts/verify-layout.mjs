@@ -83,7 +83,7 @@ try {
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
   await screenshot('entry-390x844.png');
 
-  await evaluate("document.getElementById('name').value='けいこ';document.getElementById('start').click()");
+  await evaluate("document.getElementById('name').value='';document.getElementById('start').click()");
   for (let i = 0; i < 40; i++) {
     if (await evaluate("!document.getElementById('cake-button').disabled")) break;
     await sleep(100);
@@ -119,7 +119,7 @@ try {
   const celebrateInitial = await read();
   fits(celebrateInitial);
   assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.equal(celebrateInitial.mobCount, 20);
-  assert.match(celebrateInitial.message, /けいこ/);
+  assert.doesNotMatch(celebrateInitial.message, /あなた|さん/);
   assert.deepEqual(celebrateInitial.cake, song.cake);
   await screenshot('celebrate-initial-390x844.png');
 
