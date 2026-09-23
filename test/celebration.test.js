@@ -18,6 +18,17 @@ test('celebration messages use messages.json, stay within 40 characters, and avo
   }
 });
 
+test('name is included when entered and removed entirely when blank, including speech', () => {
+  const withName = chooseCelebrationMessage(data.messages, data.readAloudPrefix, 'けいこ', [], () => 0);
+  const withoutName = chooseCelebrationMessage(data.messages, data.readAloudPrefix, '', [], () => 0);
+  assert.match(withName.text, /けいこさん/);
+  assert.match(withName.speechText, /けいこさん/);
+  assert.doesNotMatch(withoutName.text, /あなた|\{name\}|さん/);
+  assert.doesNotMatch(withoutName.speechText, /あなた|\{name\}|さん/);
+  console.log(`確認・名前あり: ${withName.text}`);
+  console.log(`確認・名前なし: ${withoutName.text}`);
+});
+
 test('mob list keeps only the newest 40 people', () => {
   let mobs = [];
   for (let id = 0; id < 45; id++) mobs = keepLatestMobs(mobs, [id]);

@@ -2,7 +2,7 @@
 
 import { BLOW_SENSITIVITY } from './core.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'speech-control', 'speech-enabled', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -22,12 +22,14 @@ let showDebugValue = true;
 let recentMessageIds = [];
 let currentCelebrationMessage = '';
 let mobTimer = 0;
+let mobCount = 0;
 let messageData = null;
 const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
 const RECENT_MESSAGE_LIMIT = 5;
 const MAX_MOBS = 40;
+const INITIAL_MOBS = 20;
 
 // JSON module imports are not supported by every iPhone Safari version.
 // This reads only our own bundled data file and never sends user data.
@@ -43,14 +45,18 @@ async function loadMessageData() {
 }
 void loadMessageData();
 
+function withoutName(template) {
+  return template.replaceAll('{name}さん', '').replaceAll('{name}', '').replace(/^[、。！!\s]+/, '').trim();
+}
 function chooseCelebrationMessage(messages, readAloudPrefix, name, recentIds = []) {
-  const displayName = name.trim() || 'あなた';
+  const displayName = name.trim();
   const safe = messages.map((template, id) => ({id, template})).filter(({template}) => !/\d+歳/.test(template));
-  const options = safe.filter(({id}) => !recentIds.includes(id));
-  const selected = (options.length ? options : safe)[Math.floor(Math.random() * (options.length || safe.length))];
-  const text = selected.template.includes('{name}') ? selected.template.replaceAll('{name}', displayName) : selected.template;
-  const prefix = readAloudPrefix.replace('{name}', displayName);
-  return {id: selected.id, text: Array.from(text).slice(0, MAX_MESSAGE_LENGTH).join(''), speechText: Array.from(selected.template.includes('{name}') ? text : `${prefix}${text}`).slice(0, MAX_MESSAGE_LENGTH).join(''), recentIds: [...recentIds, selected.id].slice(-RECENT_MESSAGE_LIMIT)};
+  const nameSafe = displayName ? safe : safe.filter(({template}) => !template.includes('{name}'));
+  const options = nameSafe.filter(({id}) => !recentIds.includes(id));
+  const selected = (options.length ? options : nameSafe)[Math.floor(Math.random() * (options.length || nameSafe.length))];
+  const text = displayName ? selected.template.replaceAll('{name}', displayName) : withoutName(selected.template);
+  const prefix = displayName ? readAloudPrefix.replace('{name}', displayName) : '';
+  return {id: selected.id, text: Array.from(text).slice(0, MAX_MESSAGE_LENGTH).join(''), speechText: Array.from(selected.template.includes('{name}') || !prefix ? text : `${prefix}${text}`).slice(0, MAX_MESSAGE_LENGTH).join(''), recentIds: [...recentIds, selected.id].slice(-RECENT_MESSAGE_LIMIT)};
 }
 function keepLatestMobs(mobs, additions) { return [...mobs, ...additions].slice(-MAX_MOBS); }
 
@@ -79,8 +85,8 @@ function updateGauge() {
   ui['debug-toggle'].setAttribute('aria-label', showDebugValue ? '現在の音量の数値を隠す' : '現在の音量の数値を表示する');
 }
 function completionMessage(name, template = CELEBRATION_TEMPLATE) {
-  const displayName = name.trim() || 'あなた';
-  return Array.from(template.replace('{name}', displayName)).slice(0, MAX_MESSAGE_LENGTH).join('');
+  const displayName = name.trim();
+  return Array.from(displayName ? template.replaceAll('{name}', displayName) : withoutName(template)).slice(0, MAX_MESSAGE_LENGTH).join('');
 }
 function controls() {
   const entry = scene === 'entry';
@@ -94,7 +100,7 @@ function controls() {
   ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
   ui['message-slot'].textContent = complete ? completionMessage(ui.name.value) : WISH_MESSAGE;
   ui['celebration-message'].textContent = complete ? (currentCelebrationMessage || completionMessage(ui.name.value)) : '';
-  ui['celebration-title'].textContent = scene === 'celebrate' ? `${ui.name.value.trim() || 'あなた'}さん、おめでとう！` : 'ぜんぶ消えた。おめでとう！';
+  ui['celebration-title'].textContent = scene === 'celebrate' ? (ui.name.value.trim() ? `${ui.name.value.trim()}さん、おめでとう！` : 'おめでとう！') : 'おめでとう！';
   ui.setup.hidden = !entry;
   ui.started.hidden = entry;
   ui.name.disabled = ui.count.disabled = ui.start.disabled = locked;
@@ -108,6 +114,7 @@ function controls() {
   ui['celebration-copy'].hidden = scene !== 'celebrate';
   ui['audio-note'].hidden = scene !== 'celebrate';
   ui['mob-crowd'].hidden = scene !== 'celebrate';
+  ui['speech-control'].hidden = scene !== 'celebrate';
   ui.smoke.hidden = scene !== 'blackout';
   updateBlowCue();
   updateGauge();
@@ -215,13 +222,24 @@ function pause() {
 function clearMobs() {
   clearTimeout(mobTimer);
   mobTimer = 0;
+  mobCount = 0;
   ui['mob-crowd'].replaceChildren();
 }
 function addMob() {
+  const index = mobCount++;
+  const depth = index % 3;
+  const lane = [
+    {scale: .72, bottom: 58, positions: [8, 24, 40, 56, 72, 88]},
+    {scale: .9, bottom: 30, positions: [15, 35, 55, 75, 92, 6]},
+    {scale: 1.14, bottom: 3, positions: [26, 50, 74, 12, 90, 38]}
+  ][depth];
   const mob = document.createElement('div');
   mob.className = 'mob';
-  mob.style.setProperty('--mob-x', `${8 + Math.random() * 84}%`);
-  mob.style.setProperty('--mob-rise', `${Math.floor(Math.random() * 3) * 24}px`);
+  mob.style.setProperty('--mob-x', `${lane.positions[Math.floor(index / 3) % lane.positions.length] + (Math.random() * 6 - 3)}%`);
+  mob.style.setProperty('--mob-bottom', `${lane.bottom + (Math.floor(index / 9) % 2) * 7}%`);
+  mob.style.setProperty('--mob-scale', lane.scale);
+  mob.style.setProperty('--mob-delay', `${index < INITIAL_MOBS ? (index % 10) * 20 : 0}ms`);
+  mob.style.setProperty('--mob-layer', String(depth + 1));
   const face = document.createElement('span');
   face.className = 'mob-face';
   face.textContent = ['🥳', '👏', '🎉'][Math.floor(Math.random() * 3)];
@@ -232,25 +250,52 @@ function addMob() {
   mob.append(face, shout);
   const next = keepLatestMobs([...ui['mob-crowd'].children], [mob]);
   ui['mob-crowd'].replaceChildren(...next);
+  updateMobShouts();
+}
+function updateMobShouts() {
+  const mobs = [...ui['mob-crowd'].children];
+  mobs.forEach(mob => mob.classList.remove('is-speaking'));
+  const slots = mobs.length >= MAX_MOBS ? [3, 11, 20, 29, 37] : [2, 9, 16];
+  slots.forEach(index => mobs[index]?.classList.add('is-speaking'));
 }
 function startMobs() {
   clearMobs();
-  for (let i = 0; i < 10; i++) addMob();
+  for (let i = 0; i < INITIAL_MOBS; i++) addMob();
   const addLater = () => {
     if (scene !== 'celebrate' || ui['mob-crowd'].children.length >= 40) return;
     addMob();
-    mobTimer = window.setTimeout(addLater, 300);
+    mobTimer = window.setTimeout(addLater, 150);
   };
-  mobTimer = window.setTimeout(addLater, 300);
+  mobTimer = window.setTimeout(addLater, 150);
 }
 function speakCelebration(message) {
-  if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+  if (!ui['speech-enabled'].checked || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
   try {
     window.speechSynthesis.cancel();
     const utterance = new window.SpeechSynthesisUtterance(message);
     utterance.lang = 'ja-JP';
+    utterance.rate = .87;
+    utterance.pitch = 1.15;
     window.speechSynthesis.speak(utterance);
   } catch { /* The on-screen message remains available when speech is unavailable. */ }
+}
+function playCrowdCheer() {
+  if (!audio || audio.state !== 'running') return;
+  try {
+    for (let i = 0; i < 11; i++) {
+      const buffer = audio.createBuffer(1, Math.floor(audio.sampleRate * .075), audio.sampleRate);
+      const samples = buffer.getChannelData(0);
+      for (let sample = 0; sample < samples.length; sample++) samples[sample] = (Math.random() * 2 - 1) * (1 - sample / samples.length);
+      const noise = audio.createBufferSource();
+      const gain = audio.createGain();
+      const at = audio.currentTime + .04 + i * .095;
+      noise.buffer = buffer;
+      gain.gain.setValueAtTime(.001, at);
+      gain.gain.exponentialRampToValueAtTime(.045, at + .008);
+      gain.gain.exponentialRampToValueAtTime(.001, at + .075);
+      noise.connect(gain).connect(audio.destination); noise.start(at); noise.stop(at + .08);
+    }
+  } catch { /* Celebration stays visual when audio is unavailable. */ }
 }
 function beginCelebration() {
   const selected = messageData
@@ -262,6 +307,7 @@ function beginCelebration() {
   status('すべてのろうそくが消えました。');
   controls();
   startMobs();
+  playCrowdCheer();
   speakCelebration(selected.speechText);
 }
 function extinguish(all = false) {
@@ -278,7 +324,7 @@ function extinguish(all = false) {
   }
   phase = 'complete';
   stopPending();
-  releaseAudio();
+  releaseMic();
   scene = 'blackout';
   status('しーっ。願いごとの時間。');
   controls();
@@ -391,6 +437,7 @@ function reset() {
   clearMobs();
   window.speechSynthesis?.cancel?.();
   currentCelebrationMessage = '';
+  ui['speech-enabled'].checked = true;
   releaseAudio();
   tapOnly = false;
   renderCake();
@@ -409,6 +456,9 @@ ui.count.addEventListener('input', () => {
 ui['sound-test'].addEventListener('click', () => {
   if (!prepareSound()) status('音を準備できませんでした。ケーキをタップして遊べます。', true);
   else status('音が出ないときは、マナーモード・消音設定と音量を確認してください。', true);
+});
+ui['speech-enabled'].addEventListener('change', () => {
+  if (!ui['speech-enabled'].checked) window.speechSynthesis?.cancel?.();
 });
 ui['debug-toggle'].addEventListener('click', () => {
   showDebugValue = !showDebugValue;

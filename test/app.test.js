@@ -99,8 +99,9 @@ test('microphone denial falls back to taps, completes all 99, and allows reset',
   for (let i=0; i<4; i++) app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 0);
   assert.equal(app.get('candles').children.filter(c => c.classList.contains('out')).length, 99);
-  assert.equal(app.contexts[0].state, 'closed');
+  assert.equal(app.contexts[0].state, 'running');
   app.get('reset').click();
+  assert.equal(app.contexts[0].state, 'closed');
   assert.equal(app.get('remaining').textContent, 99);
   assert.equal(app.get('name').disabled, false);
 });
@@ -271,6 +272,24 @@ test('stage 2 uses one scene state for entry, song, blackout, celebration, and e
   assert.equal(app.document.body.dataset.scene, 'celebrate');
   app.get('reset').click();
   assert.equal(app.document.body.dataset.scene, 'entry');
+});
+test('celebration starts with 20 layered mobs, reaches 40 in three seconds, and shows only three to five shouts', async () => {
+  const app = harness(() => Promise.reject());
+  app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
+  assert.equal(app.get('mob-crowd').children.length, 20);
+  assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 3);
+  for (let i = 0; i < 20; i++) app.runTimer(150);
+  assert.equal(app.get('mob-crowd').children.length, 40);
+  assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 5);
+});
+test('celebration speech is optional and uses a slower, higher delivery', async () => {
+  const app = harness(() => Promise.reject());
+  app.get('speech-enabled').checked = false;
+  app.get('speech-enabled').events.change();
+  const source = await readFile(new URL('../dist/app.js', import.meta.url), 'utf8');
+  assert.match(source, /utterance\.rate = \.87/);
+  assert.match(source, /utterance\.pitch = 1\.15/);
+  assert.match(source, /playCrowdCheer\(\);[\s\S]*speakCelebration/);
 });
 test('completion message uses the entered name, replaces the wish copy, and caps at 40 characters', async () => {
   for (const name of ['けいこ', 'あ'.repeat(16), 'あ'.repeat(18)]) {

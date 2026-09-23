@@ -115,13 +115,20 @@ try {
   assert.deepEqual(blackout.cake, song.cake);
   await screenshot('blackout-390x844.png');
 
-  await sleep(1100);
+  await sleep(1050);
+  const celebrateInitial = await read();
+  fits(celebrateInitial);
+  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.equal(celebrateInitial.mobCount, 20);
+  assert.match(celebrateInitial.message, /けいこ/);
+  assert.deepEqual(celebrateInitial.cake, song.cake);
+  await screenshot('celebrate-initial-390x844.png');
+
+  await sleep(3100);
   const celebrate = await read();
   fits(celebrate);
-  assert.equal(celebrate.scene, 'celebrate'); assert.ok(celebrate.cakeVisible && celebrate.celebration); assert.equal(celebrate.outCount, 5); assert.ok(celebrate.mobCount >= 10 && celebrate.mobCount <= 40);
-  assert.match(celebrate.message, /けいこ/);
+  assert.equal(celebrate.mobCount, 40);
   assert.deepEqual(celebrate.cake, song.cake);
-  await screenshot('celebrate-390x844.png');
+  await screenshot('celebrate-40-390x844.png');
 
   await evaluate("document.getElementById('reset').click();document.getElementById('count').value='99';document.getElementById('count').dispatchEvent(new Event('input'));document.getElementById('start').click()");
   for (let i = 0; i < 40; i++) {
@@ -139,10 +146,10 @@ try {
   console.log('PASS song shows lyrics, cue, count, gauge, and a dark readable scene');
   console.log('PASS microphone fallback control does not overlap the lyrics');
   console.log('PASS blackout keeps the cake fixed, hides the cue, shows smoke, and transitions within 1.5 seconds');
-  console.log('PASS celebration keeps the cake fixed and shows a messages.json message with 10 or more mobs');
+  console.log('PASS celebration appears with 20 mobs and reaches 40 layered mobs in three seconds');
   console.log('PASS reset returns celebration to entry; 99 candles fit in song');
   console.log('PASS no browser runtime errors or external app requests');
-  await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrate, song99, errors}, null, 2));
+  await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrateInitial, celebrate, song99, errors}, null, 2));
   await send('Browser.close').catch(() => {});
 } finally {
   ws?.close(); browser.kill(); server.close();

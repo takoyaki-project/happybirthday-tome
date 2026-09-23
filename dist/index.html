@@ -34,9 +34,9 @@
       <div id="scene-copy" class="scene-copy" aria-live="polite">
         <p id="song-lyrics" class="song-lyrics" hidden>歌詞はここに表示</p>
         <div id="blackout-copy" class="blackout-copy" hidden>しーっ。願いごとの時間。</div>
-        <div id="celebration-copy" class="celebration-copy" hidden><h2 id="celebration-title">ぜんぶ消えた。おめでとう！</h2><p id="celebration-message"></p><p id="audio-note" class="audio-note" hidden>音が出ないときは、マナーモード・消音設定と音量を確認してください。</p></div>
+        <div id="celebration-copy" class="celebration-copy" hidden><h2 id="celebration-title">おめでとう！</h2><p id="celebration-message"></p></div>
       </div>
-      <div id="scene-controls" class="scene-controls"><button id="resume" class="primary" type="button" hidden>タップして再開</button><button id="fallback" class="secondary" type="button" hidden>マイクを使わずに始める</button><button id="sound-test" class="icon-button" type="button" aria-label="音の確認" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="M17 8q4 4 0 8M20 5q7 7 0 14"/></svg></button><button id="reset" class="icon-button" type="button" aria-label="もう一度、火をつける" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/></svg></button><button id="debug-toggle" class="icon-button debug-toggle" type="button" aria-label="現在の音量の数値を隠す" aria-pressed="true" hidden>数</button></div>
+      <div id="scene-controls" class="scene-controls"><button id="resume" class="primary" type="button" hidden>タップして再開</button><button id="fallback" class="secondary" type="button" hidden>マイクを使わずに始める</button><button id="sound-test" class="icon-button" type="button" aria-label="音の確認" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="M17 8q4 4 0 8M20 5q7 7 0 14"/></svg></button><button id="reset" class="icon-button" type="button" aria-label="もう一度、火をつける" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/></svg></button><button id="debug-toggle" class="icon-button debug-toggle" type="button" aria-label="現在の音量の数値を隠す" aria-pressed="true" hidden>数</button><label id="speech-control" class="speech-control" hidden><input id="speech-enabled" type="checkbox" checked> 読み上げ</label></div>
       <div id="smoke" class="smoke" aria-hidden="true" hidden><span></span><span></span><span></span><span></span><span></span></div>
       <div id="blow-cue" class="blow-cue" hidden>
         <div id="bubble" class="bubble" aria-hidden="true">ふーっ<span>！</span></div>
@@ -60,6 +60,7 @@
         <div id="meter" class="meter" role="meter" aria-label="声の大きさ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="meter-fill"></div></div>
       </div>
       <div id="mob-crowd" class="mob-crowd" aria-label="お祝いのモブ" hidden></div>
+      <p id="audio-note" class="audio-note" hidden>音が出ないときは、マナーモード・消音設定と音量を確認してください。</p>
       <p id="status" class="status" role="status" aria-live="polite"></p>
     </section>
   </main>

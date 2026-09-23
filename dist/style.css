@@ -109,21 +109,24 @@ body[data-scene="song"], body[data-scene="blackout"] { background: var(--color-d
 .party:not([data-scene="entry"]) .cake-button { top: calc(var(--space-4) * 4 + var(--space-2)); }
 .party:not([data-scene="entry"]) .blow-cue { top: calc(var(--space-4) * 2 + var(--space-3)); }
 .party:not([data-scene="entry"]) .volume-area { top: calc(var(--space-4) * 11 + var(--space-3)); }
-.scene-copy { position: absolute; z-index: 2; top: var(--space-1); right: calc(44px + var(--space-3)); left: var(--space-3); text-align: center; }
+.scene-copy { position: absolute; z-index: 4; top: var(--space-2); right: calc(44px + var(--space-3)); left: var(--space-3); text-align: center; }
 .song-lyrics { margin: 0; color: var(--color-dark-text); font-size: var(--font-large); font-weight: 900; line-height: 1.4; }
 .scene-controls { position: absolute; z-index: 4; top: 0; right: 0; display: flex; flex-direction: column; align-items: end; gap: var(--space-1); max-width: 100%; }
 .scene-controls .primary, .scene-controls .secondary { width: auto; min-width: calc(var(--space-4) * 4); }
 .party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }
 .celebration-copy { color: var(--color-text); }
-.celebration-copy h2 { margin: 0 0 var(--space-1); font-size: var(--font-medium); line-height: 1.4; }
-.celebration-copy > p:not(.audio-note) { max-width: calc(var(--space-4) * 7); max-height: calc(var(--font-small) * 4.8); margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: var(--font-small); line-height: 1.6; }
-.audio-note { max-width: calc(var(--space-4) * 7); margin: var(--space-2) auto 0; color: var(--color-text); font-size: var(--font-small); line-height: 1.5; }
+.celebration-copy h2 { margin: 0 0 var(--space-2); font-size: clamp(32px, 10vw, 46px); font-weight: 900; letter-spacing: .04em; line-height: 1.15; }
+.celebration-copy > p { max-width: calc(var(--space-4) * 8); margin: 0 auto; overflow-wrap: anywhere; font-size: clamp(20px, 5.4vw, 24px); font-weight: 700; line-height: 1.5; text-wrap: balance; }
+.audio-note { position: absolute; z-index: 5; top: 55%; right: var(--space-3); left: var(--space-3); margin: 0; color: var(--color-text); font-size: 11px; line-height: 1.35; opacity: .58; text-align: center; }
+.speech-control { display: flex; min-height: 32px; align-items: center; gap: 4px; padding: 4px var(--space-1); border-radius: var(--radius); background: color-mix(in srgb, var(--color-card) 88%, transparent); color: var(--color-text); font-size: 11px; font-weight: 700; line-height: 1; }
+.speech-control input { width: 16px; height: 16px; padding: 0; accent-color: var(--color-accent); }
 .blackout-copy { color: var(--color-dark-text); font-size: var(--font-small); line-height: 1.5; }
-.mob-crowd { position: absolute; z-index: 3; top: calc(var(--space-4) * 12 + var(--space-2)); right: 0; left: 0; height: calc(var(--space-4) * 4); overflow: hidden; pointer-events: none; }
-.mob { position: absolute; bottom: var(--mob-rise); left: var(--mob-x); display: grid; place-items: center; transform: translateX(-50%); animation: mob-arrive 360ms ease-out both; }
-.mob-face { font-size: var(--font-medium); line-height: 1; filter: drop-shadow(0 var(--space-1) 0 var(--color-shadow)); }
-.mob-shout { position: absolute; bottom: calc(100% + var(--space-1)); left: 50%; padding: 3px 6px; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); color: var(--color-text); font-size: 11px; font-weight: 700; line-height: 1.25; white-space: nowrap; transform: translateX(-50%); }
-@keyframes mob-arrive { from { opacity: 0; transform: translate(-50%, var(--space-3)); } to { opacity: 1; transform: translate(-50%, 0); } }
+.mob-crowd { position: absolute; z-index: 3; top: 66%; right: 0; bottom: 0; left: 0; overflow: hidden; pointer-events: none; }
+.mob { position: absolute; z-index: var(--mob-layer); bottom: var(--mob-bottom); left: var(--mob-x); display: grid; place-items: center; opacity: 0; transform: translate(-50%, 120%) scale(var(--mob-scale)); transform-origin: center bottom; animation: mob-arrive 300ms cubic-bezier(.19,.9,.27,1.15) var(--mob-delay) forwards; }
+.mob-face { font-size: 30px; line-height: 1; filter: drop-shadow(0 3px 0 var(--color-shadow)); }
+.mob-shout { display: none; position: absolute; z-index: 5; bottom: calc(100% + var(--space-1)); left: 50%; padding: 5px var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); color: var(--color-text); font-size: 13px; font-weight: 900; line-height: 1.25; white-space: nowrap; transform: translateX(-50%) scale(calc(1 / var(--mob-scale))); transform-origin: center bottom; }
+.mob.is-speaking .mob-shout { display: block; }
+@keyframes mob-arrive { from { opacity: 0; transform: translate(-50%, 120%) scale(var(--mob-scale)); } to { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }
 body[data-scene="song"] .volume-label, body[data-scene="song"] .counter { color: var(--color-dark-text); }
 body[data-scene="song"] .bubble { border-color: var(--color-dark-text); background: var(--color-dark-background); box-shadow: 3px 3px 0 var(--color-dark-emphasis); color: var(--color-dark-text); }
 body[data-scene="song"] .bubble::after { border-color: var(--color-dark-text); background: var(--color-dark-background); }
