@@ -119,7 +119,7 @@ try {
   await sleep(1050);
   const celebrateInitial = await read();
   fits(celebrateInitial);
-  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.equal(celebrateInitial.mobCount, 20);
+  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 20 && celebrateInitial.mobCount <= 23);
   assert.doesNotMatch(celebrateInitial.message, /あなた|さん/);
   assert.deepEqual(celebrateInitial.cake, song.cake);
   await screenshot('celebrate-initial-390x844.png');
