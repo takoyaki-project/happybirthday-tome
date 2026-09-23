@@ -2,7 +2,7 @@
 
 import { BLOW_SENSITIVITY } from './core.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'speech-control', 'speech-enabled', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -48,15 +48,14 @@ void loadMessageData();
 function withoutName(template) {
   return template.replaceAll('{name}さん', '').replaceAll('{name}', '').replace(/^[、。！!\s]+/, '').trim();
 }
-function chooseCelebrationMessage(messages, readAloudPrefix, name, recentIds = []) {
+function chooseCelebrationMessage(messages, name, recentIds = []) {
   const displayName = name.trim();
   const safe = messages.map((template, id) => ({id, template})).filter(({template}) => !/\d+歳/.test(template));
   const nameSafe = displayName ? safe : safe.filter(({template}) => !template.includes('{name}'));
   const options = nameSafe.filter(({id}) => !recentIds.includes(id));
   const selected = (options.length ? options : nameSafe)[Math.floor(Math.random() * (options.length || nameSafe.length))];
   const text = displayName ? selected.template.replaceAll('{name}', displayName) : withoutName(selected.template);
-  const prefix = displayName ? readAloudPrefix.replace('{name}', displayName) : '';
-  return {id: selected.id, text: Array.from(text).slice(0, MAX_MESSAGE_LENGTH).join(''), speechText: Array.from(selected.template.includes('{name}') || !prefix ? text : `${prefix}${text}`).slice(0, MAX_MESSAGE_LENGTH).join(''), recentIds: [...recentIds, selected.id].slice(-RECENT_MESSAGE_LIMIT)};
+  return {id: selected.id, text: Array.from(text).slice(0, MAX_MESSAGE_LENGTH).join(''), recentIds: [...recentIds, selected.id].slice(-RECENT_MESSAGE_LIMIT)};
 }
 function keepLatestMobs(mobs, additions) { return [...mobs, ...additions].slice(-MAX_MOBS); }
 
@@ -114,7 +113,6 @@ function controls() {
   ui['celebration-copy'].hidden = scene !== 'celebrate';
   ui['audio-note'].hidden = scene !== 'celebrate';
   ui['mob-crowd'].hidden = scene !== 'celebrate';
-  ui['speech-control'].hidden = scene !== 'celebrate';
   ui.smoke.hidden = scene !== 'blackout';
   updateBlowCue();
   updateGauge();
@@ -268,17 +266,6 @@ function startMobs() {
   };
   mobTimer = window.setTimeout(addLater, 150);
 }
-function speakCelebration(message) {
-  if (!ui['speech-enabled'].checked || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-  try {
-    window.speechSynthesis.cancel();
-    const utterance = new window.SpeechSynthesisUtterance(message);
-    utterance.lang = 'ja-JP';
-    utterance.rate = .87;
-    utterance.pitch = 1.15;
-    window.speechSynthesis.speak(utterance);
-  } catch { /* The on-screen message remains available when speech is unavailable. */ }
-}
 function playCrowdCheer() {
   if (!audio || audio.state !== 'running') return;
   try {
@@ -295,20 +282,35 @@ function playCrowdCheer() {
       gain.gain.exponentialRampToValueAtTime(.001, at + .075);
       noise.connect(gain).connect(audio.destination); noise.start(at); noise.stop(at + .08);
     }
+    // A few rising voices over the handclaps make the arrival feel like a cheer.
+    for (let i = 0; i < 3; i++) {
+      const voice = audio.createOscillator();
+      const voiceGain = audio.createGain();
+      const at = audio.currentTime + .06 + i * .11;
+      voice.type = 'triangle';
+      voice.frequency.setValueAtTime(420 + i * 90, at);
+      voice.frequency.exponentialRampToValueAtTime(760 + i * 80, at + .42);
+      voiceGain.gain.setValueAtTime(.001, at);
+      voiceGain.gain.exponentialRampToValueAtTime(.028, at + .05);
+      voiceGain.gain.exponentialRampToValueAtTime(.001, at + .5);
+      voice.connect(voiceGain).connect(audio.destination); voice.start(at); voice.stop(at + .52);
+    }
   } catch { /* Celebration stays visual when audio is unavailable. */ }
 }
 function beginCelebration() {
   const selected = messageData
-    ? chooseCelebrationMessage(messageData.messages, messageData.readAloudPrefix, ui.name.value, recentMessageIds)
-    : {text: completionMessage(ui.name.value), speechText: completionMessage(ui.name.value), recentIds: recentMessageIds};
+    ? chooseCelebrationMessage(messageData.messages, ui.name.value, recentMessageIds)
+    : {text: completionMessage(ui.name.value), recentIds: recentMessageIds};
   recentMessageIds = selected.recentIds;
   currentCelebrationMessage = selected.text;
   scene = 'celebrate';
   status('すべてのろうそくが消えました。');
   controls();
+  ui['celebration-message'].classList.remove('celebration-pop');
+  void ui['celebration-message'].offsetWidth;
+  ui['celebration-message'].classList.add('celebration-pop');
   startMobs();
   playCrowdCheer();
-  speakCelebration(selected.speechText);
 }
 function extinguish(all = false) {
   if (phase !== 'active') return;
@@ -435,9 +437,7 @@ function reset() {
   phase = 'idle';
   stopPending();
   clearMobs();
-  window.speechSynthesis?.cancel?.();
   currentCelebrationMessage = '';
-  ui['speech-enabled'].checked = true;
   releaseAudio();
   tapOnly = false;
   renderCake();
@@ -456,9 +456,6 @@ ui.count.addEventListener('input', () => {
 ui['sound-test'].addEventListener('click', () => {
   if (!prepareSound()) status('音を準備できませんでした。ケーキをタップして遊べます。', true);
   else status('音が出ないときは、マナーモード・消音設定と音量を確認してください。', true);
-});
-ui['speech-enabled'].addEventListener('change', () => {
-  if (!ui['speech-enabled'].checked) window.speechSynthesis?.cancel?.();
 });
 ui['debug-toggle'].addEventListener('click', () => {
   showDebugValue = !showDebugValue;

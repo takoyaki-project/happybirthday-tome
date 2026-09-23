@@ -282,14 +282,16 @@ test('celebration starts with 20 layered mobs, reaches 40 in three seconds, and 
   assert.equal(app.get('mob-crowd').children.length, 40);
   assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 5);
 });
-test('celebration speech is optional and uses a slower, higher delivery', async () => {
+test('celebration uses a visual pop with synthesized applause and cheers, without browser speech', async () => {
   const app = harness(() => Promise.reject());
-  app.get('speech-enabled').checked = false;
-  app.get('speech-enabled').events.change();
+  app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
+  assert.ok(app.get('celebration-message').classList.contains('celebration-pop'));
   const source = await readFile(new URL('../dist/app.js', import.meta.url), 'utf8');
-  assert.match(source, /utterance\.rate = \.87/);
-  assert.match(source, /utterance\.pitch = 1\.15/);
-  assert.match(source, /playCrowdCheer\(\);[\s\S]*speakCelebration/);
+  const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
+  assert.match(source, /playCrowdCheer\(\);/);
+  assert.match(source, /voice\.frequency\.exponentialRampToValueAtTime/);
+  assert.doesNotMatch(source, /speechSynthesis|SpeechSynthesisUtterance|speech-enabled|speech-control|speakCelebration/);
+  assert.doesNotMatch(html, /speech-enabled|speech-control|読み上げ/);
 });
 test('completion message uses the entered name, replaces the wish copy, and caps at 40 characters', async () => {
   for (const name of ['けいこ', 'あ'.repeat(16), 'あ'.repeat(18)]) {

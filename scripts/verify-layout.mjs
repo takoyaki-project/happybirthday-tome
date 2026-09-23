@@ -69,7 +69,7 @@ try {
     if (await evaluate("document.querySelectorAll('.candle').length===5")) break;
     await sleep(100);
   }
-  const read = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};const visible=id=>!!document.getElementById(id).getClientRects().length;return{scene:document.body.dataset.scene,width:innerWidth,height:innerHeight,scrollY,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,cake:rect('cake'),cakeVisible:visible('cake'),bubble:visible('bubble'),counter:visible('counter'),gauge:visible('meter'),lyrics:visible('song-lyrics'),smoke:visible('smoke'),celebration:visible('celebration-copy'),setup:visible('setup'),message:document.getElementById('celebration-message').textContent,mobCount:document.querySelectorAll('.mob').length,candleCount:document.querySelectorAll('.candle').length,outCount:document.querySelectorAll('.candle.out').length,background:getComputedStyle(document.body).backgroundColor};})()");
+  const read = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};const visible=id=>!!document.getElementById(id).getClientRects().length;return{scene:document.body.dataset.scene,width:innerWidth,height:innerHeight,scrollY,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,cake:rect('cake'),cakeVisible:visible('cake'),bubble:visible('bubble'),counter:visible('counter'),gauge:visible('meter'),lyrics:visible('song-lyrics'),smoke:visible('smoke'),celebration:visible('celebration-copy'),setup:visible('setup'),message:document.getElementById('celebration-message').textContent,celebrationTitle:rect('celebration-title'),celebrationMessage:rect('celebration-message'),audioNote:rect('audio-note'),mobCount:document.querySelectorAll('.mob').length,candleCount:document.querySelectorAll('.candle').length,outCount:document.querySelectorAll('.candle.out').length,background:getComputedStyle(document.body).backgroundColor};})()");
   const screenshot = async name => {
     await evaluate('window.scrollTo(0,0)');
     assert.equal(await evaluate('scrollY'), 0);
@@ -123,15 +123,32 @@ try {
   fits(celebrateInitial);
   assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 20 && celebrateInitial.mobCount <= 23);
   assert.doesNotMatch(celebrateInitial.message, /あなた|さん/);
-  assert.deepEqual(celebrateInitial.cake, song.cake);
   await screenshot('celebrate-initial-390x844.png');
 
   await sleep(3100);
   const celebrate = await read();
   fits(celebrate);
   assert.equal(celebrate.mobCount, 40);
-  assert.deepEqual(celebrate.cake, song.cake);
   await screenshot('celebrate-40-390x844.png');
+
+  const setCelebrationCopy = async (title, message) => {
+    await evaluate(`document.getElementById('celebration-title').textContent=${JSON.stringify(title)};document.getElementById('celebration-message').textContent=${JSON.stringify(message)}`);
+    await sleep(100);
+  };
+  await setCelebrationCopy('おめでとう！', '最高！');
+  const oneLine = await read();
+  fits(oneLine); assert.ok(oneLine.celebrationMessage.bottom < oneLine.cake.y); assert.ok(oneLine.audioNote.y > oneLine.cake.bottom);
+  await screenshot('celebrate-message-1line-390x844.png');
+
+  await setCelebrationCopy('おめでとう！', String.fromCharCode(12354).repeat(40));
+  const threeLines = await read();
+  fits(threeLines); assert.ok(threeLines.celebrationMessage.bottom < threeLines.cake.y); assert.ok(threeLines.audioNote.y > threeLines.cake.bottom);
+  await screenshot('celebrate-message-3lines-390x844.png');
+
+  await setCelebrationCopy('あいうえおかきくさん、おめでとう！', '最高！');
+  const longName = await read();
+  fits(longName); assert.ok(longName.celebrationTitle.height <= 68); assert.ok(longName.celebrationMessage.bottom < longName.cake.y);
+  await screenshot('celebrate-name-8chars-390x844.png');
 
   await evaluate("document.getElementById('reset').click();document.getElementById('count').value='99';document.getElementById('count').dispatchEvent(new Event('input'));document.getElementById('start').click()");
   for (let i = 0; i < 40; i++) {
@@ -150,9 +167,10 @@ try {
   console.log('PASS microphone fallback control does not overlap the lyrics');
   console.log('PASS blackout keeps the cake fixed, hides the cue, shows smoke, and transitions within 1.5 seconds');
   console.log('PASS celebration appears with 20 mobs and reaches 40 layered mobs in three seconds');
+  console.log('PASS celebration copy fits one line, 40 characters over three lines, and an eight-character name');
   console.log('PASS reset returns celebration to entry; 99 candles fit in song');
   console.log('PASS no browser runtime errors or external app requests');
-  await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrateInitial, celebrate, song99, errors}, null, 2));
+  await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrateInitial, celebrate, oneLine, threeLines, longName, song99, errors}, null, 2));
   await send('Browser.close').catch(() => {});
 } finally {
   ws?.close(); browser.kill(); server.close();

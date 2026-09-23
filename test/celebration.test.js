@@ -11,20 +11,18 @@ test('celebration messages use messages.json, stay within 40 characters, and avo
   let recent = [];
   for (let step = 0; step < 16; step++) {
     const before = recent;
-    const result = chooseCelebrationMessage(data.messages, data.readAloudPrefix, 'けいこ', recent, () => 0);
+    const result = chooseCelebrationMessage(data.messages, 'けいこ', recent, () => 0);
     assert.ok(!before.includes(result.id));
     assert.ok(Array.from(result.text).length <= MAX_MESSAGE_LENGTH);
     recent = result.recentIds;
   }
 });
 
-test('name is included when entered and removed entirely when blank, including speech', () => {
-  const withName = chooseCelebrationMessage(data.messages, data.readAloudPrefix, 'けいこ', [], () => 0);
-  const withoutName = chooseCelebrationMessage(data.messages, data.readAloudPrefix, '', [], () => 0);
+test('name is included when entered and removed entirely when blank', () => {
+  const withName = chooseCelebrationMessage(data.messages, 'けいこ', [], () => 0);
+  const withoutName = chooseCelebrationMessage(data.messages, '', [], () => 0);
   assert.match(withName.text, /けいこさん/);
-  assert.match(withName.speechText, /けいこさん/);
   assert.doesNotMatch(withoutName.text, /あなた|\{name\}|さん/);
-  assert.doesNotMatch(withoutName.speechText, /あなた|\{name\}|さん/);
   console.log(`確認・名前あり: ${withName.text}`);
   console.log(`確認・名前なし: ${withoutName.text}`);
 });
