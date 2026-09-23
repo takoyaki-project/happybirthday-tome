@@ -102,11 +102,13 @@ input { width: 100%; height: 44px; min-width: 0; padding: var(--space-1) var(--s
 
 /* Stage 2 scenes share this fixed stage; entry is the only scene without a cake. */
 body[data-scene="song"], body[data-scene="blackout"] { background: var(--color-dark-background); }
-body[data-scene="celebrate"] { overflow: hidden; }
+body[data-scene="celebrate"] { height: 100svh; overflow: hidden; }
 .party[data-scene="entry"] .stage { display: none; }
 .party:not([data-scene="entry"]) { min-height: 100svh; padding: var(--space-3) var(--space-2) var(--space-2); }
 .party:not([data-scene="entry"]) .brand, .party:not([data-scene="entry"]) .message-card { display: none; }
 .party:not([data-scene="entry"]) .stage { height: calc(100svh - var(--space-4)); margin: 0; }
+.party[data-scene="celebrate"] { height: 100svh; min-height: 0; overflow: hidden; }
+.party[data-scene="celebrate"] .stage { overflow: hidden; }
 .party:not([data-scene="entry"]) .cake-button { top: calc(var(--space-4) * 4 + var(--space-2)); }
 .party[data-scene="celebrate"] .cake-button { top: calc(var(--space-4) * 6); }
 .party:not([data-scene="entry"]) .blow-cue { top: calc(var(--space-4) * 2 + var(--space-3)); }
@@ -117,7 +119,7 @@ body[data-scene="celebrate"] { overflow: hidden; }
 .scene-controls .primary, .scene-controls .secondary { width: auto; min-width: calc(var(--space-4) * 4); }
 .party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }
 .party[data-scene="celebrate"] .scene-copy { right: calc(var(--space-1) - var(--space-2)); left: calc(var(--space-1) - var(--space-2)); }
-.celebration-copy { max-height: 45svh; padding: var(--space-3); overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); box-shadow: 0 var(--space-1) 0 var(--color-shadow); color: var(--color-text); }
+.celebration-copy { max-height: min(45svh, calc(var(--space-4) * 5 + var(--space-1))); padding: var(--space-3); overflow-x: hidden; overflow-y: auto; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); box-shadow: 0 var(--space-1) 0 var(--color-shadow); color: var(--color-text); scrollbar-width: thin; }
 .celebration-copy h2 { max-height: 2.4em; margin: 0 0 var(--space-2); overflow: hidden; font-size: clamp(24px, 7.2vw, 28px); font-weight: 900; letter-spacing: .04em; line-break: strict; line-height: 1.2; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; word-break: auto-phrase; }
 .celebration-copy > p { margin: 0; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-break: strict; line-height: 1.25; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; word-break: auto-phrase; }
 .party.long-celebration-message .celebration-copy h2 { font-size: 18px; }

@@ -80,6 +80,16 @@ try {
     assert.equal(state.width, 390); assert.equal(state.height, 844);
     assert.ok(state.scrollWidth <= 390); assert.ok(state.scrollHeight <= 844);
   };
+  const celebrationBands = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{top:r.top,bottom:r.bottom,height:r.height};};return{copy:rect('celebration-copy'),cake:rect('cake'),crowd:rect('mob-crowd'),note:rect('audio-note'),top:document.documentElement.getBoundingClientRect().top,scrollY};})()");
+  const assertCelebrationBands = async () => {
+    const bands = await celebrationBands();
+    assert.equal(bands.scrollY, 0); assert.equal(bands.top, 0);
+    assert.ok(bands.copy.height <= 844 * .45);
+    assert.ok(bands.copy.bottom < bands.cake.top);
+    assert.ok(bands.cake.bottom < bands.crowd.top);
+    assert.ok(bands.crowd.bottom < bands.note.top);
+    return bands;
+  };
 
   const entry = await read();
   fits(entry);
@@ -138,11 +148,13 @@ try {
   await setCelebrationCopy('おめでとう！', '最高！');
   const oneLine = await read();
   fits(oneLine); assert.ok(oneLine.celebrationMessage.bottom < oneLine.cake.y); assert.ok(oneLine.audioNote.y > oneLine.cake.bottom);
+  await assertCelebrationBands();
   await screenshot('celebrate-5-message-1line-390x844.png');
 
   await setCelebrationCopy('おめでとう！', String.fromCharCode(12354).repeat(40));
   const threeLines = await read();
   fits(threeLines); assert.ok(threeLines.celebrationMessage.bottom < threeLines.cake.y); assert.ok(threeLines.audioNote.y > threeLines.cake.bottom);
+  await assertCelebrationBands();
   await screenshot('celebrate-5-message-3lines-390x844.png');
 
   await setCelebrationCopy('あいうえおかきくさん、おめでとう！', '最高！');
@@ -165,8 +177,10 @@ try {
   const celebrate99 = await read();
   fits(celebrate99); assert.equal(celebrate99.scene, 'celebrate'); assert.equal(celebrate99.outCount, 99);
   await setCelebrationCopy('おめでとう！', '最高！');
+  await assertCelebrationBands();
   await screenshot('celebrate-99-message-1line-390x844.png');
   await setCelebrationCopy('おめでとう！', String.fromCharCode(12354).repeat(40));
+  await assertCelebrationBands();
   await screenshot('celebrate-99-message-3lines-390x844.png');
 
   assert.deepEqual(errors, []);
