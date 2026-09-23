@@ -116,20 +116,20 @@ body[data-scene="celebrate"] { overflow: hidden; }
 .scene-controls { position: absolute; z-index: 4; top: 0; right: 0; display: flex; flex-direction: column; align-items: end; gap: var(--space-1); max-width: 100%; }
 .scene-controls .primary, .scene-controls .secondary { width: auto; min-width: calc(var(--space-4) * 4); }
 .party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }
-.celebration-copy { color: var(--color-text); }
-.celebration-copy h2 { max-height: 2.4em; margin: 0 0 var(--space-2); overflow: hidden; overflow-wrap: anywhere; font-size: clamp(24px, 7.2vw, 28px); font-weight: 900; letter-spacing: .04em; line-height: 1.2; }
-.celebration-copy > p { min-height: 3.75em; max-width: calc(var(--space-4) * 8); max-height: 3.75em; margin: 0 auto; overflow: hidden; overflow-wrap: anywhere; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-height: 1.25; text-wrap: balance; }
-.party.long-celebration-message .scene-copy { right: var(--space-3); }
-.party.long-celebration-message .celebration-copy h2 { font-size: clamp(20px, 5.2vw, 21px); }
-.party.long-celebration-message .celebration-copy > p { max-width: none; font-size: clamp(24px, 6.6vw, 26px); }
+.party[data-scene="celebrate"] .scene-copy { right: 8%; left: 8%; }
+.celebration-copy { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); box-shadow: 0 var(--space-1) 0 var(--color-shadow); color: var(--color-text); }
+.celebration-copy h2 { max-height: 2.4em; margin: 0 0 var(--space-2); overflow: hidden; font-size: clamp(24px, 7.2vw, 28px); font-weight: 900; letter-spacing: .04em; line-break: strict; line-height: 1.2; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; }
+.celebration-copy > p { margin: 0; font-size: clamp(35px, 9vw, 36px); font-weight: 900; line-break: strict; line-height: 1.25; overflow-wrap: break-word; text-wrap: pretty; word-break: normal; }
+.party.long-celebration-message .celebration-copy h2 { font-size: clamp(18px, 4.8vw, 19px); }
+.party.long-celebration-message .celebration-copy > p { font-size: 23px; }
 .celebration-message.celebration-pop { animation: celebration-pop 520ms cubic-bezier(.19,.9,.27,1.15) both; }
 @keyframes celebration-pop { 0% { opacity: 0; transform: scale(.65); } 58% { opacity: 1; transform: scale(1.14); } 100% { opacity: 1; transform: scale(1); } }
-.audio-note { position: absolute; z-index: 5; top: 64%; right: var(--space-3); left: var(--space-3); margin: 0; color: var(--color-text); font-size: 10px; line-height: 1.35; opacity: .58; text-align: center; }
+.audio-note { position: absolute; z-index: 5; top: calc(var(--space-4) * 12 + var(--space-3)); right: var(--space-3); left: var(--space-3); margin: 0; color: var(--color-text); font-size: 10px; line-height: 1.35; opacity: .58; text-align: center; }
 .blackout-copy { color: var(--color-dark-text); font-size: var(--font-small); line-height: 1.5; }
 .mob-crowd { position: absolute; z-index: 3; top: 66%; right: 0; bottom: 0; left: 0; overflow: hidden; pointer-events: none; }
 .mob { position: absolute; z-index: var(--mob-layer); bottom: var(--mob-bottom); left: var(--mob-x); display: grid; place-items: center; opacity: 0; transform: translate(-50%, 120%) scale(var(--mob-scale)); transform-origin: center bottom; animation: mob-arrive 300ms cubic-bezier(.19,.9,.27,1.15) var(--mob-delay) forwards; }
 .mob-face { font-size: 30px; line-height: 1; filter: drop-shadow(0 3px 0 var(--color-shadow)); }
-.mob-shout { display: none; position: absolute; z-index: 5; bottom: calc(100% + var(--space-1)); left: 50%; padding: 5px var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); color: var(--color-text); font-size: 13px; font-weight: 900; line-height: 1.25; white-space: nowrap; transform: translateX(-50%) scale(calc(1 / var(--mob-scale))); transform-origin: center bottom; }
+.mob-shout { display: none; position: absolute; z-index: 5; bottom: calc(100% + var(--space-1)); left: var(--shout-x, 50%); padding: 5px var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); color: var(--color-text); font-size: 13px; font-weight: 900; line-height: 1.25; white-space: nowrap; transform: translateX(-50%) scale(calc(1 / var(--mob-scale))); transform-origin: center bottom; }
 .mob.is-speaking .mob-shout { display: block; }
 @keyframes mob-arrive { from { opacity: 0; transform: translate(-50%, 120%) scale(var(--mob-scale)); } to { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }
 @media (prefers-reduced-motion: reduce) { .mob { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }

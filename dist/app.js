@@ -228,14 +228,16 @@ function addMob() {
   const index = mobCount++;
   const depth = index % 3;
   const lane = [
-    {scale: .72, bottom: 58, positions: [8, 24, 40, 56, 72, 88]},
-    {scale: .9, bottom: 30, positions: [15, 35, 55, 75, 92, 6]},
-    {scale: 1.14, bottom: 3, positions: [26, 50, 74, 12, 90, 38]}
+    {scale: .72, bottom: 58, positions: [5, 31, 62, 87, 18, 48, 76]},
+    {scale: .9, bottom: 30, positions: [16, 54, 90, 7, 39, 71, 27]},
+    {scale: 1.14, bottom: 3, positions: [43, 11, 78, 29, 94, 58, 68]}
   ][depth];
   const mob = document.createElement('div');
   mob.className = 'mob';
-  mob.style.setProperty('--mob-x', `${lane.positions[Math.floor(index / 3) % lane.positions.length] + (Math.random() * 6 - 3)}%`);
-  mob.style.setProperty('--mob-bottom', `${lane.bottom + (Math.floor(index / 9) % 2) * 7}%`);
+  const slot = Math.floor(index / 3);
+  mob.style.setProperty('--mob-x', `${lane.positions[slot % lane.positions.length] + (Math.random() * 10 - 5)}%`);
+  mob.style.setProperty('--mob-bottom', `${lane.bottom + [0, 9, 3, 12, 5, 1, 8][slot % 7]}%`);
+  mob.style.setProperty('--shout-x', `${[22, 78, 36, 68, 50][index % 5]}%`);
   mob.style.setProperty('--mob-scale', lane.scale);
   mob.style.setProperty('--mob-delay', `${index < INITIAL_MOBS ? (index % 10) * 20 : 0}ms`);
   mob.style.setProperty('--mob-layer', String(depth + 1));
