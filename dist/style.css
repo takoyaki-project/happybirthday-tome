@@ -114,7 +114,7 @@ body[data-scene="celebrate"] { height: 100svh; overflow: hidden; }
 .party:not([data-scene="entry"]) .blow-cue { top: calc(var(--space-4) * 2 + var(--space-3)); }
 .party:not([data-scene="entry"]) .volume-area { top: calc(var(--space-4) * 11 + var(--space-3)); }
 .scene-copy { position: absolute; z-index: 4; top: var(--space-2); right: calc(44px + var(--space-3)); left: var(--space-3); text-align: center; }
-.song-lyrics { margin: 0; color: var(--color-dark-text); font-size: var(--font-large); font-weight: 900; line-height: 1.4; }
+.song-lyrics { margin: 0; color: var(--color-dark-text); font-size: clamp(32px, 9vw, 44px); font-weight: 900; line-height: 1.25; text-shadow: 0 3px 0 rgba(250, 70, 107, .45); }
 .scene-controls { position: absolute; z-index: 4; top: 0; right: 0; display: flex; flex-direction: column; align-items: end; gap: var(--space-1); max-width: 100%; }
 .scene-controls .primary, .scene-controls .secondary { width: auto; min-width: calc(var(--space-4) * 4); }
 .party[data-mic-state="preparing"] .scene-controls, .party[data-mic-state="paused"] .scene-controls { top: auto; right: var(--space-2); bottom: var(--space-2); left: var(--space-2); }

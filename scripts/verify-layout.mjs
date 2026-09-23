@@ -15,7 +15,7 @@ await unlink(path.join(profile, 'DevToolsActivePort')).catch(error => { if (erro
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
-  if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/messages.json', '/style.css'].includes(pathname)) { res.writeHead(404).end(); return; }
+  if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/song.js', '/messages.json', '/style.css'].includes(pathname)) { res.writeHead(404).end(); return; }
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
   const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8'};
   res.writeHead(200, {'Content-Type': types[file.split('.').pop()], 'Cache-Control': 'no-store'}).end(await readFile(path.join(root, 'dist', file)));
@@ -96,36 +96,36 @@ try {
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
   await screenshot('entry-390x844.png');
 
-  await evaluate("document.getElementById('name').value='';document.getElementById('start').click()");
-  for (let i = 0; i < 40; i++) {
-    if (await evaluate("!document.getElementById('cake-button').disabled")) break;
-    await sleep(100);
-  }
-  await sleep(2000);
+  await evaluate("window.__testSongDuration=8500;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
+  await sleep(5000);
   const song = await read();
   fits(song);
-  assert.equal(song.scene, 'song'); assert.ok(song.cakeVisible && song.lyrics && song.bubble && song.counter && song.gauge);
+  assert.equal(song.scene, 'song'); assert.ok(song.cakeVisible && song.lyrics && !song.bubble && !song.counter && !song.gauge);
+  assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /ディア、けいこ/);
   assert.equal(song.background, 'rgb(23, 17, 37)');
-  await screenshot('song-390x844.png');
+  await screenshot('song-lyrics-390x844.png');
+  await sleep(3700);
+  const songReady = await read();
+  assert.ok(songReady.bubble && songReady.counter && songReady.gauge);
 
   await evaluate("window.__testMic=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=()=>new Promise(()=>{});document.getElementById('reset').click();document.getElementById('start').click()");
   await sleep(100);
   const fallbackLayout = await evaluate("(()=>{const fallback=document.getElementById('fallback').getBoundingClientRect();const lyrics=document.getElementById('song-lyrics').getBoundingClientRect();return{visible:!!document.getElementById('fallback').getClientRects().length,fallbackTop:fallback.top,lyricsBottom:lyrics.bottom};})()");
   assert.ok(fallbackLayout.visible && fallbackLayout.fallbackTop >= fallbackLayout.lyricsBottom);
   await screenshot('song-fallback-390x844.png');
-  await evaluate("document.getElementById('reset').click();navigator.mediaDevices.getUserMedia=window.__testMic;document.getElementById('start').click()");
+  await evaluate("window.__testSongDuration=600;document.getElementById('reset').click();navigator.mediaDevices.getUserMedia=window.__testMic;document.getElementById('start').click()");
   for (let i = 0; i < 40; i++) {
     if (await evaluate("!document.getElementById('cake-button').disabled")) break;
     await sleep(100);
   }
-  await sleep(2000);
+  await sleep(100);
 
-  await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
+  await evaluate("document.getElementById('name').value='';for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
   await sleep(100);
   const blackout = await read();
   fits(blackout);
   assert.equal(blackout.scene, 'blackout'); assert.ok(blackout.cakeVisible && blackout.smoke && !blackout.bubble && !blackout.counter && !blackout.gauge); assert.equal(blackout.outCount, 5);
-  assert.deepEqual(blackout.cake, song.cake);
+  assert.deepEqual(blackout.cake, songReady.cake);
   await screenshot('blackout-390x844.png');
 
   await sleep(1050);
@@ -167,9 +167,9 @@ try {
     if (await evaluate("!document.getElementById('cake-button').disabled")) break;
     await sleep(100);
   }
-  await sleep(2000);
+  await sleep(100);
   const song99 = await read();
-  fits(song99); assert.equal(song99.scene, 'song'); assert.equal(song99.candleCount, 99); assert.deepEqual(song99.cake, song.cake);
+  fits(song99); assert.equal(song99.scene, 'song'); assert.equal(song99.candleCount, 99); assert.deepEqual(song99.cake, songReady.cake);
   await screenshot('song-99-candles-390x844.png');
 
   await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
@@ -186,7 +186,7 @@ try {
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
   console.log('PASS entry hides the cake and fits at 390×844');
-  console.log('PASS song shows lyrics, cue, count, gauge, and a dark readable scene');
+  console.log('PASS song shows name lyrics while cue, count, and gauge stay hidden until it ends');
   console.log('PASS microphone fallback control does not overlap the lyrics');
   console.log('PASS blackout keeps the cake fixed, hides the cue, shows smoke, and transitions within 1.5 seconds');
   console.log('PASS celebration appears with 20 mobs and reaches 40 layered mobs in three seconds');

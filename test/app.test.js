@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 import * as core from '../dist/core.js';
 import * as celebration from '../dist/celebration.js';
+import { SONG } from '../dist/song.js';
 const messageData = JSON.parse(await readFile(new URL('../dist/messages.json', import.meta.url), 'utf8'));
 const code = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8')).replace(/^\uFEFF?import[^\n]+\n|^import[^\n]+\n/gm, '');
 
@@ -20,7 +21,7 @@ class Element {
   replaceChildren(...children) { this.children = children; }
   click() { if (!this.disabled) this.events.click?.(); }
 }
-function harness(getUserMedia, withAudio = true) {
+function harness(getUserMedia, withAudio = true, songDuration = 0) {
   const els = new Map();
   const get = id => { if (!els.has(id)) els.set(id, new Element()); return els.get(id); };
   const raf = new Map();
@@ -47,12 +48,12 @@ function harness(getUserMedia, withAudio = true) {
     addEventListener(name, callback) { this.events[name] = callback; }
   };
   const window = {
-    isSecureContext: true, AudioContext: withAudio ? AudioContext : undefined, events: {},
+    isSecureContext: true, __testSongDuration: songDuration, AudioContext: withAudio ? AudioContext : undefined, events: {},
     setTimeout(callback, delay) { timers.set(++id, {callback, delay}); return id; },
     addEventListener(name, callback) { this.events[name] = callback; }
   };
   const context = {
-    ...core, ...celebration, messageData, document, window, navigator: {mediaDevices: {getUserMedia: (...args) => { requested++; return getUserMedia(...args); }}},
+    ...core, ...celebration, SONG, messageData, document, window, navigator: {mediaDevices: {getUserMedia: (...args) => { requested++; return getUserMedia(...args); }}},
     performance: {now: () => now}, Float32Array,
     setTimeout: window.setTimeout, clearTimeout: id => timers.delete(id),
     requestAnimationFrame: cb => { raf.set(++id, cb); return id; }, cancelAnimationFrame: id => raf.delete(id)
@@ -215,7 +216,7 @@ test('before start: setup visible, started card and shared blow cue hidden', () 
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('volume-area').hidden, true);
 });
-test('start immediately replaces only card content and reveals shared blow cue', () => {
+test('start immediately replaces only card content while microphone permission is pending', () => {
   const app = harness(() => new Promise(() => {}));
   app.name('テスト'); app.count(99); app.submit();
   assert.equal(app.get('setup').hidden, true);
@@ -225,6 +226,19 @@ test('start immediately replaces only card content and reveals shared blow cue',
   assert.equal(app.get('start').disabled, true);
   assert.equal(app.get('dedication').textContent, '今日の主役へ');
   assert.equal(app.get('cake-heading').textContent, '願いごと、決まった？');
+  assert.equal(app.get('blow-cue').hidden, true);
+  assert.equal(app.get('volume-area').hidden, true);
+});
+test('song keeps microphone cues and detection off until the song ends', async () => {
+  const mic = microphone();
+  const app = harness(() => Promise.resolve(mic.stream), true, 8500);
+  app.submit(); await flush();
+  assert.equal(app.get('song-lyrics').hidden, false);
+  assert.equal(app.get('blow-cue').hidden, true);
+  assert.equal(app.get('volume-area').hidden, true);
+  app.frames(20, .5);
+  assert.equal(app.get('remaining').textContent, 5);
+  app.runTimer(8500);
   assert.equal(app.get('blow-cue').hidden, false);
   assert.equal(app.get('volume-area').hidden, false);
 });

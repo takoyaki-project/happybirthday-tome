@@ -5,6 +5,6 @@
   "scripts": {
     "dev": "node scripts/serve.mjs",
     "test": "node --test",
-    "check": "node --check dist/app.js && node --check dist/core.js && node --check dist/celebration.js"
+    "check": "node --check dist/app.js && node --check dist/core.js && node --check dist/celebration.js && node --check dist/song.js"
   }
 }

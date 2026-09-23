@@ -24,7 +24,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: stage4-visual-verification-no-name
-          path: verification/celebrate-*-390x844.png
+          path: |
+            verification/celebrate-*-390x844.png
+            verification/song-lyrics-390x844.png
           if-no-files-found: error
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

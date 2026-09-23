@@ -1,6 +1,7 @@
 ﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 import { BLOW_SENSITIVITY } from './core.js';
+import { SONG } from './song.js';
 const $ = (id) => document.getElementById(id);
 const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
@@ -16,6 +17,7 @@ let source = null;
 let frame = 0;
 let generation = 0;
 let timer = 0;
+let songTimers = [];
 let ignoreUntil = 0;
 let tapOnly = false;
 let showDebugValue = true;
@@ -73,10 +75,10 @@ function meter(level, measuredLevel = 0) {
 // The bubble and remaining count always share this single visibility boundary.
 // When singing is added, change the readiness condition here after song completion.
 function updateBlowCue() {
-  ui['blow-cue'].hidden = !(scene === 'song' && ['preparing', 'active'].includes(phase));
+  ui['blow-cue'].hidden = !(scene === 'song' && phase === 'active');
 }
 function updateGauge() {
-  const waiting = scene === 'song' && ['preparing', 'active'].includes(phase);
+  const waiting = scene === 'song' && phase === 'active';
   ui['volume-area'].hidden = !waiting;
   ui['debug-toggle'].hidden = !waiting;
   ui['debug-value'].hidden = !waiting || !showDebugValue;
@@ -169,7 +171,7 @@ function releaseAudio() {
     void old.close().catch(() => {});
   }
 }
-function stopPending() { generation++; clearTimeout(timer); timer = 0; }
+function stopPending() { generation++; clearTimeout(timer); timer = 0; songTimers.forEach(clearTimeout); songTimers = []; }
 
 // Always called synchronously inside a tap/click handler, before requesting the mic.
 function prepareSound() {
@@ -197,10 +199,38 @@ function prepareSound() {
     }
     ignoreUntil = performance.now() + 1000;
     ctx.onstatechange = () => {
-      if (audio === ctx && phase === 'active' && ['interrupted', 'suspended'].includes(ctx.state)) pause();
+      if (audio === ctx && ['active', 'singing'].includes(phase) && ['interrupted', 'suspended'].includes(ctx.state)) pause();
     };
     return ctx;
   } catch { return null; }
+}
+function playSong(ctx, ticket) {
+  const displayName = ui.name.value.trim() || 'わたし';
+  for (const [offset, hz, duration] of SONG.notes) {
+    const oscillator = ctx.createOscillator(); const gain = ctx.createGain(); const at = ctx.currentTime + offset / 1000;
+    oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(hz, at);
+    gain.gain.setValueAtTime(.001, at); gain.gain.exponentialRampToValueAtTime(.11, at + .02); gain.gain.exponentialRampToValueAtTime(.001, at + duration / 1000);
+    oscillator.connect(gain).connect(ctx.destination); oscillator.start(at); oscillator.stop(at + duration / 1000 + .03);
+  }
+  SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => { if (phase === 'singing') ui['song-lyrics'].textContent = lyric.replace('{name}', displayName); }, offset)));
+  const finish = () => {
+    if (ticket !== generation || phase !== 'singing') return;
+    if (tapOnly) { activateTap(); return; }
+    phase = 'active';
+    controls();
+    status('ふーっ、いけるよ！');
+    listen(ctx, ticket);
+  };
+  const duration = window.__testSongDuration ?? SONG.durationMs;
+  if (duration === 0) finish(); else timer = window.setTimeout(finish, duration);
+}
+function beginSong(ctx, ticket, useTap = false) {
+  if (ticket !== generation) return;
+  phase = 'singing';
+  tapOnly = useTap;
+  status('歌が終わるまで、みんなで歌ってね。');
+  controls();
+  playSong(ctx, ticket);
 }
 function activateTap() {
   stopPending();
@@ -211,7 +241,7 @@ function activateTap() {
   status('マイクはオフです。ケーキをタップして消せます。', true);
 }
 function pause() {
-  if (!['active', 'preparing'].includes(phase)) return;
+  if (!['active', 'preparing', 'singing'].includes(phase)) return;
   stopPending();
   phase = 'paused';
   releaseAudio();
@@ -391,17 +421,18 @@ function start(resuming = false) {
   const ctx = prepareSound();
   document.activeElement?.blur();
   if (resuming && tapOnly) { activateTap(); return; }
-  if (!ctx || !window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+  if (!ctx) {
     activateTap(); return;
   }
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { beginSong(ctx, ticket, true); return; }
   status('マイクの許可を確認しています。');
   timer = window.setTimeout(() => {
-    if (ticket === generation && phase === 'preparing') activateTap();
+    if (ticket === generation && phase === 'preparing') beginSong(ctx, ticket, true);
   }, 15000);
   let request;
   try {
     request = navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}, video: false});
-  } catch { activateTap(); return; }
+  } catch { beginSong(ctx, ticket, true); return; }
   void request.then(async (incoming) => {
     if (ticket !== generation || phase !== 'preparing' || document.hidden) {
       incoming.getTracks().forEach(track => track.stop());
@@ -422,17 +453,13 @@ function start(resuming = false) {
       source = ctx.createMediaStreamSource(incoming);
       source.connect(analyser); // Never connect microphone input to speakers.
       for (const track of incoming.getAudioTracks()) {
-        track.onended = () => { if (phase === 'active') activateTap(); };
-        track.onmute = () => { if (phase === 'active') pause(); };
+        track.onended = () => { if (phase === 'active') activateTap(); else if (phase === 'singing') tapOnly = true; };
+        track.onmute = () => { if (phase === 'active') pause(); else if (phase === 'singing') tapOnly = true; };
       }
-      phase = 'active';
-      tapOnly = false;
-      status('周りの音を確認中。少しだけ静かに待ってね。');
-      controls();
-      listen(ctx, ticket);
-    } catch { activateTap(); }
+      beginSong(ctx, ticket);
+    } catch { beginSong(ctx, ticket, true); }
   }).catch(() => {
-    if (ticket === generation && phase === 'preparing') activateTap();
+    if (ticket === generation && phase === 'preparing') beginSong(ctx, ticket, true);
   });
 }
 function reset() {
