@@ -127,6 +127,7 @@ body[data-scene="song"], body[data-scene="blackout"] { background: var(--color-d
 .mob-shout { display: none; position: absolute; z-index: 5; bottom: calc(100% + var(--space-1)); left: 50%; padding: 5px var(--space-1); border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-card); color: var(--color-text); font-size: 13px; font-weight: 900; line-height: 1.25; white-space: nowrap; transform: translateX(-50%) scale(calc(1 / var(--mob-scale))); transform-origin: center bottom; }
 .mob.is-speaking .mob-shout { display: block; }
 @keyframes mob-arrive { from { opacity: 0; transform: translate(-50%, 120%) scale(var(--mob-scale)); } to { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }
+@media (prefers-reduced-motion: reduce) { .mob { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }
 body[data-scene="song"] .volume-label, body[data-scene="song"] .counter { color: var(--color-dark-text); }
 body[data-scene="song"] .bubble { border-color: var(--color-dark-text); background: var(--color-dark-background); box-shadow: 3px 3px 0 var(--color-dark-emphasis); color: var(--color-dark-text); }
 body[data-scene="song"] .bubble::after { border-color: var(--color-dark-text); background: var(--color-dark-background); }
