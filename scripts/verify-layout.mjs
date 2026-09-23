@@ -30,7 +30,7 @@ const browser = spawn(browserPath, [
 let ws;
 try {
   let port;
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 300; i++) {
     try { port = Number((await readFile(path.join(profile, 'DevToolsActivePort'), 'utf8')).split('\n')[0]); break; } catch { await sleep(100); }
   }
   assert.ok(port, 'headless browser started');
