@@ -273,14 +273,14 @@ test('stage 2 uses one scene state for entry, song, blackout, celebration, and e
   app.get('reset').click();
   assert.equal(app.document.body.dataset.scene, 'entry');
 });
-test('celebration starts with 20 layered mobs, reaches 40 in three seconds, and shows only three to five shouts', async () => {
+test('celebration starts with 20 layered mobs, reaches 40 in three seconds, and shows at most three shouts', async () => {
   const app = harness(() => Promise.reject());
   app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
   assert.equal(app.get('mob-crowd').children.length, 20);
   assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 3);
   for (let i = 0; i < 20; i++) app.runTimer(150);
   assert.equal(app.get('mob-crowd').children.length, 40);
-  assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 5);
+  assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 3);
 });
 test('celebration uses a visual pop with synthesized applause and cheers, without browser speech', async () => {
   const app = harness(() => Promise.reject());

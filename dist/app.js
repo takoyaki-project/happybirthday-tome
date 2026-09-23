@@ -256,7 +256,7 @@ function addMob() {
 function updateMobShouts() {
   const mobs = [...ui['mob-crowd'].children];
   mobs.forEach(mob => mob.classList.remove('is-speaking'));
-  const slots = mobs.length >= MAX_MOBS ? [3, 11, 20, 29, 37] : [2, 9, 16];
+  const slots = mobs.length >= MAX_MOBS ? [3, 20, 37] : [2, 9, 16];
   slots.forEach(index => mobs[index]?.classList.add('is-speaking'));
 }
 function startMobs() {

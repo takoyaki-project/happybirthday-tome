@@ -138,12 +138,12 @@ try {
   await setCelebrationCopy('おめでとう！', '最高！');
   const oneLine = await read();
   fits(oneLine); assert.ok(oneLine.celebrationMessage.bottom < oneLine.cake.y); assert.ok(oneLine.audioNote.y > oneLine.cake.bottom);
-  await screenshot('celebrate-message-1line-390x844.png');
+  await screenshot('celebrate-5-message-1line-390x844.png');
 
   await setCelebrationCopy('おめでとう！', String.fromCharCode(12354).repeat(40));
   const threeLines = await read();
   fits(threeLines); assert.ok(threeLines.celebrationMessage.bottom < threeLines.cake.y); assert.ok(threeLines.audioNote.y > threeLines.cake.bottom);
-  await screenshot('celebrate-message-3lines-390x844.png');
+  await screenshot('celebrate-5-message-3lines-390x844.png');
 
   await setCelebrationCopy('あいうえおかきくさん、おめでとう！', '最高！');
   const longName = await read();
@@ -160,6 +160,15 @@ try {
   fits(song99); assert.equal(song99.scene, 'song'); assert.equal(song99.candleCount, 99); assert.deepEqual(song99.cake, song.cake);
   await screenshot('song-99-candles-390x844.png');
 
+  await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
+  await sleep(1100);
+  const celebrate99 = await read();
+  fits(celebrate99); assert.equal(celebrate99.scene, 'celebrate'); assert.equal(celebrate99.outCount, 99);
+  await setCelebrationCopy('おめでとう！', '最高！');
+  await screenshot('celebrate-99-message-1line-390x844.png');
+  await setCelebrationCopy('おめでとう！', String.fromCharCode(12354).repeat(40));
+  await screenshot('celebrate-99-message-3lines-390x844.png');
+
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
   console.log('PASS entry hides the cake and fits at 390×844');
@@ -170,7 +179,7 @@ try {
   console.log('PASS celebration copy fits one line, 40 characters over three lines, and an eight-character name');
   console.log('PASS reset returns celebration to entry; 99 candles fit in song');
   console.log('PASS no browser runtime errors or external app requests');
-  await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrateInitial, celebrate, oneLine, threeLines, longName, song99, errors}, null, 2));
+  await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrateInitial, celebrate, oneLine, threeLines, longName, song99, celebrate99, errors}, null, 2));
   await send('Browser.close').catch(() => {});
 } finally {
   ws?.close(); browser.kill(); server.close();
