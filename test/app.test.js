@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 import * as core from '../dist/core.js';
 import * as celebration from '../dist/celebration.js';
-const messageData = JSON.parse(await readFile(new URL('../messages.json', import.meta.url), 'utf8'));
+const messageData = JSON.parse(await readFile(new URL('../dist/messages.json', import.meta.url), 'utf8'));
 const code = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8')).replace(/^\uFEFF?import[^\n]+\n|^import[^\n]+\n/gm, '');
 
 class Element {

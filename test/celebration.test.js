@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { MAX_MESSAGE_LENGTH, MAX_MOBS, chooseCelebrationMessage, keepLatestMobs } from '../dist/celebration.js';
 
-const data = JSON.parse(await readFile(new URL('../messages.json', import.meta.url), 'utf8'));
+const data = JSON.parse(await readFile(new URL('../dist/messages.json', import.meta.url), 'utf8'));
 
 test('celebration messages use messages.json, stay within 40 characters, and avoid the latest five', () => {
   const allowed = data.messages.filter(message => !/\d+歳/.test(message));
