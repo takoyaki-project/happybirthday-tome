@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#fcf4f7">
+  <meta name="theme-color" content="#fff0e7">
   <meta name="description" content="自分のために、思いっきりふーっ。声やタップでろうそくを消す、ちいさな誕生日パーティー。">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>自分に、おめでとう。 | happybirthday-tome</title>
@@ -12,16 +12,17 @@
 </head>
 <body>
   <main id="party" class="party" data-scene="entry">
-    <div class="brand">
-      <h1>HAPPY BIRTHDAY <span>TO ME.</span></h1>
-      <p>ひとりでも、主役。</p>
+    <div class="brand" aria-label="誕生日のお祝い">
+      <p class="eyebrow">HAPPY BIRTHDAY</p>
+      <h1>きょうは、<br><span>あなたが主役。</span></h1>
+      <p class="brand-copy">自分にも、大切な人にも。<br>小さな誕生日会を、はじめよう。</p>
     </div>
     <section class="message-card" aria-label="誕生日の準備とメッセージ">
       <form id="setup" autocomplete="off">
-        <div class="card-heading"><p>本日の主役、入場です。</p><h2>自分に、おめでとう。</h2></div>
-        <div class="field"><label for="name">名前</label><input id="name" type="text" maxlength="30" autocomplete="off" spellcheck="false"></div>
-        <div class="field"><label for="count">ろうそくの本数 <span>1〜99本</span></label><div class="number-field"><input id="count" type="number" min="1" max="99" step="1" value="5" inputmode="numeric" required autocomplete="off"><span>本</span></div></div>
-        <button id="start" class="primary" type="submit">パーティスタート</button>
+        <div class="field"><label for="name">今日の主役のお名前 <span>ニックネームでもOK</span></label><input id="name" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="例：たろう"></div>
+        <div class="field"><label for="count">ろうそくは何本にする？ <span>1〜99本</span></label><div class="number-field"><input id="count" type="number" min="1" max="99" step="1" value="5" inputmode="numeric" required autocomplete="off" aria-label="ろうそくの本数"><span>本</span></div></div>
+        <button id="start" class="primary" type="submit">お祝いをはじめる</button>
+        <p class="sound-hint" aria-hidden="true">♬ 音楽ありでお祝い</p>
       </form>
       <div id="started" class="started" hidden>
         <div class="card-copy">
@@ -30,8 +31,10 @@
         </div>
       </div>
     </section>
+    <p class="entry-footer">誕生日を祝い、祝われたい、<br>すべての人に。</p>
     <section class="stage" aria-label="バースデーケーキ">
       <div id="scene-copy" class="scene-copy" aria-live="polite">
+        <p id="song-recipient" class="song-recipient" hidden>あなたへ</p>
         <p id="song-lyrics" class="song-lyrics" hidden>歌詞はここに表示</p>
         <div id="blackout-copy" class="blackout-copy" hidden>しーっ。願いごとの時間。</div>
         <div id="celebration-copy" class="celebration-copy" hidden><h2 id="celebration-title">おめでとう！</h2><p id="celebration-message"></p></div>

@@ -212,7 +212,7 @@ test('before start: setup visible, started card and shared blow cue hidden', () 
   const app = harness(() => Promise.reject());
   assert.equal(app.get('setup').hidden, false);
   assert.equal(app.get('started').hidden, true);
-  assert.equal(app.get('start').textContent, 'パーティスタート');
+  assert.equal(app.get('start').textContent, 'お祝いをはじめる');
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('volume-area').hidden, true);
 });
@@ -232,7 +232,8 @@ test('start immediately replaces only card content while microphone permission i
 test('song keeps microphone cues and detection off until the song ends', async () => {
   const mic = microphone();
   const app = harness(() => Promise.resolve(mic.stream), true, 8500);
-  app.submit(); await flush();
+  app.name('けいこ'); app.submit(); await flush();
+  assert.equal(app.get('song-recipient').textContent, 'けいこさんへ');
   assert.equal(app.get('song-lyrics').hidden, false);
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('volume-area').hidden, true);
@@ -273,7 +274,7 @@ test('pause hides both cue children; resume shows both; completion hides both', 
   assert.equal(app.get('setup').hidden, false);
   assert.equal(app.get('started').hidden, true);
   assert.equal(app.get('blow-cue').hidden, true);
-  assert.equal(app.get('start').textContent, 'パーティスタート');
+  assert.equal(app.get('start').textContent, 'お祝いをはじめる');
 });
 test('stage 2 uses one scene state for entry, song, blackout, celebration, and entry again', async () => {
   const app = harness(() => Promise.reject());
@@ -318,10 +319,12 @@ test('completion message uses the entered name, replaces the wish copy, and caps
     if (name === 'けいこ') assert.match(message, /けいこさん/);
   }
 });
-test('copy is exact, old catchphrases are removed, bubble and count have one parent', async () => {
+test('reference copy is editable HTML, the candle count stays required, and bubble and count have one parent', async () => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
-  for (const text of ['HAPPY BIRTHDAY TO ME.', 'ひとりでも、主役。', '本日の主役、入場です。', '自分に、おめでとう。', 'パーティスタート', '今日の主役へ', '願いごと、決まった？', '願いごとをひとつ。あとは、思いっきりふーっ。']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
-  assert.doesNotMatch(html, /YOUR BIRTHDAY CAKE|きょうは、あなたの日|年齢じゃなくても|準備万端|今日くらい|<header|<footer/);
+  for (const text of ['HAPPY BIRTHDAY', 'きょうは、', 'あなたが主役。', '今日の主役のお名前', 'ニックネームでもOK', 'ろうそくは何本にする？', '1〜99本', 'お祝いをはじめる', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
+  assert.doesNotMatch(html, /年齢|0〜120|パーティスタート|YOUR BIRTHDAY CAKE/);
+  assert.match(html, /id="count"[^>]*min="1"[^>]*max="99"[^>]*required/);
+  assert.match(html, /id="song-recipient"/);
   assert.match(html, /id="blow-cue"[^]*id="bubble"[^]*id="counter"[^]*id="remaining"/);
   assert.equal((code.match(/ui\['blow-cue'\]\.hidden =/g) || []).length, 1);
   assert.doesNotMatch(code, /ui\.(bubble|counter)\.hidden/);

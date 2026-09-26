@@ -102,7 +102,7 @@ try {
   fits(song);
   assert.equal(song.scene, 'song'); assert.ok(song.cakeVisible && song.lyrics && !song.bubble && !song.counter && !song.gauge);
   assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /ディア、けいこ/);
-  assert.equal(song.background, 'rgb(23, 17, 37)');
+  assert.equal(song.background, 'rgb(25, 13, 29)');
   await screenshot('song-lyrics-390x844.png');
   await sleep(3700);
   const songReady = await read();

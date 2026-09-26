@@ -3,7 +3,7 @@
 import { BLOW_SENSITIVITY } from './core.js';
 import { SONG } from './song.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -96,7 +96,7 @@ function controls() {
   ui.party.dataset.scene = scene;
   ui.party.dataset.micState = phase;
   ui.party.classList[scene === 'celebrate' && Array.from(currentCelebrationMessage).length > 30 ? 'add' : 'remove']('long-celebration-message');
-  ui.start.textContent = 'パーティスタート';
+  ui.start.textContent = 'お祝いをはじめる';
   ui.dedication.textContent = '今日の主役へ';
   const complete = ['blackout', 'celebrate'].includes(scene);
   ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
@@ -112,6 +112,8 @@ function controls() {
   ui['cake-button'].disabled = scene !== 'song' || phase !== 'active';
   ui['sound-test'].hidden = scene !== 'song' || !['active', 'complete'].includes(phase);
   ui['song-lyrics'].hidden = scene !== 'song';
+  ui['song-recipient'].hidden = scene !== 'song';
+  ui['song-recipient'].textContent = ui.name.value.trim() ? `${ui.name.value.trim()}さんへ` : 'あなたへ';
   ui['blackout-copy'].hidden = scene !== 'blackout';
   ui['celebration-copy'].hidden = scene !== 'celebrate';
   ui['audio-note'].hidden = scene !== 'celebrate';
