@@ -163,15 +163,23 @@ try {
   fits(longName); assert.ok(longName.celebrationTitle.height <= 68); assert.ok(longName.celebrationMessage.bottom < longName.cake.y);
   await screenshot('celebrate-name-8chars-390x844.png');
 
-  await evaluate("document.getElementById('reset').click();document.getElementById('count').value='99';document.getElementById('count').dispatchEvent(new Event('input'));document.getElementById('start').click()");
-  for (let i = 0; i < 40; i++) {
-    if (await evaluate("!document.getElementById('cake-button').disabled")) break;
+  const captureSongCount = async count => {
+    await evaluate(`document.getElementById('reset').click();document.getElementById('count').value='${count}';document.getElementById('count').dispatchEvent(new Event('input'));document.getElementById('start').click()`);
+    for (let i = 0; i < 40; i++) {
+      if (await evaluate("!document.getElementById('cake-button').disabled")) break;
+      await sleep(100);
+    }
     await sleep(100);
-  }
-  await sleep(100);
-  const song99 = await read();
+    const state = await read();
+    fits(state); assert.equal(state.scene, 'song'); assert.equal(state.candleCount, count);
+    await screenshot(`song-${count}-candles-390x844.png`);
+    return state;
+  };
+  await captureSongCount(1);
+  await captureSongCount(10);
+  await captureSongCount(50);
+  const song99 = await captureSongCount(99);
   fits(song99); assert.equal(song99.scene, 'song'); assert.equal(song99.candleCount, 99); assert.deepEqual(song99.cake, songReady.cake);
-  await screenshot('song-99-candles-390x844.png');
 
   await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
   await sleep(1100);

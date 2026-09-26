@@ -131,15 +131,18 @@ function element(tag, attrs, parent) {
 }
 function renderCake() {
   ui.candles.replaceChildren();
-  candles = candleLayout(total).map(({x, y, height, width}, i) => {
+  candles = candleLayout(total).map(({x, y, height, width, flame: flameHeight}, i) => {
     const group = element('g', {class: 'candle', transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`}, ui.candles);
     element('ellipse', {cx: 0, cy: 1.5, rx: width * .8, ry: 2.6, fill: 'rgba(47,19,35,.46)'}, group);
     element('rect', {x: -width / 2, y: -height, width, height, rx: width / 2, fill: i % 2 ? 'url(#candle-purple)' : 'url(#candle-pink)'}, group);
-    element('path', {d: `M${-width/2} ${-height+8}l${width} -4m${-width} 15l${width} -4`, stroke: 'rgba(255,244,213,.88)', 'stroke-width': Math.max(1.2, width / 5), 'stroke-linecap': 'round'}, group);
+    const stripeOffset = Math.max(3, height * .3);
+    const stripeGap = Math.max(4, height * .38);
+    element('path', {d: `M${-width/2} ${-height+stripeOffset}l${width} ${-Math.max(2, height*.13)}m${-width} ${stripeGap}l${width} ${-Math.max(2, height*.13)}`, stroke: 'rgba(255,244,213,.88)', 'stroke-width': Math.max(.9, width / 5), 'stroke-linecap': 'round'}, group);
     element('path', {class: 'wick', d: `M0 ${-height}v-5`, stroke: '#4a2548', 'stroke-width': 1.5, 'stroke-linecap': 'round'}, group);
     const flame = element('g', {class: 'flame'}, group);
-    element('path', {d: `M0 ${-height-19}C-9 ${-height-10} -7 ${-height-3} 0 ${-height-3}C8 ${-height-3} 8 ${-height-11} 0 ${-height-19}`, fill: 'url(#candle-flame)'}, flame);
-    element('ellipse', {cx: 0, cy: -height-8, rx: 1.8, ry: 3.8, fill: '#fffbe6'}, flame);
+    const flameWidth = Math.max(3.2, width * .9);
+    element('path', {d: `M0 ${-height-flameHeight}C${-flameWidth} ${-height-flameHeight*.48} ${-flameWidth*.78} ${-height-2} 0 ${-height-2}C${flameWidth*.88} ${-height-2} ${flameWidth*.88} ${-height-flameHeight*.54} 0 ${-height-flameHeight}`, fill: 'url(#candle-flame)'}, flame);
+    element('ellipse', {cx: 0, cy: -height-flameHeight*.42, rx: Math.max(.9, flameWidth*.22), ry: Math.max(1.8, flameHeight*.2), fill: '#fffbe6'}, flame);
     return group;
   });
   remaining = total;

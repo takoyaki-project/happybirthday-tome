@@ -11,9 +11,9 @@ test('every count has exactly that many distinct candles inside the cake', () =>
     const candles = candleLayout(count);
     assert.equal(candles.length, count);
     assert.equal(new Set(candles.map(c => `${c.x},${c.y}`)).size, count);
-    for (const {x, y, height} of candles) {
-      assert.ok(((x-180)/148)**2 + ((y-199)/62)**2 < 1);
-      assert.ok(y-height-18 > 80);
+    for (const {x, y, height, flame} of candles) {
+      assert.ok(((x - 180) / 98) ** 2 + ((y - 55) / 26) ** 2 < 1, `${count} candles stay on the exposed cream`);
+      assert.ok(y - height - flame > 0, `${count} candle flame stays inside the SVG viewport`);
     }
   }
 });

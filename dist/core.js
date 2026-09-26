@@ -6,14 +6,18 @@ export function validCount(value) {
 export function candleLayout(count) {
   if (validCount(count) === null) throw new RangeError('Candle count must be 1–99');
   const rows = Math.ceil(count / 11);
+  // These dimensions are measured from the exposed cream oval in cake-base-v2.png.
+  // Keep every root inside that oval; flames extend upward from it.
+  const surface = {x: 180, y: 55, rx: 98, ry: 26};
+  const stem = rows === 1 ? {height: 28, width: 8, flame: 14} : rows <= 3 ? {height: 22, width: 6, flame: 11} : rows <= 5 ? {height: 17, width: 5, flame: 9} : {height: 13, width: 3.8, flame: 7};
   const result = [];
   for (let row = 0; row < rows; row++) {
     const columns = Math.floor(count / rows) + (row < count % rows ? 1 : 0);
-    const y = rows === 1 ? 198 : 157 + row * 84 / (rows - 1);
-    const radius = Math.sqrt(1 - ((y - 199) / 62) ** 2) * 128;
+    const y = rows === 1 ? surface.y + 2 : 39 + row * 29 / (rows - 1);
+    const radius = Math.sqrt(1 - ((y - surface.y) / surface.ry) ** 2) * surface.rx;
     for (let column = 0; column < columns; column++) {
-      const x = columns === 1 ? 180 : 180 - radius + (column + .5) * (2 * radius / columns);
-      result.push({ x, y, height: rows <= 2 ? 39 : 23, width: rows <= 2 ? 9 : 6 });
+      const x = columns === 1 ? surface.x : surface.x - radius + (column + .5) * (2 * radius / columns);
+      result.push({x, y, ...stem});
     }
   }
   return result;
