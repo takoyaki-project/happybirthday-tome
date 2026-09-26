@@ -301,7 +301,7 @@ test('celebration uses local plush character assets instead of emoji mobs', asyn
   const source = await readFile(new URL('../dist/app.js', import.meta.url), 'utf8');
   assert.match(source, /MOB_ASSETS/);
   assert.doesNotMatch(source, /🥳|👏|🎉/);
-  for (const asset of ['mob-purple-bear-v2.png', 'mob-gold-bunny-v2.png', 'mob-coral-pup-v2.png']) {
+  for (const asset of ['mob-purple-bear-v2.png', 'mob-gold-bunny-v2.png', 'mob-coral-pup-v2.png', 'mob-chick-v2.png', 'mob-mint-bunny-v2.png']) {
     const image = await readFile(new URL(`../dist/assets/${asset}`, import.meta.url));
     assert.ok(image.length > 10_000);
   }

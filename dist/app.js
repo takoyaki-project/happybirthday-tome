@@ -32,7 +32,29 @@ const MAX_MESSAGE_LENGTH = 40;
 const RECENT_MESSAGE_LIMIT = 5;
 const MAX_MOBS = 40;
 const INITIAL_MOBS = 20;
-const MOB_ASSETS = ['./assets/mob-purple-bear-v2.png', './assets/mob-gold-bunny-v2.png', './assets/mob-coral-pup-v2.png'];
+const MOB_ASSETS = ['./assets/mob-purple-bear-v2.png', './assets/mob-gold-bunny-v2.png', './assets/mob-coral-pup-v2.png', './assets/mob-chick-v2.png', './assets/mob-mint-bunny-v2.png'];
+const MOB_SLOTS = [
+  {x: 3, bottom: 360, size: 58, layer: 1, asset: 3, enterX: -110, enterY: 0}, {x: 97, bottom: 355, size: 66, layer: 1, asset: 0, enterX: 110, enterY: 0},
+  {x: 27, bottom: 210, size: 126, layer: 4, asset: 1, enterX: -80, enterY: 110}, {x: 73, bottom: 214, size: 132, layer: 4, asset: 2, enterX: 80, enterY: 110},
+  {x: 11, bottom: 270, size: 85, layer: 2, asset: 4, enterX: -105, enterY: 0}, {x: 89, bottom: 263, size: 88, layer: 2, asset: 3, enterX: 105, enterY: 0},
+  {x: 50, bottom: 154, size: 105, layer: 3, asset: 0, enterX: 0, enterY: 125}, {x: 4, bottom: 155, size: 92, layer: 3, asset: 2, enterX: -100, enterY: 100},
+  {x: 96, bottom: 148, size: 96, layer: 3, asset: 1, enterX: 100, enterY: 100}, {x: 43, bottom: 300, size: 62, layer: 1, asset: 3, enterX: -30, enterY: 90},
+  {x: 57, bottom: 295, size: 68, layer: 1, asset: 4, enterX: 30, enterY: 90}, {x: 17, bottom: 92, size: 116, layer: 4, asset: 3, enterX: -90, enterY: 125},
+  {x: 83, bottom: 88, size: 120, layer: 4, asset: 4, enterX: 90, enterY: 125}, {x: 36, bottom: 120, size: 88, layer: 3, asset: 2, enterX: -45, enterY: 120},
+  {x: 64, bottom: 118, size: 92, layer: 3, asset: 0, enterX: 45, enterY: 120}, {x: 1, bottom: 315, size: 64, layer: 1, asset: 1, enterX: -110, enterY: 0},
+  {x: 99, bottom: 310, size: 66, layer: 1, asset: 2, enterX: 110, enterY: 0}, {x: 22, bottom: 325, size: 56, layer: 1, asset: 4, enterX: -75, enterY: 80},
+  {x: 78, bottom: 320, size: 56, layer: 1, asset: 3, enterX: 75, enterY: 80}, {x: 50, bottom: 65, size: 138, layer: 4, asset: 1, enterX: 0, enterY: 140},
+  {x: 9, bottom: 222, size: 76, layer: 2, asset: 0, enterX: -105, enterY: 70}, {x: 91, bottom: 218, size: 76, layer: 2, asset: 4, enterX: 105, enterY: 70},
+  {x: 32, bottom: 248, size: 74, layer: 2, asset: 2, enterX: -55, enterY: 80}, {x: 68, bottom: 246, size: 74, layer: 2, asset: 3, enterX: 55, enterY: 80},
+  {x: 42, bottom: 215, size: 104, layer: 3, asset: 4, enterX: -35, enterY: 120}, {x: 58, bottom: 215, size: 104, layer: 3, asset: 3, enterX: 35, enterY: 120},
+  {x: 24, bottom: 55, size: 124, layer: 4, asset: 0, enterX: -80, enterY: 130}, {x: 76, bottom: 52, size: 126, layer: 4, asset: 2, enterX: 80, enterY: 130},
+  {x: 5, bottom: 105, size: 90, layer: 3, asset: 1, enterX: -110, enterY: 115}, {x: 95, bottom: 103, size: 92, layer: 3, asset: 3, enterX: 110, enterY: 115},
+  {x: 48, bottom: 255, size: 64, layer: 2, asset: 0, enterX: 0, enterY: 75}, {x: 52, bottom: 275, size: 60, layer: 1, asset: 4, enterX: 0, enterY: 70},
+  {x: 14, bottom: 345, size: 54, layer: 1, asset: 3, enterX: -90, enterY: 0}, {x: 86, bottom: 342, size: 54, layer: 1, asset: 1, enterX: 90, enterY: 0},
+  {x: 34, bottom: 42, size: 110, layer: 4, asset: 4, enterX: -55, enterY: 140}, {x: 66, bottom: 40, size: 112, layer: 4, asset: 2, enterX: 55, enterY: 140},
+  {x: 39, bottom: 160, size: 78, layer: 3, asset: 3, enterX: -35, enterY: 105}, {x: 61, bottom: 160, size: 78, layer: 3, asset: 0, enterX: 35, enterY: 105},
+  {x: 18, bottom: 185, size: 82, layer: 2, asset: 1, enterX: -70, enterY: 95}, {x: 82, bottom: 183, size: 82, layer: 2, asset: 4, enterX: 70, enterY: 95}
+];
 
 // JSON module imports are not supported by every iPhone Safari version.
 // This reads only our own bundled data file and never sends user data.
@@ -262,24 +284,21 @@ function clearMobs() {
 }
 function addMob() {
   const index = mobCount++;
-  const depth = index % 3;
-  const lane = [
-    {scale: .72, bottom: 58, positions: [5, 31, 62, 87, 18, 48, 76]},
-    {scale: .9, bottom: 30, positions: [16, 54, 90, 7, 39, 71, 27]},
-    {scale: 1.14, bottom: 3, positions: [43, 11, 78, 29, 94, 58, 68]}
-  ][depth];
+  const slot = MOB_SLOTS[index % MOB_SLOTS.length];
   const mob = document.createElement('div');
   mob.className = 'mob';
-  const slot = Math.floor(index / 3);
-  mob.style.setProperty('--mob-x', `${lane.positions[slot % lane.positions.length] + (Math.random() * 10 - 5)}%`);
-  mob.style.setProperty('--mob-bottom', `${lane.bottom + [0, 9, 3, 12, 5, 1, 8][slot % 7]}%`);
+  mob.style.setProperty('--mob-x', `${slot.x + (Math.random() * 3 - 1.5)}%`);
+  mob.style.setProperty('--mob-bottom', `${slot.bottom}px`);
+  mob.style.setProperty('--mob-size', `${slot.size}px`);
+  mob.style.setProperty('--mob-enter-x', `${slot.enterX}px`);
+  mob.style.setProperty('--mob-enter-y', `${slot.enterY}px`);
   mob.style.setProperty('--shout-x', `${[22, 78, 36, 68, 50][index % 5]}%`);
-  mob.style.setProperty('--mob-scale', lane.scale);
+  mob.style.setProperty('--mob-scale', String(.94 + (index % 4) * .04));
   mob.style.setProperty('--mob-delay', `${index < INITIAL_MOBS ? (index % 10) * 20 : 0}ms`);
-  mob.style.setProperty('--mob-layer', String(depth + 1));
+  mob.style.setProperty('--mob-layer', String(slot.layer));
   const face = document.createElement('img');
   face.className = 'mob-face';
-  face.src = MOB_ASSETS[index % MOB_ASSETS.length];
+  face.src = MOB_ASSETS[slot.asset];
   face.alt = '';
   face.setAttribute('aria-hidden', 'true');
   const shout = document.createElement('span');

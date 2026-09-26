@@ -86,7 +86,7 @@ try {
     assert.equal(bands.scrollY, 0); assert.equal(bands.top, 0);
     assert.ok(bands.copy.height <= 844 * .45);
     assert.ok(bands.copy.bottom < bands.cake.top);
-    assert.ok(bands.cake.bottom < bands.crowd.top);
+    assert.ok(bands.crowd.top > bands.copy.bottom);
     assert.ok(bands.crowd.bottom < bands.note.top);
     return bands;
   };
