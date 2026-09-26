@@ -1,4 +1,4 @@
-﻿import test from 'node:test';
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
@@ -231,7 +231,7 @@ test('start immediately replaces only card content while microphone permission i
 });
 test('song keeps microphone cues and detection off until the song ends', async () => {
   const mic = microphone();
-  const app = harness(() => Promise.resolve(mic.stream), true, 8500);
+  const app = harness(() => Promise.resolve(mic.stream), true, SONG.durationMs);
   app.name('けいこ'); app.submit(); await flush();
   assert.equal(app.get('song-recipient').textContent, 'けいこさんへ');
   assert.equal(app.get('song-lyrics').hidden, false);
@@ -239,7 +239,7 @@ test('song keeps microphone cues and detection off until the song ends', async (
   assert.equal(app.get('volume-area').hidden, true);
   app.frames(20, .5);
   assert.equal(app.get('remaining').textContent, 5);
-  app.runTimer(8500);
+  app.runTimer(SONG.durationMs);
   assert.equal(app.get('blow-cue').hidden, false);
   assert.equal(app.get('volume-area').hidden, false);
 });
@@ -288,12 +288,14 @@ test('stage 2 uses one scene state for entry, song, blackout, celebration, and e
   app.get('reset').click();
   assert.equal(app.document.body.dataset.scene, 'entry');
 });
-test('celebration starts with 20 layered mobs, reaches 40 in three seconds, and shows at most three shouts', async () => {
+test('celebration introduces eight lead mobs gently, then reaches 40 with at most three shouts', async () => {
   const app = harness(() => Promise.reject());
   app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
-  assert.equal(app.get('mob-crowd').children.length, 20);
-  assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 3);
-  for (let i = 0; i < 20; i++) app.runTimer(150);
+  assert.equal(app.get('mob-crowd').children.length, 1);
+  for (let i = 0; i < 7; i++) app.runTimer(320);
+  assert.equal(app.get('mob-crowd').children.length, 8);
+  assert.ok(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length <= 3);
+  for (let i = 0; i < 32; i++) app.runTimer(520);
   assert.equal(app.get('mob-crowd').children.length, 40);
   assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 3);
 });

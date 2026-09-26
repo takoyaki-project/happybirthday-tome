@@ -96,15 +96,18 @@ try {
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
   await screenshot('entry-390x844.png');
 
-  await evaluate("window.__testSongDuration=8500;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
-  await sleep(5000);
+  await evaluate("delete window.__testSongDuration;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
+  await sleep(300); await screenshot('song-line-1-390x844.png');
+  await sleep(3400); await screenshot('song-line-2-390x844.png');
+  await sleep(3400);
   const song = await read();
   fits(song);
   assert.equal(song.scene, 'song'); assert.ok(song.cakeVisible && song.lyrics && !song.bubble && !song.counter && !song.gauge);
   assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /ディア、けいこ/);
   assert.equal(song.background, 'rgb(25, 13, 29)');
   await screenshot('song-lyrics-390x844.png');
-  await sleep(3700);
+  await sleep(3600); await screenshot('song-line-4-390x844.png');
+  await sleep(3300);
   const songReady = await read();
   assert.ok(songReady.bubble && songReady.counter && songReady.gauge);
   await screenshot('song-ready-390x844.png');
@@ -129,14 +132,14 @@ try {
   assert.deepEqual(blackout.cake, songReady.cake);
   await screenshot('blackout-390x844.png');
 
-  await sleep(1050);
+  await sleep(2500);
   const celebrateInitial = await read();
   fits(celebrateInitial);
-  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 20 && celebrateInitial.mobCount <= 23);
+  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 8 && celebrateInitial.mobCount <= 9);
   assert.doesNotMatch(celebrateInitial.message, /あなた|さん/);
   await screenshot('celebrate-initial-390x844.png');
 
-  await sleep(3100);
+  await sleep(17000);
   const celebrate = await read();
   fits(celebrate);
   assert.equal(celebrate.mobCount, 40);

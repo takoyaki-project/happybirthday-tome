@@ -1,4 +1,4 @@
-﻿import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
+import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 import { BLOW_SENSITIVITY } from './core.js';
 import { SONG } from './song.js';
@@ -249,7 +249,8 @@ function playSong(ctx, ticket) {
     status('ふーっ、いけるよ！');
     listen(ctx, ticket);
   };
-  const duration = window.__testSongDuration ?? SONG.durationMs;
+  // Completion follows the last scheduled note, never a separate display-only timer.
+  const duration = window.__testSongDuration ?? Math.max(...SONG.notes.map(([start, , noteDuration]) => start + noteDuration));
   if (duration === 0) finish(); else timer = window.setTimeout(finish, duration);
 }
 function beginSong(ctx, ticket, useTap = false) {
@@ -318,13 +319,18 @@ function updateMobShouts() {
 }
 function startMobs() {
   clearMobs();
-  for (let i = 0; i < INITIAL_MOBS; i++) addMob();
+  let lead = 0;
+  const addLead = () => {
+    addMob(); lead++;
+    if (lead < 8) { mobTimer = window.setTimeout(addLead, 320); return; }
+    mobTimer = window.setTimeout(addLater, 520);
+  };
   const addLater = () => {
     if (scene !== 'celebrate' || ui['mob-crowd'].children.length >= 40) return;
     addMob();
-    mobTimer = window.setTimeout(addLater, 150);
+    mobTimer = window.setTimeout(addLater, 520);
   };
-  mobTimer = window.setTimeout(addLater, 150);
+  addLead();
 }
 function playCrowdCheer() {
   if (!audio || audio.state !== 'running') return;
