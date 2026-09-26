@@ -15,9 +15,9 @@ await unlink(path.join(profile, 'DevToolsActivePort')).catch(error => { if (erro
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
-  if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/song.js', '/messages.json', '/style.css'].includes(pathname)) { res.writeHead(404).end(); return; }
+  if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/song.js', '/messages.json', '/style.css'].includes(pathname) && !pathname.startsWith('/assets/')) { res.writeHead(404).end(); return; }
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
-  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8'};
+  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8', png: 'image/png'};
   res.writeHead(200, {'Content-Type': types[file.split('.').pop()], 'Cache-Control': 'no-store'}).end(await readFile(path.join(root, 'dist', file)));
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -107,6 +107,7 @@ try {
   await sleep(3700);
   const songReady = await read();
   assert.ok(songReady.bubble && songReady.counter && songReady.gauge);
+  await screenshot('song-ready-390x844.png');
 
   await evaluate("window.__testMic=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=()=>new Promise(()=>{});document.getElementById('reset').click();document.getElementById('start').click()");
   await sleep(100);

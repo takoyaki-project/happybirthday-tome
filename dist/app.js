@@ -32,6 +32,7 @@ const MAX_MESSAGE_LENGTH = 40;
 const RECENT_MESSAGE_LIMIT = 5;
 const MAX_MOBS = 40;
 const INITIAL_MOBS = 20;
+const MOB_ASSETS = ['./assets/mob-purple-bear-v2.png', './assets/mob-gold-bunny-v2.png', './assets/mob-coral-pup-v2.png'];
 
 // JSON module imports are not supported by every iPhone Safari version.
 // This reads only our own bundled data file and never sends user data.
@@ -132,13 +133,13 @@ function renderCake() {
   ui.candles.replaceChildren();
   candles = candleLayout(total).map(({x, y, height, width}, i) => {
     const group = element('g', {class: 'candle', transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`}, ui.candles);
-    element('ellipse', {cx: 0, cy: 1, rx: width, ry: 2.5, fill: 'var(--color-text)'}, group);
-    element('rect', {x: -width / 2, y: -height, width, height, rx: 2, fill: ['var(--color-emphasis)', 'var(--color-accent)'][i % 2]}, group);
-    element('path', {d: `M${-width/2} ${-height+9}l${width} -4m${-width} 15l${width} -4`, stroke: 'var(--color-background)', 'stroke-width': 2}, group);
-    element('path', {class: 'wick', d: `M0 ${-height}v-5`, stroke: 'var(--color-text)', 'stroke-width': 1.5}, group);
+    element('ellipse', {cx: 0, cy: 1.5, rx: width * .8, ry: 2.6, fill: 'rgba(47,19,35,.46)'}, group);
+    element('rect', {x: -width / 2, y: -height, width, height, rx: width / 2, fill: i % 2 ? 'url(#candle-purple)' : 'url(#candle-pink)'}, group);
+    element('path', {d: `M${-width/2} ${-height+8}l${width} -4m${-width} 15l${width} -4`, stroke: 'rgba(255,244,213,.88)', 'stroke-width': Math.max(1.2, width / 5), 'stroke-linecap': 'round'}, group);
+    element('path', {class: 'wick', d: `M0 ${-height}v-5`, stroke: '#4a2548', 'stroke-width': 1.5, 'stroke-linecap': 'round'}, group);
     const flame = element('g', {class: 'flame'}, group);
-    element('path', {d: `M0 ${-height-18}C-10 ${-height-8} -6 ${-height-2} 0 ${-height-3}C7 ${-height-3} 7 ${-height-10} 0 ${-height-18}`, fill: 'var(--color-emphasis)'}, flame);
-    element('ellipse', {cx: 0, cy: -height-7, rx: 2, ry: 4, fill: 'var(--color-background)'}, flame);
+    element('path', {d: `M0 ${-height-19}C-9 ${-height-10} -7 ${-height-3} 0 ${-height-3}C8 ${-height-3} 8 ${-height-11} 0 ${-height-19}`, fill: 'url(#candle-flame)'}, flame);
+    element('ellipse', {cx: 0, cy: -height-8, rx: 1.8, ry: 3.8, fill: '#fffbe6'}, flame);
     return group;
   });
   remaining = total;
@@ -273,9 +274,11 @@ function addMob() {
   mob.style.setProperty('--mob-scale', lane.scale);
   mob.style.setProperty('--mob-delay', `${index < INITIAL_MOBS ? (index % 10) * 20 : 0}ms`);
   mob.style.setProperty('--mob-layer', String(depth + 1));
-  const face = document.createElement('span');
+  const face = document.createElement('img');
   face.className = 'mob-face';
-  face.textContent = ['🥳', '👏', '🎉'][Math.floor(Math.random() * 3)];
+  face.src = MOB_ASSETS[index % MOB_ASSETS.length];
+  face.alt = '';
+  face.setAttribute('aria-hidden', 'true');
   const shout = document.createElement('span');
   shout.className = 'mob-shout';
   const shouts = messageData?.mobShouts?.length ? messageData.mobShouts : ['おめでとー！'];

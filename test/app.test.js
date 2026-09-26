@@ -297,6 +297,25 @@ test('celebration starts with 20 layered mobs, reaches 40 in three seconds, and 
   assert.equal(app.get('mob-crowd').children.length, 40);
   assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 3);
 });
+test('celebration uses local plush character assets instead of emoji mobs', async () => {
+  const source = await readFile(new URL('../dist/app.js', import.meta.url), 'utf8');
+  assert.match(source, /MOB_ASSETS/);
+  assert.doesNotMatch(source, /🥳|👏|🎉/);
+  for (const asset of ['mob-purple-bear-v2.png', 'mob-gold-bunny-v2.png', 'mob-coral-pup-v2.png']) {
+    const image = await readFile(new URL(`../dist/assets/${asset}`, import.meta.url));
+    assert.ok(image.length > 10_000);
+  }
+});
+
+test('cake base is a local candle-free asset and candles remain dynamic SVG', async () => {
+  const [html, cake] = await Promise.all([
+    readFile(new URL('../dist/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../dist/assets/cake-base-v2.png', import.meta.url))
+  ]);
+  assert.match(html, /assets\/cake-base-v2\.png/);
+  assert.match(html, /id="candles"/);
+  assert.ok(cake.length > 10_000);
+});
 test('celebration uses a visual pop with synthesized applause and cheers, without browser speech', async () => {
   const app = harness(() => Promise.reject());
   app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
