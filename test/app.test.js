@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
 import * as core from '../dist/core.js';
 import * as celebration from '../dist/celebration.js';
-import { SONG } from '../dist/song.js';
+import { SONG, PLUSH_SONG } from '../dist/song.js';
 const messageData = JSON.parse(await readFile(new URL('../dist/messages.json', import.meta.url), 'utf8'));
 const code = (await readFile(new URL('../dist/app.js', import.meta.url), 'utf8')).replace(/^\uFEFF?import[^\n]+\n|^import[^\n]+\n/gm, '');
 
@@ -53,7 +53,7 @@ function harness(getUserMedia, withAudio = true, songDuration = 0) {
     addEventListener(name, callback) { this.events[name] = callback; }
   };
   const context = {
-    ...core, ...celebration, SONG, messageData, document, window, navigator: {mediaDevices: {getUserMedia: (...args) => { requested++; return getUserMedia(...args); }}},
+    ...core, ...celebration, SONG, PLUSH_SONG, messageData, document, window, navigator: {mediaDevices: {getUserMedia: (...args) => { requested++; return getUserMedia(...args); }}},
     performance: {now: () => now}, Float32Array,
     setTimeout: window.setTimeout, clearTimeout: id => timers.delete(id),
     requestAnimationFrame: cb => { raf.set(++id, cb); return id; }, cancelAnimationFrame: id => raf.delete(id)
@@ -242,6 +242,29 @@ test('song keeps microphone cues and detection off until the song ends', async (
   app.runTimer(SONG.durationMs);
   assert.equal(app.get('blow-cue').hidden, false);
   assert.equal(app.get('volume-area').hidden, false);
+});
+test('plush mode releases its permission microphone, shows the micro:bit lyric timeline, then reacquires before one blow clears all candles', async () => {
+  const mics = [microphone(), microphone()]; let micIndex = 0;
+  const app = harness(() => Promise.resolve(mics[micIndex++].stream));
+  app.get('mode-plush').checked = true;
+  app.count(10); app.name('けいこ'); app.submit(); await flush();
+  assert.equal(app.document.body.dataset.scene, 'plush-prepare');
+  assert.equal(mics[0].track.stopped, true);
+  app.runTimer(300);
+  assert.equal(app.get('plush-pop').disabled, false);
+  app.get('plush-pop').click();
+  assert.equal(app.document.body.dataset.scene, 'song');
+  assert.equal(app.get('plush-again').hidden, false);
+  app.runTimer(100);
+  assert.match(app.get('song-lyrics').textContent, /ハッピーバースデー/);
+  assert.equal(app.requested(), 1);
+  app.runTimer(PLUSH_SONG.durationMs + 100); await flush();
+  assert.equal(app.requested(), 2);
+  assert.equal(app.get('blow-cue').hidden, true);
+  app.frames(60, 0);
+  assert.equal(app.get('blow-cue').hidden, false);
+  app.frames(20, .18);
+  assert.equal(app.get('remaining').textContent, 0);
 });
 test('allowed and denied microphones preserve the exact started card copy', async () => {
   for (const grant of [true, false]) {

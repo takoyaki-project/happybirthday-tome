@@ -10,3 +10,14 @@ export const SONG = { durationMs: songEndMs(notes), notes, lyrics: [
   [0, 'Happy birthday\nto you'], [3360, 'Happy birthday\nto you'],
   [6720, 'Happy birthday\nDear {name}'], [10600, 'Happy birthday\nto you']
 ] };
+// micro:bit's built-in Birthday melody is four three-second phrases.
+// The app displays these lyrics but never plays its notes.
+export const PLUSH_SONG = {
+  durationMs: 12000,
+  lyrics: [
+    [0, '\u30cf\u30c3\u30d4\u30fc\u30d0\u30fc\u30b9\u30c7\u30fc\n\u30c8\u30a5\u30fc\u30e6\u30fc'],
+    [3000, '\u30cf\u30c3\u30d4\u30fc\u30d0\u30fc\u30b9\u30c7\u30fc\n\u30c8\u30a5\u30fc\u30e6\u30fc'],
+    [6000, '\u30cf\u30c3\u30d4\u30fc\u30d0\u30fc\u30b9\u30c7\u30fc\n\u30c7\u30a3\u30a2\u3001{name}'],
+    [9000, '\u30cf\u30c3\u30d4\u30fc\u30d0\u30fc\u30b9\u30c7\u30fc\n\u30c8\u30a5\u30fc\u30e6\u30fc']
+  ]
+};

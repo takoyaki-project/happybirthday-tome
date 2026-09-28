@@ -1,9 +1,9 @@
 import { validCount, candleLayout, rms, createBlowDetector } from './core.js';
 
 import { BLOW_SENSITIVITY } from './core.js';
-import { SONG } from './song.js';
+import { SONG, PLUSH_SONG } from './song.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'song-lyrics', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'mode-phone', 'mode-plush', 'start', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'song-lyrics', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -26,11 +26,22 @@ let currentCelebrationMessage = '';
 let mobTimer = 0;
 let mobCount = 0;
 let messageData = null;
+let playMode = 'phone';
+let plushCalibrationComplete = false;
 const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
 const RECENT_MESSAGE_LIMIT = 5;
 const MAX_MOBS = 40;
+const PLUSH_SONG_START_OFFSET_MS = 100;
+const PLUSH_PERMISSION_SETTLE_MS = 300;
+// Noise and pop overlap, so this keeps their combined peak under full scale.
+const PLUSH_CRACKER_GAIN = .58;
+const PLUSH_CRACKER_DURATION_MS = 400;
+const PLUSH_CRACKER_NOISE_DURATION_MS = 180;
+const PLUSH_CRACKER_POP_START_HZ = 1260;
+const PLUSH_CRACKER_POP_END_HZ = 720;
+const PLUSH_CONFETTI_COUNT = 22;
 const INITIAL_MOBS = 20;
 const MOB_ASSETS = ['./assets/mob-purple-bear-v2.png', './assets/mob-gold-bunny-v2.png', './assets/mob-coral-pup-v2.png', './assets/mob-chick-v2.png', './assets/mob-mint-bunny-v2.png'];
 const MOB_SLOTS = [
@@ -98,10 +109,10 @@ function meter(level, measuredLevel = 0) {
 // The bubble and remaining count always share this single visibility boundary.
 // When singing is added, change the readiness condition here after song completion.
 function updateBlowCue() {
-  ui['blow-cue'].hidden = !(scene === 'song' && phase === 'active');
+  ui['blow-cue'].hidden = !(scene === 'song' && phase === 'active' && (playMode !== 'plush' || plushCalibrationComplete));
 }
 function updateGauge() {
-  const waiting = scene === 'song' && phase === 'active';
+  const waiting = scene === 'song' && phase === 'active' && (playMode !== 'plush' || plushCalibrationComplete);
   ui['volume-area'].hidden = !waiting;
   ui['debug-toggle'].hidden = !waiting;
   ui['debug-value'].hidden = !waiting || !showDebugValue;
@@ -130,11 +141,14 @@ function controls() {
   ui['celebration-title'].textContent = scene === 'celebrate' ? (ui.name.value.trim() ? `${ui.name.value.trim()}さん、おめでとう！` : 'おめでとう！') : 'おめでとう！';
   ui.setup.hidden = !entry;
   ui.started.hidden = entry;
-  ui.name.disabled = ui.count.disabled = ui.start.disabled = locked;
+  ui.name.disabled = ui.count.disabled = ui['mode-phone'].disabled = ui['mode-plush'].disabled = ui.start.disabled = locked;
   ui.resume.hidden = phase !== 'paused';
-  ui.fallback.hidden = scene !== 'song' || phase !== 'preparing';
+  ui.fallback.hidden = playMode === 'plush' || scene !== 'song' || phase !== 'preparing';
+  ui['plush-prepare'].hidden = scene !== 'plush-prepare';
+  ui['plush-pop'].disabled = scene !== 'plush-prepare' || phase !== 'plush-ready';
+  ui['plush-again'].hidden = !(playMode === 'plush' && scene === 'song' && phase === 'singing');
   ui.reset.hidden = entry;
-  ui['cake-button'].disabled = scene !== 'song' || phase !== 'active';
+  ui['cake-button'].disabled = scene !== 'song' || phase !== 'active' || (playMode === 'plush' && !plushCalibrationComplete);
   ui['sound-test'].hidden = scene !== 'song' || !['active', 'complete'].includes(phase);
   ui['song-lyrics'].hidden = scene !== 'song';
   ui['song-recipient'].hidden = scene !== 'song';
@@ -204,7 +218,7 @@ function releaseAudio() {
 function stopPending() { generation++; clearTimeout(timer); timer = 0; songTimers.forEach(clearTimeout); songTimers = []; }
 
 // Always called synchronously inside a tap/click handler, before requesting the mic.
-function prepareSound() {
+function prepareSound(playReadyTone = true) {
   try {
     if (!audio || audio.state === 'closed') {
       const Audio = window.AudioContext || window.webkitAudioContext;
@@ -213,7 +227,7 @@ function prepareSound() {
     }
     const ctx = audio;
     void ctx.resume().catch(() => {});
-    for (const [i, hz] of [659.25, 880].entries()) {
+    if (playReadyTone) for (const [i, hz] of [659.25, 880].entries()) {
       const oscillator = ctx.createOscillator();
       const gain = ctx.createGain();
       const when = ctx.currentTime + .03 + i * .18;
@@ -227,7 +241,7 @@ function prepareSound() {
       oscillator.stop(when + .28);
       oscillator.onended = () => { oscillator.disconnect(); gain.disconnect(); };
     }
-    ignoreUntil = performance.now() + 1000;
+    ignoreUntil = performance.now() + (playReadyTone ? 1000 : 0);
     ctx.onstatechange = () => {
       if (audio === ctx && ['active', 'singing'].includes(phase) && ['interrupted', 'suspended'].includes(ctx.state)) pause();
     };
@@ -262,6 +276,108 @@ function beginSong(ctx, ticket, useTap = false) {
   status('歌が終わるまで、みんなで歌ってね。');
   controls();
   playSong(ctx, ticket);
+}
+function burstPlushConfetti() {
+  ui['plush-confetti'].replaceChildren();
+  for (let i = 0; i < PLUSH_CONFETTI_COUNT; i++) {
+    const piece = document.createElement('span');
+    piece.style.setProperty('--confetti-x', `${5 + (i * 37) % 90}%`);
+    piece.style.setProperty('--confetti-turn', `${(i * 47) % 180 - 90}deg`);
+    piece.style.setProperty('--confetti-delay', `${(i % 6) * 28}ms`);
+    ui['plush-confetti'].append(piece);
+  }
+}
+function playPlushCracker(ctx) {
+  if (!ctx || ctx.state !== 'running') return false;
+  try {
+    const at = ctx.currentTime + .02;
+    if (ctx.createBuffer && ctx.createBufferSource) {
+      const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * PLUSH_CRACKER_NOISE_DURATION_MS / 1000), ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const noise = ctx.createBufferSource(); const noiseGain = ctx.createGain();
+      noise.buffer = buffer;
+      noiseGain.gain.setValueAtTime(.001, at);
+      noiseGain.gain.exponentialRampToValueAtTime(PLUSH_CRACKER_GAIN, at + .008);
+      noiseGain.gain.exponentialRampToValueAtTime(.001, at + PLUSH_CRACKER_NOISE_DURATION_MS / 1000);
+      noise.connect(noiseGain).connect(ctx.destination); noise.start(at); noise.stop(at + PLUSH_CRACKER_NOISE_DURATION_MS / 1000 + .01);
+    }
+    const pop = ctx.createOscillator(); const popGain = ctx.createGain();
+    pop.type = 'triangle'; pop.frequency.setValueAtTime(PLUSH_CRACKER_POP_START_HZ, at);
+    pop.frequency.exponentialRampToValueAtTime(PLUSH_CRACKER_POP_END_HZ, at + .12);
+    popGain.gain.setValueAtTime(.001, at);
+    popGain.gain.exponentialRampToValueAtTime(PLUSH_CRACKER_GAIN * .68, at + .006);
+    popGain.gain.exponentialRampToValueAtTime(.001, at + PLUSH_CRACKER_DURATION_MS / 1000);
+    pop.connect(popGain).connect(ctx.destination); pop.start(at); pop.stop(at + PLUSH_CRACKER_DURATION_MS / 1000 + .02);
+    return true;
+  } catch { return false; }
+}
+function attachPlushMicrophone(ctx, ticket) {
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { activateTap(); return; }
+  let request;
+  try { request = navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}, video: false}); } catch { activateTap(); return; }
+  void request.then(async incoming => {
+    if (ticket !== generation || scene !== 'song' || phase !== 'singing' || document.hidden) {
+      incoming.getTracks().forEach(track => track.stop()); return;
+    }
+    try {
+      await ctx.resume();
+      stream = incoming;
+      analyser = ctx.createAnalyser(); analyser.fftSize = 1024;
+      source = ctx.createMediaStreamSource(incoming); source.connect(analyser);
+      for (const track of incoming.getAudioTracks()) {
+        track.onended = () => { if (phase === 'active') activateTap(); };
+        track.onmute = () => { if (phase === 'active') pause(); };
+      }
+      plushCalibrationComplete = false;
+      phase = 'active'; controls();
+      status('まわりの音を測っています…');
+      listen(ctx, ticket);
+    } catch { incoming.getTracks().forEach(track => track.stop()); activateTap(); }
+  }).catch(() => activateTap());
+}
+function playPlushSong() {
+  if (playMode !== 'plush' || !['plush-ready', 'singing'].includes(phase)) return;
+  stopPending();
+  const ticket = generation;
+  const ctx = prepareSound(false);
+  if (!ctx) { tapOnly = true; }
+  scene = 'song'; phase = 'singing'; plushCalibrationComplete = false;
+  controls(); burstPlushConfetti();
+  if (ctx) { void ctx.resume().then(() => playPlushCracker(ctx)); }
+  const displayName = ui.name.value.trim() || 'あなた';
+  PLUSH_SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => {
+    if (ticket === generation && phase === 'singing') ui['song-lyrics'].textContent = lyric.replace('{name}', displayName);
+  }, PLUSH_SONG_START_OFFSET_MS + offset)));
+  timer = window.setTimeout(() => {
+    if (ticket !== generation || phase !== 'singing') return;
+    if (tapOnly || !ctx) { activateTap(); return; }
+    attachPlushMicrophone(ctx, ticket);
+  }, PLUSH_SONG_START_OFFSET_MS + PLUSH_SONG.durationMs);
+}
+function beginPlushPreparation() {
+  scene = 'plush-prepare'; phase = 'preparing'; tapOnly = false; plushCalibrationComplete = false;
+  stopPending();
+  const ticket = generation;
+  const ctx = prepareSound(false);
+  controls(); document.activeElement?.blur();
+  if (!ctx || !window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+    tapOnly = true; phase = 'plush-ready'; controls(); return;
+  }
+  let request;
+  try { request = navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}, video: false}); } catch { tapOnly = true; phase = 'plush-ready'; controls(); return; }
+  void request.then(incoming => {
+    incoming.getTracks().forEach(track => track.stop());
+    if (ticket !== generation || scene !== 'plush-prepare' || document.hidden) return;
+    timer = window.setTimeout(() => {
+      if (ticket !== generation || scene !== 'plush-prepare') return;
+      void ctx.resume().catch(() => {});
+      phase = 'plush-ready'; controls();
+    }, PLUSH_PERMISSION_SETTLE_MS);
+  }).catch(() => {
+    if (ticket !== generation || scene !== 'plush-prepare') return;
+    tapOnly = true; phase = 'plush-ready'; controls();
+  });
 }
 function activateTap() {
   stopPending();
@@ -382,6 +498,7 @@ function beginCelebration() {
 }
 function extinguish(all = false) {
   if (phase !== 'active') return;
+  if (playMode === 'plush') all = true;
   const amount = all ? remaining : Math.min(remaining, Math.max(1, Math.ceil(total / 5)));
   // Clear in an even spread, so a gentle blow visibly affects several cake rows.
   const lit = candles.filter(candle => !candle.classList.contains('out'));
@@ -425,6 +542,7 @@ function listen(ctx, ticket) {
       noiseSamples.sort((a, b) => a - b);
       baseline = noiseSamples[Math.floor(noiseSamples.length / 2)] || 0;
       detector = createBlowDetector(BLOW_SENSITIVITY);
+      if (playMode === 'plush') { plushCalibrationComplete = true; controls(); }
       status('準備OK！ 小さな声で少しずつ、大きな声で一気に。');
     }
     const delta = detector ? Math.max(0, raw - baseline) : 0;
@@ -447,6 +565,8 @@ function start(resuming = false) {
     total = count;
     renderCake();
     tapOnly = false;
+    playMode = ui['mode-plush'].checked ? 'plush' : 'phone';
+    if (playMode === 'plush') { beginPlushPreparation(); return; }
     scene = 'song';
   }
   stopPending();
@@ -505,6 +625,10 @@ function reset() {
   currentCelebrationMessage = '';
   releaseAudio();
   tapOnly = false;
+  playMode = 'phone';
+  plushCalibrationComplete = false;
+  ui['mode-phone'].checked = true;
+  ui['mode-plush'].checked = false;
   renderCake();
   controls();
   status('スタートすると、マイクの許可を確認します。');
@@ -512,6 +636,8 @@ function reset() {
 ui.setup.addEventListener('submit', event => { event.preventDefault(); start(); });
 ui.resume.addEventListener('click', () => start(true));
 ui.fallback.addEventListener('click', () => activateTap());
+ui['plush-pop'].addEventListener('click', playPlushSong);
+ui['plush-again'].addEventListener('click', playPlushSong);
 ui['cake-button'].addEventListener('click', () => extinguish());
 ui.reset.addEventListener('click', reset);
 ui.count.addEventListener('input', () => {

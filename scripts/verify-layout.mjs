@@ -96,6 +96,18 @@ try {
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
   await screenshot('entry-390x844.png');
 
+  await evaluate("document.getElementById('mode-plush').checked=true;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
+  await sleep(500);
+  const plushPrepare = await evaluate("(()=>({scene:document.body.dataset.scene,visible:!!document.getElementById('plush-prepare').getClientRects().length,enabled:!document.getElementById('plush-pop').disabled,lyrics:!!document.getElementById('song-lyrics').getClientRects().length}))()");
+  assert.deepEqual(plushPrepare, {scene: 'plush-prepare', visible: true, enabled: true, lyrics: false});
+  await screenshot('plush-prepare-390x844.png');
+  await evaluate("document.getElementById('plush-pop').click()");
+  await sleep(250);
+  const plushSong = await read();
+  fits(plushSong); assert.equal(plushSong.scene, 'song'); assert.ok(plushSong.lyrics && !plushSong.bubble && !plushSong.gauge);
+  await screenshot('plush-song-390x844.png');
+  await evaluate("document.getElementById('reset').click()");
+
   await evaluate("delete window.__testSongDuration;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
   await sleep(300); await screenshot('song-line-1-390x844.png');
   await sleep(3400); await screenshot('song-line-2-390x844.png');
