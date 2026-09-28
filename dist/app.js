@@ -307,8 +307,8 @@ function addMob() {
   const shouts = messageData?.mobShouts?.length ? messageData.mobShouts : ['おめでとー！'];
   shout.textContent = shouts[Math.floor(Math.random() * shouts.length)];
   mob.append(face, shout);
-  const next = keepLatestMobs([...ui['mob-crowd'].children], [mob]);
-  ui['mob-crowd'].replaceChildren(...next);
+  ui['mob-crowd'].append(mob);
+  while (ui['mob-crowd'].children.length > MAX_MOBS) ui['mob-crowd'].children[0].remove();
   updateMobShouts();
 }
 function updateMobShouts() {
