@@ -7,6 +7,6 @@ const notes = [
 ];
 export const songEndMs = (events = notes) => Math.max(...events.map(([start, , duration]) => start + duration));
 export const SONG = { durationMs: songEndMs(notes), notes, lyrics: [
-  [0, 'ハッピーバースデー\nトゥーユー'], [3360, 'ハッピーバースデー\nトゥーユー'],
-  [6720, 'ハッピーバースデー\nディア、{name}'], [10600, 'ハッピーバースデー\nトゥーユー']
+  [0, 'Happy birthday\nto you'], [3360, 'Happy birthday\nto you'],
+  [6720, 'Happy birthday\nDear {name}'], [10600, 'Happy birthday\nto you']
 ] };
