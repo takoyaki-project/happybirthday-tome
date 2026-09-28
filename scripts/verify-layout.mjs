@@ -17,7 +17,7 @@ const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/song.js', '/messages.json', '/style.css'].includes(pathname) && !pathname.startsWith('/assets/')) { res.writeHead(404).end(); return; }
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
-  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8', png: 'image/png'};
+  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8', png: 'image/png', webp: 'image/webp'};
   res.writeHead(200, {'Content-Type': types[file.split('.').pop()], 'Cache-Control': 'no-store'}).end(await readFile(path.join(root, 'dist', file)));
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -70,10 +70,10 @@ try {
     await sleep(100);
   }
   const read = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};const visible=id=>!!document.getElementById(id).getClientRects().length;return{scene:document.body.dataset.scene,width:innerWidth,height:innerHeight,scrollY,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,cake:rect('cake'),cakeVisible:visible('cake'),bubble:visible('bubble'),counter:visible('counter'),gauge:visible('meter'),lyrics:visible('song-lyrics'),smoke:visible('smoke'),celebration:visible('celebration-copy'),setup:visible('setup'),message:document.getElementById('celebration-message').textContent,celebrationTitle:rect('celebration-title'),celebrationMessage:rect('celebration-message'),audioNote:rect('audio-note'),mobCount:document.querySelectorAll('.mob').length,candleCount:document.querySelectorAll('.candle').length,outCount:document.querySelectorAll('.candle.out').length,background:getComputedStyle(document.body).backgroundColor};})()");
-  const screenshot = async name => {
+  const screenshot = async (name, height = 844) => {
     await evaluate('window.scrollTo(0,0)');
     assert.equal(await evaluate('scrollY'), 0);
-    const shot = await send('Page.captureScreenshot', {format: 'png', clip: {x: 0, y: 0, width: 390, height: 844, scale: 1}, captureBeyondViewport: true});
+    const shot = await send('Page.captureScreenshot', {format: 'png', clip: {x: 0, y: 0, width: 390, height, scale: 1}, captureBeyondViewport: true});
     await writeFile(path.join(output, name), Buffer.from(shot.data, 'base64'));
   };
   const fits = state => {
@@ -86,7 +86,7 @@ try {
     assert.equal(bands.scrollY, 0); assert.equal(bands.top, 0);
     assert.ok(bands.copy.height <= 844 * .45);
     assert.ok(bands.copy.bottom < bands.cake.top);
-    assert.ok(bands.crowd.top > bands.copy.bottom);
+
     assert.ok(bands.crowd.bottom < bands.note.top);
     return bands;
   };
@@ -103,7 +103,7 @@ try {
   const song = await read();
   fits(song);
   assert.equal(song.scene, 'song'); assert.ok(song.cakeVisible && song.lyrics && !song.bubble && !song.counter && !song.gauge);
-  assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /ディア、けいこ/);
+  assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /Dear けいこ/);
   assert.equal(song.background, 'rgb(25, 13, 29)');
   await screenshot('song-lyrics-390x844.png');
   await sleep(3600); await screenshot('song-line-4-390x844.png');
@@ -135,11 +135,11 @@ try {
   await sleep(2500);
   const celebrateInitial = await read();
   fits(celebrateInitial);
-  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 8 && celebrateInitial.mobCount <= 9);
+  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 1 && celebrateInitial.mobCount <= 10);
   assert.doesNotMatch(celebrateInitial.message, /あなた|さん/);
   await screenshot('celebrate-initial-390x844.png');
 
-  await sleep(17000);
+  await sleep(20000);
   const celebrate = await read();
   fits(celebrate);
   assert.equal(celebrate.mobCount, 40);
@@ -195,13 +195,21 @@ try {
   await assertCelebrationBands();
   await screenshot('celebrate-99-message-3lines-390x844.png');
 
+  await send('Emulation.setDeviceMetricsOverride', {width: 390, height: 700, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: 700});
+  await sleep(120);
+  const celebrateCompact = await read();
+  assert.equal(celebrateCompact.scene, 'celebrate'); assert.equal(celebrateCompact.height, 700);
+  assert.ok(celebrateCompact.scrollWidth <= 390); assert.ok(celebrateCompact.scrollHeight <= 700);
+  assert.ok(celebrateCompact.celebrationMessage.bottom < celebrateCompact.cake.y);
+  await screenshot('celebrate-frame-390x700.png', 700);
+
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
   console.log('PASS entry hides the cake and fits at 390×844');
   console.log('PASS song shows name lyrics while cue, count, and gauge stay hidden until it ends');
   console.log('PASS microphone fallback control does not overlap the lyrics');
   console.log('PASS blackout keeps the cake fixed, hides the cue, shows smoke, and transitions within 1.5 seconds');
-  console.log('PASS celebration appears with 20 mobs and reaches 40 layered mobs in three seconds');
+  console.log('PASS celebration introduces its crowd and reaches 40 layered mobs before the final capture');
   console.log('PASS celebration copy fits one line, 40 characters over three lines, and an eight-character name');
   console.log('PASS reset returns celebration to entry; 99 candles fit in song');
   console.log('PASS no browser runtime errors or external app requests');

@@ -291,6 +291,7 @@ test('stage 2 uses one scene state for entry, song, blackout, celebration, and e
 test('celebration introduces eight lead mobs gently, then reaches 40 with at most three shouts', async () => {
   const app = harness(() => Promise.reject());
   app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
+  app.runTimer(500);
   assert.equal(app.get('mob-crowd').children.length, 1);
   for (let i = 0; i < 7; i++) app.runTimer(320);
   assert.equal(app.get('mob-crowd').children.length, 8);

@@ -118,7 +118,9 @@ function controls() {
   document.body.dataset.scene = scene;
   ui.party.dataset.scene = scene;
   ui.party.dataset.micState = phase;
-  ui.party.classList[scene === 'celebrate' && Array.from(currentCelebrationMessage).length > 30 ? 'add' : 'remove']('long-celebration-message');
+  const messageLength = Array.from(currentCelebrationMessage).length;
+  ui.party.classList[scene === 'celebrate' && messageLength > 16 && messageLength <= 28 ? 'add' : 'remove']('medium-celebration-message');
+  ui.party.classList[scene === 'celebrate' && messageLength > 28 ? 'add' : 'remove']('long-celebration-message');
   ui.start.textContent = 'お祝いをはじめる';
   ui.dedication.textContent = '今日の主役へ';
   const complete = ['blackout', 'celebrate'].includes(scene);
@@ -375,7 +377,7 @@ function beginCelebration() {
   ui['celebration-message'].classList.remove('celebration-pop');
   void ui['celebration-message'].offsetWidth;
   ui['celebration-message'].classList.add('celebration-pop');
-  startMobs();
+  mobTimer = window.setTimeout(startMobs, 500);
   playCrowdCheer();
 }
 function extinguish(all = false) {
