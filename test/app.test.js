@@ -98,8 +98,10 @@ test('microphone denial falls back to taps, completes all 99, and allows reset',
   await flush();
   assert.equal(app.get('cake-button').disabled, false);
   app.get('cake-button').click();
-  assert.equal(app.get('remaining').textContent, 79);
-  for (let i=0; i<4; i++) app.get('cake-button').click();
+  assert.equal(app.get('remaining').textContent, 66);
+  app.get('cake-button').click();
+  assert.equal(app.get('remaining').textContent, 33);
+  app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 0);
   assert.equal(app.get('candles').children.filter(c => c.classList.contains('out')).length, 99);
   assert.equal(app.contexts[0].state, 'running');
@@ -151,7 +153,7 @@ test('hide releases microphone; explicit resume keeps remaining candle count', a
   const mics = [microphone(), microphone()]; let index = 0;
   const app = harness(() => Promise.resolve(mics[index++].stream));
   app.submit(); await flush(); app.get('cake-button').click();
-  assert.equal(app.get('remaining').textContent, 4);
+  assert.equal(app.get('remaining').textContent, 3);
   app.hide();
   assert.equal(mics[0].track.stopped, true);
   assert.equal(app.contexts[0].state, 'closed');
@@ -159,7 +161,7 @@ test('hide releases microphone; explicit resume keeps remaining candle count', a
   assert.equal(app.requested(), 1);
   app.get('resume').click(); await flush();
   assert.equal(app.requested(), 2);
-  assert.equal(app.get('remaining').textContent, 4);
+  assert.equal(app.get('remaining').textContent, 3);
   assert.equal(app.get('cake-button').disabled, false);
 });
 test('microphone disconnection switches to taps', async () => {
@@ -180,7 +182,7 @@ test('calibration subtracts room noise; normal voice fills the meter in about on
   app.frames(50, core.BLOW_SENSITIVITY.meterFullDelta);
   assert.equal(app.get('meter').attributes['aria-valuenow'], 100);
   assert.equal(app.get('debug-value').textContent, core.BLOW_SENSITIVITY.meterFullDelta.toFixed(3));
-  assert.equal(app.get('remaining').textContent, 79);
+  assert.equal(app.get('remaining').textContent, 66);
   app.get('debug-toggle').click();
   assert.equal(app.get('debug-value').hidden, true);
   assert.equal(app.get('debug-toggle').attributes['aria-pressed'], 'false');
@@ -192,6 +194,26 @@ test('calibration subtracts room noise; normal voice fills the meter in about on
   assert.equal(mic.track.stopped, true);
   assert.equal(app.get('meter').attributes['aria-valuenow'], 0);
   assert.equal(app.get('meter-fill').style.width, '0%');
+});
+test('three separate gentle breaths clear five candles on the phone', async () => {
+  const mic = microphone();
+  const app = harness(() => Promise.resolve(mic.stream));
+  app.count(5); app.submit(); await flush();
+  app.frames(100, 0);
+  for (const expected of [3, 1, 0]) {
+    app.frames(15, core.BLOW_SENSITIVITY.meterFullDelta);
+    assert.equal(app.get('remaining').textContent, expected);
+    if (expected) app.frames(50, 0);
+  }
+  assert.equal(mic.track.stopped, true);
+});
+test('any allowed candle count clears within three fallback taps', async () => {
+  for (const count of [1, 2, 3, 4, 5, 10, 99]) {
+    const app = harness(() => Promise.reject());
+    app.count(count); app.submit(); await flush();
+    for (let taps = 0; taps < 3 && app.get('remaining').textContent > 0; taps++) app.get('cake-button').click();
+    assert.equal(app.get('remaining').textContent, 0, `${count} candles`);
+  }
 });
 test('an interrupted audio context pauses and releases the microphone', async () => {
   const mic = microphone();

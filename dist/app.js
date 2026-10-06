@@ -32,6 +32,7 @@ const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふ�
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
 const RECENT_MESSAGE_LIMIT = 5;
+const MAX_GENTLE_BLOWS = 3;
 const MAX_MOBS = 40;
 const PLUSH_SONG_START_OFFSET_MS = 100;
 const PLUSH_PERMISSION_SETTLE_MS = 300;
@@ -523,7 +524,7 @@ function beginCelebration() {
 function extinguish(all = false) {
   if (phase !== 'active') return;
   if (playMode === 'plush') all = true;
-  const amount = all ? remaining : Math.min(remaining, Math.max(1, Math.ceil(total / 5)));
+  const amount = all ? remaining : Math.min(remaining, Math.max(1, Math.ceil(total / MAX_GENTLE_BLOWS)));
   // Clear in an even spread, so a gentle blow visibly affects several cake rows.
   const lit = candles.filter(candle => !candle.classList.contains('out'));
   for (let i = 0; i < amount; i++) lit[Math.floor(i * lit.length / amount)].classList.add('out');
