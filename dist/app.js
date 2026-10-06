@@ -35,8 +35,8 @@ const MAX_GENTLE_BLOWS = 3;
 const MAX_MOBS = 40;
 const PLUSH_SONG_START_OFFSET_MS = 100;
 const PLUSH_MICROBIT_READY_DELAY_MS = 1000;
-// 12 s melody + about 1 s before the micro:bit listens + 2 s to blow + 1 s blackout.
-const PLUSH_CELEBRATION_DELAY_MS = 16000;
+// The observed micro:bit heart/sound arrives around 18 s after the pop; allow 1 s of margin.
+const PLUSH_CELEBRATION_DELAY_MS = 19000;
 const BLACKOUT_DURATION_MS = 1000;
 // A sharp, broadband pop with a short thump; avoid sustained tones that sound like a buzzer.
 const PLUSH_CRACKER_GAIN = .92;

@@ -149,3 +149,11 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .plush-prepare .plush-tip { margin: 14px 0 0; color: #ffe3af; font-size: 12px; font-weight: 700; line-height: 1.5; }
 @media (max-height: 740px) { .party[data-scene="plush-prepare"] .cake-button { top: 380px; } }
 .party[data-play-mode="plush"][data-mic-state="plush-wait"] .song-lyrics { color: #fff0cd; font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: clamp(27px, 7.8vw, 34px); font-style: normal; font-weight: 800; line-height: 1.25; letter-spacing: .04em; }
+
+/* Keep the cake fixed as the song becomes the blackout and then the celebration. */
+.party:not([data-scene="entry"]) { --stage-cake-top: clamp(392px, 47svh, 410px); --stage-cake-height: calc(min(100vw, 430px) * 235 / 360); }
+.party:is([data-scene="song"], [data-scene="blackout"], [data-scene="celebrate"]) .cake-button { top: var(--stage-cake-top); }
+.party[data-play-mode="phone"][data-scene="song"] .blow-cue { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 6px); }
+.party[data-play-mode="phone"][data-scene="song"] .volume-area { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 65px); }
+@media (min-height: 741px) { .party[data-scene="song"] .scene-copy { top: clamp(145px, 20svh, 185px); } }
+@media (max-height: 740px) { .party:not([data-scene="entry"]) { --stage-cake-top: 300px; } }

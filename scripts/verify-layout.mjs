@@ -147,6 +147,7 @@ try {
   await sleep(2500);
   const celebrateInitial = await read();
   fits(celebrateInitial);
+  assert.deepEqual(celebrateInitial.cake, songReady.cake);
   assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 1 && celebrateInitial.mobCount < 40);
   assert.doesNotMatch(celebrateInitial.message, /あなた|さん/);
   await screenshot('celebrate-initial-390x844.png');
@@ -246,6 +247,7 @@ try {
     await sleep(250);
     assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /^Happy birthday\nto you$/);
     const lyric = (await visibleBounds('#song-lyrics'))[0];
+    const songCake = (await visibleBounds('#cake'))[0];
     const retry = (await visibleBounds('#plush-again'))[0];
     assert.ok(lyric.left >= 16 && lyric.right <= width-16 && lyric.top >= 80 && lyric.scrollWidth <= lyric.clientWidth+1, 'lyrics fit below the curtains');
     assert.ok(retry.top > lyric.bottom && retry.right <= width-8 && retry.bottom <= height, 'retry stays below the lyrics');
@@ -260,14 +262,20 @@ try {
       assert.ok(blowGuide.bottom + 12 < plushCake.top, 'plush blow guide clears the cake');
       assert.equal(await evaluate("document.getElementById('volume-area').hidden"), true);
       await screenshot(`${reviewDir}/plush-blow-${size}.png`, height);
-      await sleep(Math.max(0, 15200 - (await evaluate('performance.now()') - plushStartedAt)));
+      await sleep(Math.max(0, 18200 - (await evaluate('performance.now()') - plushStartedAt)));
       assert.equal(await evaluate('document.body.dataset.scene'), 'blackout');
-      await sleep(Math.max(0, 16300 - (await evaluate('performance.now()') - plushStartedAt)));
+      await sleep(Math.max(0, 19300 - (await evaluate('performance.now()') - plushStartedAt)));
       assert.equal(await evaluate('document.body.dataset.scene'), 'celebrate');
+      assert.ok(Math.abs((await visibleBounds('#cake'))[0].top - songCake.top) < 1, 'plush cake stays fixed through celebration');
       await screenshot(`${reviewDir}/plush-celebrate-${size}.png`, height);
     }
     await evaluate("document.getElementById('reset').click();window.__testSongDuration=100;document.getElementById('start').click()");
     await sleep(400);
+    const phoneCake = (await visibleBounds('#cake'))[0];
+    const phoneCue = (await visibleBounds('#blow-cue'))[0];
+    const phoneMeter = (await visibleBounds('#volume-area'))[0];
+    assert.ok(Math.abs(phoneCake.top - songCake.top) < 1, `phone and plush cake align ${size}`);
+    assert.ok(phoneCue.top >= phoneCake.bottom + 4 && phoneMeter.top >= phoneCue.bottom + 4 && phoneMeter.bottom <= height - 8, `phone blow controls clear cake ${size}`);
     await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
     await sleep(1100);
     const began = await evaluate('performance.now()');
@@ -286,6 +294,7 @@ try {
     assert.equal(await evaluate("Array.from(document.querySelectorAll('.mob.is-speaking')).every(el=>Number(getComputedStyle(el).zIndex)>5)"), true);
     const frameBounds = (await visibleBounds('.frame-shell'))[0];
     const cakeBounds = (await visibleBounds('#cake'))[0];
+    assert.ok(Math.abs(cakeBounds.top - songCake.top) < 1, `celebration cake stays fixed ${size}`);
     assert.ok(frameBounds.bottom + 8 <= cakeBounds.top, 'frame has breathing room above cake');
     for (const box of shouts) assert.ok(box.left >= 8 && box.right <= width-8 && box.top >= 0 && box.bottom <= height-30, `speech fits ${size}: ${JSON.stringify(box)}`);
     assert.equal(await evaluate("document.querySelectorAll('.mob').length"), 40);

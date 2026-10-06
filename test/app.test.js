@@ -288,7 +288,7 @@ test('plush mode needs no phone microphone and celebrates on the micro:bit timel
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('volume-area').hidden, true);
   assert.equal(app.get('cake-button').disabled, true);
-  app.runTimer(15000);
+  app.runTimer(18000);
   assert.equal(app.get('remaining').textContent, 0);
   assert.equal(app.document.body.dataset.scene, 'blackout');
   app.runTimer(1000);
@@ -392,13 +392,13 @@ test('plush retry restarts the song and celebration timer without opening the mi
   app.get('mode-plush').checked = true;
   app.count(99); app.submit();
   app.get('plush-pop').click();
-  const firstCountdown = [...app.timers.values()].find(timer => timer.delay === 15000).callback;
+  const firstCountdown = [...app.timers.values()].find(timer => timer.delay === 18000).callback;
   app.get('plush-again').click();
   assert.equal(app.contexts[0].sources.length, 2);
   firstCountdown();
   assert.equal(app.document.body.dataset.scene, 'song', 'the cancelled countdown cannot complete the retry');
   app.runTimer(PLUSH_SONG.durationMs + 100);
-  app.runTimer(15000);
+  app.runTimer(18000);
   assert.equal(app.get('remaining').textContent, 0);
   assert.equal(app.document.body.dataset.scene, 'blackout');
   assert.equal(app.requested(), 0);
@@ -409,7 +409,7 @@ test('plush mode does not start a silent celebration when audio cannot play', ()
   app.submit(); app.get('plush-pop').click();
   assert.equal(app.document.body.dataset.scene, 'plush-prepare');
   assert.equal(app.get('plush-pop').disabled, false);
-  assert.equal([...app.timers.values()].some(timer => timer.delay === 15000), false);
+  assert.equal([...app.timers.values()].some(timer => timer.delay === 18000), false);
   assert.equal(app.requested(), 0);
 });
 test('returning to a hidden plush page offers a fresh cracker, not the phone microphone flow', () => {
