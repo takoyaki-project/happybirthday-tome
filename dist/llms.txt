@@ -1,0 +1,10 @@
+# 自分に、おめでとう。 | TAKOYAKI PROJECT
+
+公開URL: https://takoyaki-project.github.io/happybirthday-tome/
+ソースコード: https://github.com/takoyaki-project/happybirthday-tome
+
+ブラウザで遊べる誕生日のお祝いアプリです。名前とろうそくの本数を選び、歌のあとに息またはタップで火を消すと、金の額縁に祝辞とお祝いのモブが現れます。
+
+「スマホだけ」モードではスマホが歌を流します。「ぬいぐるみと」モードでは音の合図でmicro:bitの歌を始めます。micro:bitとの接続にBluetoothは使いません。
+
+名前・本数・音声は保存も送信もしません。ぬいぐるみモードではスマホのマイクを使用しません。

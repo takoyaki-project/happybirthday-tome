@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /happybirthday-tome/
+Sitemap: https://takoyaki-project.github.io/happybirthday-tome/sitemap.xml

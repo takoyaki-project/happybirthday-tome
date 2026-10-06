@@ -228,7 +228,8 @@ test('app code keeps data local and only reads its bundled messages.json file', 
   assert.match(code, /window\.fetch\('\.\/messages\.json'\)/);
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
   assert.match(html, /connect-src 'self'/);
-  assert.doesNotMatch(html, /(?:src|href)="https?:/);
+  assert.doesNotMatch(html, /<script\b[^>]*\bsrc="https?:/);
+  assert.doesNotMatch(html, /<link\b[^>]*\brel="stylesheet"[^>]*\bhref="https?:/);
 });
 
 

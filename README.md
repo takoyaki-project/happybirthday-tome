@@ -4,6 +4,12 @@
 
 公開URL: https://takoyaki-project.github.io/happybirthday-tome/
 
+## 公開設定
+
+[TAKOYAKI共通キットの「公開セット（一般公開型）」](https://github.com/takoyaki-project/takoyaki-common-kit/blob/main/takoyaki-common-kit.md)に合わせて、検索用の説明と `index,follow`、共有用OGP画像（1200×630）、`llms.txt`、`robots.txt`、`sitemap.xml` を用意しています。GitHub Pagesは `dist/` を公開するため、公開用ファイルはそこに置きます。画像の元データは `dist/ogp.svg` です。
+
+このアプリは名前・本数・音声を外部に送らない設計なので、共通キットの例外に従ってGA4は入れていません。ブラウザからの外部通信もありません。
+
 ## 画面
 
 1ページ内で4つの場面を切り替えます。名前・本数・音声は保存も送信もしません。
