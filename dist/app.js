@@ -35,14 +35,22 @@ const RECENT_MESSAGE_LIMIT = 5;
 const MAX_MOBS = 40;
 const PLUSH_SONG_START_OFFSET_MS = 100;
 const PLUSH_PERMISSION_SETTLE_MS = 300;
-// Noise and pop overlap, so this keeps their combined peak under full scale.
-const PLUSH_CRACKER_GAIN = .58;
-const PLUSH_CRACKER_DURATION_MS = 400;
-const PLUSH_CRACKER_NOISE_DURATION_MS = 180;
-const PLUSH_CRACKER_POP_START_HZ = 1260;
-const PLUSH_CRACKER_POP_END_HZ = 720;
+// A sustained midrange trigger reaches small phone speakers; the soft limit stays below full scale.
+const PLUSH_CRACKER_GAIN = .9;
+const PLUSH_CRACKER_DURATION_MS = 680;
+const PLUSH_CRACKER_HOLD_MS = 560;
+const PLUSH_CRACKER_ATTACK_MS = 12;
+const PLUSH_CRACKER_DRIVE = 2.2;
+const PLUSH_CRACKER_TONES = [[1200, .5], [1750, .4], [2350, .23]];
+const PLUSH_CRACKER_NOISE_WEIGHT = .12;
 const PLUSH_CONFETTI_COUNT = 22;
-const INITIAL_MOBS = 20;
+const MOB_START_DELAY_MS = 500;
+const MOB_SOLO_INTERVAL_MS = 280;
+const MOB_WAVE_INTERVAL_MS = 560;
+const MOB_WAVE_STAGGER_MS = 24;
+const MOB_ARRIVAL_MS = 600;
+const MOB_SOLO_SLOTS = [2, 3, 6];
+const MOB_SPEAKING_SLOTS = [6, 11, 12];
 const MOB_ASSETS = ['./assets/mob-purple-bear-v2.png', './assets/mob-gold-bunny-v2.png', './assets/mob-coral-pup-v2.png', './assets/mob-chick-v2.png', './assets/mob-mint-bunny-v2.png'];
 const MOB_SLOTS = [
   {x: 3, bottom: 360, size: 58, layer: 1, asset: 3, enterX: -110, enterY: 0}, {x: 97, bottom: 355, size: 66, layer: 1, asset: 0, enterX: 110, enterY: 0},
@@ -129,6 +137,7 @@ function controls() {
   document.body.dataset.scene = scene;
   ui.party.dataset.scene = scene;
   ui.party.dataset.micState = phase;
+  ui.party.dataset.playMode = playMode;
   const messageLength = Array.from(currentCelebrationMessage).length;
   ui.party.classList[scene === 'celebrate' && messageLength > 16 && messageLength <= 28 ? 'add' : 'remove']('medium-celebration-message');
   ui.party.classList[scene === 'celebrate' && messageLength > 28 ? 'add' : 'remove']('long-celebration-message');
@@ -281,34 +290,36 @@ function burstPlushConfetti() {
   ui['plush-confetti'].replaceChildren();
   for (let i = 0; i < PLUSH_CONFETTI_COUNT; i++) {
     const piece = document.createElement('span');
-    piece.style.setProperty('--confetti-x', `${5 + (i * 37) % 90}%`);
-    piece.style.setProperty('--confetti-turn', `${(i * 47) % 180 - 90}deg`);
+    const angle = i * 2.399963;
+    piece.style.setProperty('--confetti-dx', `${Math.cos(angle) * 130}px`);
+    piece.style.setProperty('--confetti-dy', `${80 + (i % 5) * 24}px`);
+    piece.style.setProperty('--confetti-turn', `${(i * 47) % 360 - 180}deg`);
     piece.style.setProperty('--confetti-delay', `${(i % 6) * 28}ms`);
     ui['plush-confetti'].append(piece);
   }
 }
 function playPlushCracker(ctx) {
-  if (!ctx || ctx.state !== 'running') return false;
+  if (!ctx?.createBuffer || !ctx.createBufferSource) return false;
   try {
-    const at = ctx.currentTime + .02;
-    if (ctx.createBuffer && ctx.createBufferSource) {
-      const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * PLUSH_CRACKER_NOISE_DURATION_MS / 1000), ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-      const noise = ctx.createBufferSource(); const noiseGain = ctx.createGain();
-      noise.buffer = buffer;
-      noiseGain.gain.setValueAtTime(.001, at);
-      noiseGain.gain.exponentialRampToValueAtTime(PLUSH_CRACKER_GAIN, at + .008);
-      noiseGain.gain.exponentialRampToValueAtTime(.001, at + PLUSH_CRACKER_NOISE_DURATION_MS / 1000);
-      noise.connect(noiseGain).connect(ctx.destination); noise.start(at); noise.stop(at + PLUSH_CRACKER_NOISE_DURATION_MS / 1000 + .01);
+    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * PLUSH_CRACKER_DURATION_MS / 1000), ctx.sampleRate);
+    const samples = buffer.getChannelData(0);
+    const attack = PLUSH_CRACKER_ATTACK_MS / 1000;
+    const hold = PLUSH_CRACKER_HOLD_MS / 1000;
+    const duration = PLUSH_CRACKER_DURATION_MS / 1000;
+    const softLimit = PLUSH_CRACKER_GAIN / Math.tanh(PLUSH_CRACKER_DRIVE);
+    for (let i = 0; i < samples.length; i++) {
+      const time = i / ctx.sampleRate;
+      const envelope = Math.min(1, time / attack, (duration - time) / (duration - hold));
+      const tones = PLUSH_CRACKER_TONES.reduce((sum, [hz, level]) => sum + level * Math.sin(2 * Math.PI * hz * time), 0);
+      const noise = PLUSH_CRACKER_NOISE_WEIGHT * (Math.random() * 2 - 1);
+      samples[i] = softLimit * Math.tanh(PLUSH_CRACKER_DRIVE * (tones + noise)) * Math.max(0, envelope);
     }
-    const pop = ctx.createOscillator(); const popGain = ctx.createGain();
-    pop.type = 'triangle'; pop.frequency.setValueAtTime(PLUSH_CRACKER_POP_START_HZ, at);
-    pop.frequency.exponentialRampToValueAtTime(PLUSH_CRACKER_POP_END_HZ, at + .12);
-    popGain.gain.setValueAtTime(.001, at);
-    popGain.gain.exponentialRampToValueAtTime(PLUSH_CRACKER_GAIN * .68, at + .006);
-    popGain.gain.exponentialRampToValueAtTime(.001, at + PLUSH_CRACKER_DURATION_MS / 1000);
-    pop.connect(popGain).connect(ctx.destination); pop.start(at); pop.stop(at + PLUSH_CRACKER_DURATION_MS / 1000 + .02);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.onended = () => source.disconnect();
+    // Schedule in the tap handler. Safari may keep the context suspended until resume resolves.
+    source.start(ctx.currentTime + .02);
     return true;
   } catch { return false; }
 }
@@ -344,7 +355,10 @@ function playPlushSong() {
   if (!ctx) { tapOnly = true; }
   scene = 'song'; phase = 'singing'; plushCalibrationComplete = false;
   controls(); burstPlushConfetti();
-  if (ctx) { void ctx.resume().then(() => playPlushCracker(ctx)); }
+  if (ctx) {
+    if (!playPlushCracker(ctx)) status('音を再生できません。音量を確認して、もう一度鳴らしてください。', true);
+    void ctx.resume().catch(() => status('音を再生できません。もう一度鳴らしてください。', true));
+  }
   const displayName = ui.name.value.trim() || 'あなた';
   PLUSH_SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => {
     if (ticket === generation && phase === 'singing') ui['song-lyrics'].textContent = lyric.replace('{name}', displayName);
@@ -383,6 +397,7 @@ function activateTap() {
   stopPending();
   releaseMic();
   tapOnly = true;
+  plushCalibrationComplete = true;
   phase = 'active';
   controls();
   status('マイクはオフです。ケーキをタップして消せます。', true);
@@ -401,19 +416,21 @@ function clearMobs() {
   mobCount = 0;
   ui['mob-crowd'].replaceChildren();
 }
-function addMob() {
+function addMob(slotIndex, delay = 0) {
   const index = mobCount++;
-  const slot = MOB_SLOTS[index % MOB_SLOTS.length];
+  const slot = MOB_SLOTS[slotIndex];
   const mob = document.createElement('div');
   mob.className = 'mob';
-  mob.style.setProperty('--mob-x', `${slot.x + (Math.random() * 3 - 1.5)}%`);
+  mob.dataset.slot = String(slotIndex);
+  mob.style.setProperty('--mob-x', `${slot.x}%`);
   mob.style.setProperty('--mob-bottom', `${slot.bottom}px`);
   mob.style.setProperty('--mob-size', `${slot.size}px`);
   mob.style.setProperty('--mob-enter-x', `${slot.enterX}px`);
   mob.style.setProperty('--mob-enter-y', `${slot.enterY}px`);
-  mob.style.setProperty('--shout-x', `${[22, 78, 36, 68, 50][index % 5]}%`);
+  mob.style.setProperty('--shout-x', '50%');
   mob.style.setProperty('--mob-scale', String(.94 + (index % 4) * .04));
-  mob.style.setProperty('--mob-delay', `${index < INITIAL_MOBS ? (index % 10) * 20 : 0}ms`);
+  mob.style.setProperty('--mob-delay', `${delay}ms`);
+  mob.style.setProperty('--mob-duration', `${MOB_ARRIVAL_MS}ms`);
   mob.style.setProperty('--mob-layer', String(slot.layer));
   const face = document.createElement('img');
   face.className = 'mob-face';
@@ -432,23 +449,30 @@ function addMob() {
 function updateMobShouts() {
   const mobs = [...ui['mob-crowd'].children];
   mobs.forEach(mob => mob.classList.remove('is-speaking'));
-  const slots = mobs.length >= MAX_MOBS ? [3, 20, 37] : [2, 9, 16];
-  slots.forEach(index => mobs[index]?.classList.add('is-speaking'));
+  mobs.filter(mob => MOB_SPEAKING_SLOTS.includes(Number(mob.dataset.slot)))
+    .forEach(mob => mob.classList.add('is-speaking'));
 }
 function startMobs() {
   clearMobs();
-  let lead = 0;
-  const addLead = () => {
-    addMob(); lead++;
-    if (lead < 8) { mobTimer = window.setTimeout(addLead, 320); return; }
-    mobTimer = window.setTimeout(addLater, 520);
+  // Three solo entrances, then four rows from the back toward the audience.
+  const rows = [[], [], [], []];
+  MOB_SLOTS.forEach((slot, index) => {
+    if (MOB_SOLO_SLOTS.includes(index)) return;
+    rows[slot.bottom >= 290 ? 0 : slot.bottom >= 200 ? 1 : slot.bottom >= 130 ? 2 : 3].push(index);
+  });
+  rows.forEach(row => row.sort((a, b) => MOB_SLOTS[a].x - MOB_SLOTS[b].x));
+  const groups = [...MOB_SOLO_SLOTS.map(index => [index]), ...rows];
+  let group = 0;
+  const enterGroup = () => {
+    if (scene !== 'celebrate') return;
+    const slots = groups[group];
+    slots.forEach((slot, index) => addMob(slot, group < 3 ? 0 : index * MOB_WAVE_STAGGER_MS));
+    group++;
+    if (group < groups.length) mobTimer = window.setTimeout(enterGroup,
+      group < 3 ? MOB_SOLO_INTERVAL_MS : MOB_WAVE_INTERVAL_MS);
+    else mobTimer = 0;
   };
-  const addLater = () => {
-    if (scene !== 'celebrate' || ui['mob-crowd'].children.length >= 40) return;
-    addMob();
-    mobTimer = window.setTimeout(addLater, 520);
-  };
-  addLead();
+  enterGroup();
 }
 function playCrowdCheer() {
   if (!audio || audio.state !== 'running') return;
@@ -493,7 +517,7 @@ function beginCelebration() {
   ui['celebration-message'].classList.remove('celebration-pop');
   void ui['celebration-message'].offsetWidth;
   ui['celebration-message'].classList.add('celebration-pop');
-  mobTimer = window.setTimeout(startMobs, 500);
+  mobTimer = window.setTimeout(startMobs, MOB_START_DELAY_MS);
   playCrowdCheer();
 }
 function extinguish(all = false) {

@@ -34,11 +34,13 @@ function harness(getUserMedia, withAudio = true, songDuration = 0) {
   const param = () => ({value: 0, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}});
   const node = () => ({connect(other) { return other; }, disconnect() {}});
   class AudioContext {
-    constructor() { this.state = 'suspended'; this.currentTime = 0; this.destination = {}; contexts.push(this); }
+    constructor() { this.state = 'suspended'; this.currentTime = 0; this.sampleRate = 48000; this.destination = {}; this.buffers = []; this.sources = []; contexts.push(this); }
     resume() { this.state = 'running'; return Promise.resolve(); }
     close() { this.state = 'closed'; return Promise.resolve(); }
     createOscillator() { return {...node(), frequency: param(), start() {}, stop() {}}; }
     createGain() { return {...node(), gain: param()}; }
+    createBuffer(_channels, length, sampleRate) { const data = new Float32Array(length); const buffer = {sampleRate, getChannelData: () => data}; this.buffers.push(buffer); return buffer; }
+    createBufferSource() { const source = {...node(), start(when) { this.startedAt = when; }, stop() {}}; this.sources.push(source); return source; }
     createMediaStreamSource() { return node(); }
     createAnalyser() { return {...node(), getFloatTimeDomainData(samples) { for (let i=0;i<samples.length;i++) samples[i] = i % 2 ? signal : -signal; }}; }
   }
@@ -256,7 +258,9 @@ test('plush mode releases its permission microphone, shows the micro:bit lyric t
   assert.equal(app.document.body.dataset.scene, 'song');
   assert.equal(app.get('plush-again').hidden, false);
   app.runTimer(100);
-  assert.match(app.get('song-lyrics').textContent, /ハッピーバースデー/);
+  assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[0][1]);
+  app.runTimer(6100);
+  assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[2][1].replace('{name}', 'けいこ'));
   assert.equal(app.requested(), 1);
   app.runTimer(PLUSH_SONG.durationMs + 100); await flush();
   assert.equal(app.requested(), 2);
@@ -265,6 +269,31 @@ test('plush mode releases its permission microphone, shows the micro:bit lyric t
   assert.equal(app.get('blow-cue').hidden, false);
   app.frames(20, .18);
   assert.equal(app.get('remaining').textContent, 0);
+});
+test('plush tap queues a sustained, unclipped trigger before audio resume resolves', async () => {
+  const mic = microphone();
+  const app = harness(() => Promise.resolve(mic.stream));
+  app.get('mode-plush').checked = true;
+  app.submit(); await flush(); app.runTimer(300);
+  const ctx = app.contexts[0];
+  ctx.state = 'suspended';
+  let finishResume;
+  ctx.resume = () => new Promise(resolve => { finishResume = () => { ctx.state = 'running'; resolve(); }; });
+  app.get('plush-pop').click();
+  assert.equal(ctx.state, 'suspended');
+  assert.equal(ctx.sources.length, 1, 'sound is queued in the tap handler');
+  assert.ok(ctx.sources[0].startedAt >= 0);
+  const samples = ctx.buffers[0].getChannelData(0);
+  assert.equal(samples.length, Math.ceil(ctx.sampleRate * 680 / 1000));
+  const peak = Math.max(...samples.subarray(0, 1000));
+  assert.ok(peak > .5 && peak < 1, 'the trigger is loud without clipping');
+  const rms = (from, to) => {
+    let sum = 0;
+    for (let i = from; i < to; i++) sum += samples[i] ** 2;
+    return Math.sqrt(sum / (to - from));
+  };
+  assert.ok(rms(8000, 24000) > .4, 'the body stays loud long enough for sound-level sampling');
+  finishResume(); await flush();
 });
 test('allowed and denied microphones preserve the exact started card copy', async () => {
   for (const grant of [true, false]) {
@@ -311,18 +340,40 @@ test('stage 2 uses one scene state for entry, song, blackout, celebration, and e
   app.get('reset').click();
   assert.equal(app.document.body.dataset.scene, 'entry');
 });
-test('celebration introduces eight lead mobs gently, then reaches 40 with at most three shouts', async () => {
+test('celebration introduces three soloists then four complete rows and stops at 40', async () => {
   const app = harness(() => Promise.reject());
   app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
   app.runTimer(500);
   assert.equal(app.get('mob-crowd').children.length, 1);
-  for (let i = 0; i < 7; i++) app.runTimer(320);
-  assert.equal(app.get('mob-crowd').children.length, 8);
-  assert.ok(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length <= 3);
-  for (let i = 0; i < 32; i++) app.runTimer(520);
-  assert.equal(app.get('mob-crowd').children.length, 40);
-  assert.equal(app.get('mob-crowd').children.filter(mob => mob.classList.contains('is-speaking')).length, 3);
+  app.runTimer(280); app.runTimer(280);
+  assert.equal(app.get('mob-crowd').children.length, 3);
+  const arrivals = [3];
+  for (let row = 0; row < 4; row++) {
+    app.runTimer(560);
+    const count = app.get('mob-crowd').children.length;
+    assert.ok(count - arrivals.at(-1) >= 5, 'a whole row arrives together');
+    arrivals.push(count);
+  }
+  const mobs = app.get('mob-crowd').children;
+  assert.equal(mobs.length, 40);
+  assert.equal(new Set(mobs.map(mob => mob.dataset.slot)).size, 40);
+  assert.equal(mobs.filter(mob => mob.classList.contains('is-speaking')).length, 3);
+  app.get('reset').click();
+  assert.equal(app.get('mob-crowd').children.length, 0);
 });
+
+test('plush microphone denial still permits one-tap completion after the lyrics', async () => {
+  const app = harness(() => Promise.reject());
+  app.get('mode-plush').checked = true;
+  app.count(99); app.submit(); await flush();
+  app.get('plush-pop').click();
+  app.runTimer(PLUSH_SONG.durationMs + 100);
+  assert.equal(app.get('cake-button').disabled, false);
+  app.get('cake-button').click();
+  assert.equal(app.get('remaining').textContent, 0);
+  assert.equal(app.document.body.dataset.scene, 'blackout');
+});
+
 test('celebration uses local plush character assets instead of emoji mobs', async () => {
   const source = await readFile(new URL('../dist/app.js', import.meta.url), 'utf8');
   assert.match(source, /MOB_ASSETS/);
@@ -366,7 +417,7 @@ test('completion message uses the entered name, replaces the wish copy, and caps
 });
 test('reference copy is editable HTML, the candle count stays required, and bubble and count have one parent', async () => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
-  for (const text of ['HAPPY BIRTHDAY', 'きょうは、', 'あなたが主役。', '今日の主役のお名前', 'ニックネームでもOK', 'ろうそくは何本にする？', '1〜99本', 'お祝いをはじめる', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
+  for (const text of ['HAPPY BIRTHDAY', 'きょうは、', 'あなたが主役。', 'お名前', '省略OK', 'ろうそくは何本にする？', '1〜99本', 'お祝いをはじめる', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
   assert.doesNotMatch(html, /年齢|0〜120|パーティスタート|YOUR BIRTHDAY CAKE/);
   assert.match(html, /id="count"[^>]*min="1"[^>]*max="99"[^>]*required/);
   assert.match(html, /id="song-recipient"/);

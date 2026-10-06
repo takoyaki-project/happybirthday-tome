@@ -17,7 +17,7 @@ const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
   if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/song.js', '/messages.json', '/style.css'].includes(pathname) && !pathname.startsWith('/assets/')) { res.writeHead(404).end(); return; }
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
-  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8', png: 'image/png', webp: 'image/webp'};
+  const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8', png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml'};
   res.writeHead(200, {'Content-Type': types[file.split('.').pop()], 'Cache-Control': 'no-store'}).end(await readFile(path.join(root, 'dist', file)));
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -73,7 +73,7 @@ try {
   const screenshot = async (name, height = 844) => {
     await evaluate('window.scrollTo(0,0)');
     assert.equal(await evaluate('scrollY'), 0);
-    const shot = await send('Page.captureScreenshot', {format: 'png', clip: {x: 0, y: 0, width: 390, height, scale: 1}, captureBeyondViewport: true});
+    const shot = await send('Page.captureScreenshot', {format: 'png', clip: {x: 0, y: 0, width: await evaluate('innerWidth'), height, scale: 1}, captureBeyondViewport: true});
     await writeFile(path.join(output, name), Buffer.from(shot.data, 'base64'));
   };
   const fits = state => {
@@ -147,18 +147,18 @@ try {
   await sleep(2500);
   const celebrateInitial = await read();
   fits(celebrateInitial);
-  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 1 && celebrateInitial.mobCount <= 10);
+  assert.equal(celebrateInitial.scene, 'celebrate'); assert.ok(celebrateInitial.cakeVisible && celebrateInitial.celebration); assert.equal(celebrateInitial.outCount, 5); assert.ok(celebrateInitial.mobCount >= 1 && celebrateInitial.mobCount < 40);
   assert.doesNotMatch(celebrateInitial.message, /あなた|さん/);
   await screenshot('celebrate-initial-390x844.png');
 
-  await sleep(20000);
+  await sleep(3500);
   const celebrate = await read();
   fits(celebrate);
   assert.equal(celebrate.mobCount, 40);
   await screenshot('celebrate-40-390x844.png');
 
   const setCelebrationCopy = async (title, message) => {
-    await evaluate(`document.getElementById('celebration-title').textContent=${JSON.stringify(title)};document.getElementById('celebration-message').textContent=${JSON.stringify(message)};document.getElementById('party').classList.toggle('long-celebration-message',Array.from(${JSON.stringify(message)}).length>30)`);
+    await evaluate(`document.getElementById('celebration-title').textContent=${JSON.stringify(title)};document.getElementById('celebration-message').textContent=${JSON.stringify(message)};document.getElementById('party').classList.toggle('long-celebration-message',Array.from(${JSON.stringify(message)}).length>28);document.getElementById('party').classList.toggle('medium-celebration-message',Array.from(${JSON.stringify(message)}).length>16&&Array.from(${JSON.stringify(message)}).length<=28)`);
     await sleep(100);
   };
   await setCelebrationCopy('おめでとう！', '最高！');
@@ -214,6 +214,71 @@ try {
   assert.ok(celebrateCompact.scrollWidth <= 390); assert.ok(celebrateCompact.scrollHeight <= 700);
   assert.ok(celebrateCompact.celebrationMessage.bottom < celebrateCompact.cake.y);
   await screenshot('celebrate-frame-390x700.png', 700);
+
+
+  // Inspect real motion as well as reduced motion, across narrow and short phones.
+  const reviewDir = 'review-2026-10-06/after';
+  await mkdir(path.join(output, reviewDir), {recursive: true});
+  const review = [];
+  const visibleBounds = selector => evaluate(`Array.from(document.querySelectorAll(${JSON.stringify(selector)})).filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect();return{text:el.textContent.trim(),left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,scrollWidth:el.scrollWidth,clientWidth:el.clientWidth};})`);
+  for (const [width, height] of [[320,700], [375,667], [390,844], [430,932]]) {
+    const size = `${width}x${height}`;
+    await send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: true, screenWidth: width, screenHeight: height});
+    await send('Emulation.setEmulatedMedia', {features: [{name: 'prefers-reduced-motion', value: 'no-preference'}]});
+    await evaluate("document.getElementById('reset').click();document.getElementById('name').value='けいこ';document.getElementById('count').value='5';document.getElementById('count').dispatchEvent(new Event('input'))");
+    await sleep(120);
+    const entryBounds = await visibleBounds('.eyebrow, .brand h1, .brand-copy, #setup, #start, .sound-hint');
+    for (const box of entryBounds) { assert.ok(box.left >= 16 && box.right <= width-16, `entry width: ${size}`); assert.ok(box.bottom < height, `entry height: ${size}`); }
+    assert.ok(entryBounds[0].top >= 70, 'curtains end above the brand');
+    await screenshot(`${reviewDir}/entry-${size}.png`, height);
+    await evaluate("document.getElementById('mode-plush').checked=true;document.getElementById('start').click()");
+    await sleep(500);
+    const guide = await visibleBounds('.plush-prepare p span, #plush-pop, .plush-tip');
+    assert.equal(guide.length, 4);
+    for (const box of guide) assert.ok(box.left >= 16 && box.right <= width-16 && box.scrollWidth <= box.clientWidth+1, `plush guide ${size}`);
+    assert.ok(guide[0].bottom <= guide[1].top+1, 'instructions have two deliberate lines');
+    const cakeInPreparation = (await visibleBounds('#cake-button'))[0];
+    assert.ok(guide[3].bottom + 12 < cakeInPreparation.top, `sound-volume hint clears cake ${size}`);
+    assert.equal(await evaluate("document.querySelector('#plush-pop img').naturalWidth > 0"), true);
+    await screenshot(`${reviewDir}/plush-prepare-${size}.png`, height);
+    await evaluate("document.getElementById('plush-pop').click()");
+    await sleep(250);
+    assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /^Happy birthday\nto you$/);
+    const lyric = (await visibleBounds('#song-lyrics'))[0];
+    const retry = (await visibleBounds('#plush-again'))[0];
+    assert.ok(lyric.left >= 16 && lyric.right <= width-16 && lyric.top >= 80 && lyric.scrollWidth <= lyric.clientWidth+1, 'lyrics fit below the curtains');
+    assert.ok(retry.top > lyric.bottom && retry.right <= width-8 && retry.bottom <= height, 'retry stays below the lyrics');
+    await screenshot(`${reviewDir}/plush-song-${size}.png`, height);
+    await evaluate("document.getElementById('reset').click();window.__testSongDuration=100;document.getElementById('start').click()");
+    await sleep(400);
+    await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
+    await sleep(1100);
+    const began = await evaluate('performance.now()');
+    const timeline = [];
+    for (const at of [500, 1100, 1900, 2900, 4200]) {
+      await sleep(Math.max(0, at - (await evaluate('performance.now()')-began)));
+      const count = await evaluate("document.querySelectorAll('.mob').length");
+      timeline.push({msAfterCelebration: at+100, count});
+      if (width === 390) await screenshot(`${reviewDir}/wave-${at+100}ms.png`, height);
+    }
+    assert.equal(timeline.at(-1).count, 40);
+    assert.ok(timeline[0].count <= 2 && timeline[1].count <= 16);
+    await evaluate("document.querySelectorAll('.mob.is-speaking .mob-shout').forEach((el,i)=>el.textContent=['さいこー！','おめでとー！','いえーい！'][i])");
+    const shouts = await visibleBounds('.mob.is-speaking .mob-shout');
+    assert.equal(shouts.length, 3);
+    assert.equal(await evaluate("Array.from(document.querySelectorAll('.mob.is-speaking')).every(el=>Number(getComputedStyle(el).zIndex)>5)"), true);
+    const frameBounds = (await visibleBounds('.frame-shell'))[0];
+    const cakeBounds = (await visibleBounds('#cake'))[0];
+    assert.ok(frameBounds.bottom + 8 <= cakeBounds.top, 'frame has breathing room above cake');
+    for (const box of shouts) assert.ok(box.left >= 8 && box.right <= width-8 && box.top >= 0 && box.bottom <= height-30, `speech fits ${size}: ${JSON.stringify(box)}`);
+    assert.equal(await evaluate("document.querySelectorAll('.mob').length"), 40);
+    assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight"), true);
+    assert.equal(await evaluate("getComputedStyle(document.getElementById('plush-confetti')).display"), 'none');
+    await screenshot(`${reviewDir}/celebrate-${size}.png`, height);
+    review.push({width,height,timeline,shouts,entryBounds,guide});
+  }
+  await writeFile(path.join(output, 'review-2026-10-06/metrics.json'), JSON.stringify(review,null,2));
+  console.log('PASS entry, cracker, shared English lyrics, real row waves and speech bounds at four phone sizes');
 
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));

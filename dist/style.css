@@ -42,7 +42,7 @@ body[data-scene="song"]::before, body[data-scene="blackout"]::before, body[data-
 .smoke { position: absolute; z-index: 8; top: clamp(252px, 37svh, 305px); left: 0; width: 100%; display: flex; justify-content: center; gap: 29px; }.smoke span { --turn: 0deg; display: block; width: 9px; height: 26px; border-left: 2px solid var(--color-dark-text); border-radius: 50%; background: transparent; opacity: .42; animation: smoke 700ms ease-out infinite alternate; }.smoke span:nth-child(2) { --turn: -18deg; animation-delay: -350ms; }.smoke span:nth-child(3) { --turn: 16deg; animation-delay: -180ms; }.smoke span:nth-child(n + 4) { display: none; } @keyframes smoke { from { transform: rotate(var(--turn)) translateY(0); opacity: .4; } to { transform: rotate(var(--turn)) translateY(-9px); opacity: .05; } }
 .party[data-scene="blackout"] .cake-button { opacity: .26; filter: saturate(.3); }.party[data-scene="blackout"] .stage::before { opacity: .13; }
 .party[data-scene="celebrate"] .stage::before { height: 77%; opacity: .78; background: radial-gradient(ellipse at 50% 0, rgba(255,226,157,.7), rgba(238,94,135,.13) 28%, transparent 64%); }.party[data-scene="celebrate"] .stage::after { z-index: 1; height: 100%; bottom: 0; border-radius: 0; background-image: radial-gradient(ellipse 2px 7px at 12px 17px, #f4c455 0 88%, transparent 92%), radial-gradient(ellipse 3px 8px at 43px 41px, #ed6b99 0 88%, transparent 92%), radial-gradient(ellipse 2px 6px at 72px 23px, #ac7ae0 0 88%, transparent 92%), radial-gradient(ellipse 3px 7px at 96px 68px, #f08a65 0 88%, transparent 92%); background-size: 115px 123px, 137px 146px, 163px 109px, 187px 169px; opacity: .88; pointer-events: none; }.party[data-scene="celebrate"] .cake-button { top: clamp(215px, 30svh, 265px); z-index: 4; }.party[data-scene="celebrate"] .scene-copy { top: max(73px, calc(env(safe-area-inset-top) + 37px)); }
-.mob-crowd { position: absolute; z-index: 5; top: clamp(178px, 22svh, 208px); right: 0; bottom: 48px; left: 0; overflow: hidden; pointer-events: none; }.mob { position: absolute; z-index: var(--mob-layer); bottom: var(--mob-bottom); left: var(--mob-x); display: grid; place-items: center; opacity: 0; transform: translate(calc(-50% + var(--mob-enter-x)), var(--mob-enter-y)) scale(var(--mob-scale)); transform-origin: center bottom; animation: mob-arrive 720ms cubic-bezier(.2,.8,.25,1) var(--mob-delay) forwards; }.mob-face { display: block; width: var(--mob-size); height: auto; filter: drop-shadow(0 5px 4px rgba(0,0,0,.3)); }.mob-shout { display: none; position: absolute; z-index: 5; bottom: calc(100% + 6px); left: var(--shout-x, 50%); padding: 5px var(--space-1); border: 1px solid rgba(255,237,205,.55); border-radius: 12px; background: #fff3d7; box-shadow: 0 4px 11px rgba(0,0,0,.22); color: var(--color-text); font-size: 12px; font-weight: 900; line-height: 1.25; white-space: nowrap; transform: translateX(-50%) scale(calc(1 / var(--mob-scale))); transform-origin: center bottom; }.mob.is-speaking .mob-shout { display: block; } @keyframes mob-arrive { from { opacity: 0; transform: translate(calc(-50% + var(--mob-enter-x)), var(--mob-enter-y)) scale(var(--mob-scale)); } to { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }
+.mob-crowd { position: absolute; z-index: 5; top: clamp(178px, 22svh, 208px); right: 0; bottom: 48px; left: 0; overflow: hidden; pointer-events: none; }.mob { position: absolute; z-index: var(--mob-layer); bottom: var(--mob-bottom); left: var(--mob-x); display: grid; place-items: center; opacity: 0; transform: translate(calc(-50% + var(--mob-enter-x)), var(--mob-enter-y)) scale(var(--mob-scale)); transform-origin: center bottom; animation: mob-arrive var(--mob-duration, 600ms) cubic-bezier(.2,.8,.25,1) var(--mob-delay) forwards; }.mob-face { display: block; width: var(--mob-size); height: auto; filter: drop-shadow(0 5px 4px rgba(0,0,0,.3)); }.mob-shout { display: none; position: absolute; z-index: 5; bottom: calc(100% + 6px); left: var(--shout-x, 50%); padding: 6px 9px; border: 1px solid rgba(255,237,205,.55); border-radius: 12px; background: #fff3d7; box-shadow: 0 4px 11px rgba(0,0,0,.22); color: var(--color-text); font-size: 12px; font-weight: 900; line-height: 1.25; white-space: nowrap; transform: translateX(-50%) scale(calc(1 / var(--mob-scale))); transform-origin: center bottom; }.mob.is-speaking .mob-shout { display: block; } @keyframes mob-arrive { from { opacity: 0; transform: translate(calc(-50% + var(--mob-enter-x)), var(--mob-enter-y)) scale(var(--mob-scale)); } to { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }
 .audio-note { position: absolute; z-index: 7; right: var(--space-3); bottom: max(13px, env(safe-area-inset-bottom)); left: var(--space-3); margin: 0; color: rgba(255,242,219,.85); font-size: 10px; font-weight: 700; line-height: 1.35; text-align: center; }
 @media (max-height: 740px) { .party { padding-top: max(58px, calc(env(safe-area-inset-top) + 36px)); }.brand { margin-bottom: 22px; }.eyebrow { margin-bottom: 12px; }.brand-copy { margin-top: 15px; } #setup { gap: 13px; }.entry-footer { margin-top: 28px; }.party:not([data-scene="entry"]) .stage { min-height: 620px; }.scene-copy { top: max(58px, calc(env(safe-area-inset-top) + 25px)); }.cake-button { top: 180px; }.blow-cue { top: 465px; }.volume-area { top: 535px; }.party[data-scene="celebrate"] .cake-button { top: 195px; }.mob-crowd { top: 165px; bottom: 44px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .mob { opacity: 1; transform: translate(-50%, 0) scale(var(--mob-scale)); } }
@@ -85,3 +85,66 @@ body[data-scene="song"]::before, body[data-scene="blackout"]::before, body[data-
 .plush-confetti { position: absolute; z-index: 14; inset: 0; overflow: hidden; pointer-events: none; }.plush-confetti span { position: absolute; top: 22%; left: var(--confetti-x); width: 8px; height: 13px; border-radius: 2px; background: hsl(calc((var(--confetti-x) * 3)), 86%, 68%); animation: plush-confetti .9s cubic-bezier(.18,.8,.3,1) var(--confetti-delay) both; }.plush-confetti span:nth-child(3n) { background: #ffd56d; }.plush-confetti span:nth-child(3n + 1) { background: #ff88a6; }.plush-confetti span:nth-child(3n + 2) { background: #a98aff; } @keyframes plush-confetti { from { opacity: 0; transform: translate(-50%, -26px) rotate(0); } 20% { opacity: 1; } to { opacity: 0; transform: translate(calc(-50% + var(--confetti-turn)), 210px) rotate(300deg); } }
 .party[data-scene="plush-prepare"] .scene-copy { top: max(76px, calc(env(safe-area-inset-top) + 38px)); }.party[data-scene="plush-prepare"] .cake-button { top: clamp(355px, 47svh, 410px); }.party[data-scene="plush-prepare"] .scene-controls { top: max(14px, env(safe-area-inset-top)); }
 @media (max-height: 740px) { .party[data-scene="plush-prepare"] .scene-copy { top: 48px; transform: scale(.9); transform-origin: top center; }.party[data-scene="plush-prepare"] .cake-button { top: 300px; } }
+/* A clear invitation: keep the curtain outside the text and give the form one rhythm. */
+.party[data-scene="entry"] { padding-top: max(86px, calc(env(safe-area-inset-top) + 60px)); }
+.party[data-scene="entry"]::before, .party[data-scene="entry"]::after { width: 28%; height: 70px; opacity: .9; }
+.party[data-scene="entry"] .brand { margin-bottom: 34px; text-align: center; }
+.party[data-scene="entry"] .eyebrow { margin-bottom: 18px; color: #85506b; font-size: 11px; letter-spacing: .22em; }
+.party[data-scene="entry"] h1 { font-size: clamp(30px, 8.5vw, 37px); line-height: 1.4; letter-spacing: .015em; }
+.party[data-scene="entry"] .brand-copy { margin-top: 16px; color: #755464; font-size: 14px; font-weight: 500; }
+#setup { gap: 22px; }
+.field label { color: #593b50; }
+.field label span { color: #795c70; font-size: 12px; }
+input::placeholder { color: #8b7584; }
+.mode-switch { min-width: 0; padding: 4px; border-color: #cbb5c5; background: rgba(255,255,255,.5); }
+.mode-switch legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.mode-switch label, .mode-switch input:checked + span { min-height: 44px; }
+.mode-switch input:checked + span { background: var(--color-accent); box-shadow: 0 2px 5px rgba(62,27,78,.12); }
+#start { min-height: 54px; box-shadow: 0 7px 16px rgba(62,27,78,.2); }
+.sound-hint { margin-top: -10px; color: #795b6a; font-weight: 500; }
+.primary { transition: transform 160ms ease, box-shadow 160ms ease; }
+.primary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 7px rgba(62,27,78,.2); }
+/* The preparation belongs to the same dark stage as the song. */
+body[data-scene="plush-prepare"] { background: var(--color-dark-background); }
+body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse at 50% 12%, rgba(247,189,103,.35), transparent 30%), radial-gradient(ellipse at 50% 72%, rgba(142,39,71,.27), transparent 48%), linear-gradient(180deg, #35102a 0%, var(--stage-wine-deep) 76%); }
+.plush-prepare { width: min(100%, 320px); padding: 18px 20px 20px; border-color: rgba(255,226,159,.24); border-radius: 24px; background: rgba(56,19,48,.7); box-shadow: 0 12px 28px rgba(0,0,0,.16); }
+.plush-prepare p { margin: 0 0 18px; font-size: 17px; font-weight: 600; line-height: 1.65; letter-spacing: .03em; }
+.plush-prepare p span { display: block; white-space: nowrap; }
+.plush-prepare .primary { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 132px; min-height: 136px; margin: 0 auto; padding: 16px; border: 1px solid rgba(255,215,135,.65); border-radius: 24px; background: linear-gradient(145deg, #78355d, #4a203f); box-shadow: 0 8px 20px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.12); font-size: 15px; font-weight: 700; letter-spacing: .08em; }
+.plush-prepare .primary img { display: block; width: 72px; height: 72px; }
+.plush-prepare .primary:disabled { opacity: .5; cursor: wait; }
+.party:not([data-scene="song"]) .plush-confetti { display: none; }
+@media (max-height: 740px) {
+  .party[data-scene="entry"] { padding-top: max(72px, calc(env(safe-area-inset-top) + 44px)); }
+  .party[data-scene="entry"] .brand { margin-bottom: 24px; }
+  .party[data-scene="entry"] .eyebrow { margin-bottom: 12px; }
+  .party[data-scene="entry"] .brand-copy { margin-top: 12px; }
+  #setup { gap: 18px; }
+  .party[data-scene="plush-prepare"] .scene-copy { top: 65px; transform: none; }
+  .party[data-scene="plush-prepare"] .cake-button { top: 340px; }
+}
+@media (prefers-reduced-motion: reduce) { .plush-confetti { display: none; } }
+
+.party[data-play-mode="plush"][data-scene="song"] .plush-again { position: absolute; top: calc(100svh - 96px); right: 0; font-size: 13px; }
+
+/* Keep every cheer legible above the front row. */
+.mob.is-speaking { z-index: 6; }
+.party[data-scene="celebrate"] .scene-copy { right: 0; left: 0; }
+@media (max-height: 740px) { .party[data-scene="celebrate"] .cake-button { top: 300px; } }
+
+/* Lyrics stay inside the open part of the curtain, including narrow phones. */
+.party[data-scene="song"] .scene-copy { top: max(84px, calc(env(safe-area-inset-top) + 45px)); }
+.party[data-scene="song"]::before, .party[data-scene="song"]::after { height: 80px; }
+.song-lyrics { font-size: clamp(27px, 7.6vw, 34px); letter-spacing: .035em; }
+/* Confetti bursts from one point below the copy, rather than forming a line over it. */
+.plush-confetti { z-index: 4; }
+.plush-confetti span { top: 26%; left: 50%; opacity: 0; background: #ffd56d; }
+@keyframes plush-confetti {
+  from { opacity: 0; transform: translate(-50%, 0) scale(.6) rotate(0); }
+  18% { opacity: 1; }
+  to { opacity: 0; transform: translate(calc(-50% + var(--confetti-dx)), var(--confetti-dy)) rotate(var(--confetti-turn)); }
+}
+
+.party[data-scene="celebrate"] .stage::after { bottom: 60px; height: calc(100% - 60px); }
+.plush-prepare .plush-tip { margin: 14px 0 0; color: #ffe3af; font-size: 12px; font-weight: 700; line-height: 1.5; }
+@media (max-height: 740px) { .party[data-scene="plush-prepare"] .cake-button { top: 380px; } }
