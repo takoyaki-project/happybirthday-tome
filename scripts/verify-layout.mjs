@@ -241,6 +241,7 @@ try {
     assert.ok(guide[3].bottom + 12 < cakeInPreparation.top, `sound-volume hint clears cake ${size}`);
     assert.equal(await evaluate("document.querySelector('#plush-pop img').naturalWidth > 0"), true);
     await screenshot(`${reviewDir}/plush-prepare-${size}.png`, height);
+    const plushStartedAt = await evaluate('performance.now()');
     await evaluate("document.getElementById('plush-pop').click()");
     await sleep(250);
     assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /^Happy birthday\nto you$/);
@@ -249,6 +250,22 @@ try {
     assert.ok(lyric.left >= 16 && lyric.right <= width-16 && lyric.top >= 80 && lyric.scrollWidth <= lyric.clientWidth+1, 'lyrics fit below the curtains');
     assert.ok(retry.top > lyric.bottom && retry.right <= width-8 && retry.bottom <= height, 'retry stays below the lyrics');
     await screenshot(`${reviewDir}/plush-song-${size}.png`, height);
+    if (width === 390) {
+      await sleep(Math.max(0, 12300 - (await evaluate('performance.now()') - plushStartedAt)));
+      assert.equal(await evaluate("document.getElementById('song-lyrics').textContent"), 'もうすぐ\nふーっ！');
+      await sleep(Math.max(0, 13400 - (await evaluate('performance.now()') - plushStartedAt)));
+      assert.equal(await evaluate("document.getElementById('song-lyrics').textContent"), 'ぬいぐるみに\nふーっ！');
+      const blowGuide = (await visibleBounds('#song-lyrics'))[0];
+      const plushCake = (await visibleBounds('#cake-button'))[0];
+      assert.ok(blowGuide.bottom + 12 < plushCake.top, 'plush blow guide clears the cake');
+      assert.equal(await evaluate("document.getElementById('volume-area').hidden"), true);
+      await screenshot(`${reviewDir}/plush-blow-${size}.png`, height);
+      await sleep(Math.max(0, 15200 - (await evaluate('performance.now()') - plushStartedAt)));
+      assert.equal(await evaluate('document.body.dataset.scene'), 'blackout');
+      await sleep(Math.max(0, 16300 - (await evaluate('performance.now()') - plushStartedAt)));
+      assert.equal(await evaluate('document.body.dataset.scene'), 'celebrate');
+      await screenshot(`${reviewDir}/plush-celebrate-${size}.png`, height);
+    }
     await evaluate("document.getElementById('reset').click();window.__testSongDuration=100;document.getElementById('start').click()");
     await sleep(400);
     await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
@@ -279,6 +296,7 @@ try {
   }
   await writeFile(path.join(output, 'review-2026-10-06/metrics.json'), JSON.stringify(review,null,2));
   console.log('PASS entry, cracker, shared English lyrics, real row waves and speech bounds at four phone sizes');
+  console.log('PASS plush waits for the micro:bit breath window and celebrates at the scheduled time');
 
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));

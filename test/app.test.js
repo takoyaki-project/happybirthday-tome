@@ -267,14 +267,12 @@ test('song keeps microphone cues and detection off until the song ends', async (
   assert.equal(app.get('blow-cue').hidden, false);
   assert.equal(app.get('volume-area').hidden, false);
 });
-test('plush mode releases its permission microphone, shows the micro:bit lyric timeline, then reacquires before one blow clears all candles', async () => {
-  const mics = [microphone(), microphone()]; let micIndex = 0;
-  const app = harness(() => Promise.resolve(mics[micIndex++].stream));
+test('plush mode needs no phone microphone and celebrates on the micro:bit timeline', async () => {
+  const app = harness(() => { throw new Error('plush must not request the microphone'); });
   app.get('mode-plush').checked = true;
   app.count(10); app.name('けいこ'); app.submit(); await flush();
   assert.equal(app.document.body.dataset.scene, 'plush-prepare');
-  assert.equal(mics[0].track.stopped, true);
-  app.runTimer(300);
+  assert.equal(app.requested(), 0);
   assert.equal(app.get('plush-pop').disabled, false);
   app.get('plush-pop').click();
   assert.equal(app.document.body.dataset.scene, 'song');
@@ -283,20 +281,24 @@ test('plush mode releases its permission microphone, shows the micro:bit lyric t
   assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[0][1]);
   app.runTimer(6100);
   assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[2][1].replace('{name}', 'けいこ'));
-  assert.equal(app.requested(), 1);
-  app.runTimer(PLUSH_SONG.durationMs + 100); await flush();
-  assert.equal(app.requested(), 2);
+  app.runTimer(PLUSH_SONG.durationMs + 100);
+  assert.equal(app.get('song-lyrics').textContent, 'もうすぐ\nふーっ！');
+  app.runTimer(PLUSH_SONG.durationMs + 1100);
+  assert.equal(app.get('song-lyrics').textContent, 'ぬいぐるみに\nふーっ！');
   assert.equal(app.get('blow-cue').hidden, true);
-  app.frames(60, 0);
-  assert.equal(app.get('blow-cue').hidden, false);
-  app.frames(20, .18);
+  assert.equal(app.get('volume-area').hidden, true);
+  assert.equal(app.get('cake-button').disabled, true);
+  app.runTimer(15000);
   assert.equal(app.get('remaining').textContent, 0);
+  assert.equal(app.document.body.dataset.scene, 'blackout');
+  app.runTimer(1000);
+  assert.equal(app.document.body.dataset.scene, 'celebrate');
+  assert.equal(app.requested(), 0);
 });
-test('plush tap queues a sustained, unclipped trigger before audio resume resolves', async () => {
-  const mic = microphone();
-  const app = harness(() => Promise.resolve(mic.stream));
+test('plush tap queues a sharp, unclipped cracker before audio resume resolves', async () => {
+  const app = harness(() => { throw new Error('plush must not request the microphone'); });
   app.get('mode-plush').checked = true;
-  app.submit(); await flush(); app.runTimer(300);
+  app.submit(); await flush();
   const ctx = app.contexts[0];
   ctx.state = 'suspended';
   let finishResume;
@@ -306,7 +308,7 @@ test('plush tap queues a sustained, unclipped trigger before audio resume resolv
   assert.equal(ctx.sources.length, 1, 'sound is queued in the tap handler');
   assert.ok(ctx.sources[0].startedAt >= 0);
   const samples = ctx.buffers[0].getChannelData(0);
-  assert.equal(samples.length, Math.ceil(ctx.sampleRate * 680 / 1000));
+  assert.equal(samples.length, Math.ceil(ctx.sampleRate * 420 / 1000));
   const peak = Math.max(...samples.subarray(0, 1000));
   assert.ok(peak > .5 && peak < 1, 'the trigger is loud without clipping');
   const rms = (from, to) => {
@@ -314,7 +316,8 @@ test('plush tap queues a sustained, unclipped trigger before audio resume resolv
     for (let i = from; i < to; i++) sum += samples[i] ** 2;
     return Math.sqrt(sum / (to - from));
   };
-  assert.ok(rms(8000, 24000) > .4, 'the body stays loud long enough for sound-level sampling');
+  assert.ok(rms(500, 5000) > .5, 'the opening crack is loud enough for sound-level sampling');
+  assert.ok(rms(15000, 19000) < rms(500, 5000) * .5, 'the sound decays rather than buzzing');
   finishResume(); await flush();
 });
 test('allowed and denied microphones preserve the exact started card copy', async () => {
@@ -384,16 +387,40 @@ test('celebration introduces three soloists then four complete rows and stops at
   assert.equal(app.get('mob-crowd').children.length, 0);
 });
 
-test('plush microphone denial still permits one-tap completion after the lyrics', async () => {
-  const app = harness(() => Promise.reject());
+test('plush retry restarts the song and celebration timer without opening the microphone', async () => {
+  const app = harness(() => { throw new Error('plush must not request the microphone'); });
   app.get('mode-plush').checked = true;
-  app.count(99); app.submit(); await flush();
+  app.count(99); app.submit();
   app.get('plush-pop').click();
+  const firstCountdown = [...app.timers.values()].find(timer => timer.delay === 15000).callback;
+  app.get('plush-again').click();
+  assert.equal(app.contexts[0].sources.length, 2);
+  firstCountdown();
+  assert.equal(app.document.body.dataset.scene, 'song', 'the cancelled countdown cannot complete the retry');
   app.runTimer(PLUSH_SONG.durationMs + 100);
-  assert.equal(app.get('cake-button').disabled, false);
-  app.get('cake-button').click();
+  app.runTimer(15000);
   assert.equal(app.get('remaining').textContent, 0);
   assert.equal(app.document.body.dataset.scene, 'blackout');
+  assert.equal(app.requested(), 0);
+});
+test('plush mode does not start a silent celebration when audio cannot play', () => {
+  const app = harness(() => { throw new Error('plush must not request the microphone'); }, false);
+  app.get('mode-plush').checked = true;
+  app.submit(); app.get('plush-pop').click();
+  assert.equal(app.document.body.dataset.scene, 'plush-prepare');
+  assert.equal(app.get('plush-pop').disabled, false);
+  assert.equal([...app.timers.values()].some(timer => timer.delay === 15000), false);
+  assert.equal(app.requested(), 0);
+});
+test('returning to a hidden plush page offers a fresh cracker, not the phone microphone flow', () => {
+  const app = harness(() => { throw new Error('plush must not request the microphone'); });
+  app.get('mode-plush').checked = true;
+  app.submit(); app.get('plush-pop').click();
+  app.runTimer(PLUSH_SONG.durationMs + 100);
+  app.hide(); app.show(); app.get('resume').click();
+  assert.equal(app.document.body.dataset.scene, 'plush-prepare');
+  assert.equal(app.get('plush-pop').disabled, false);
+  assert.equal(app.requested(), 0);
 });
 
 test('celebration uses local plush character assets instead of emoji mobs', async () => {

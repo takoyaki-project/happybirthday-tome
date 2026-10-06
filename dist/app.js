@@ -27,7 +27,6 @@ let mobTimer = 0;
 let mobCount = 0;
 let messageData = null;
 let playMode = 'phone';
-let plushCalibrationComplete = false;
 const WISH_MESSAGE = '願いごとをひとつ。あとは、思いっきりふーっ。';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
@@ -35,15 +34,20 @@ const RECENT_MESSAGE_LIMIT = 5;
 const MAX_GENTLE_BLOWS = 3;
 const MAX_MOBS = 40;
 const PLUSH_SONG_START_OFFSET_MS = 100;
-const PLUSH_PERMISSION_SETTLE_MS = 300;
-// A sustained midrange trigger reaches small phone speakers; the soft limit stays below full scale.
-const PLUSH_CRACKER_GAIN = .9;
-const PLUSH_CRACKER_DURATION_MS = 680;
-const PLUSH_CRACKER_HOLD_MS = 560;
-const PLUSH_CRACKER_ATTACK_MS = 12;
+const PLUSH_MICROBIT_READY_DELAY_MS = 1000;
+// 12 s melody + about 1 s before the micro:bit listens + 2 s to blow + 1 s blackout.
+const PLUSH_CELEBRATION_DELAY_MS = 16000;
+const BLACKOUT_DURATION_MS = 1000;
+// A sharp, broadband pop with a short thump; avoid sustained tones that sound like a buzzer.
+const PLUSH_CRACKER_GAIN = .92;
+const PLUSH_CRACKER_DURATION_MS = 420;
+const PLUSH_CRACKER_ATTACK_MS = 2;
+const PLUSH_CRACKER_MAIN_DECAY_MS = 130;
+const PLUSH_CRACKER_TAIL_DECAY_MS = 240;
+const PLUSH_CRACKER_THUMP_MS = 65;
+const PLUSH_CRACKER_THUMP_START_HZ = 520;
+const PLUSH_CRACKER_THUMP_END_HZ = 240;
 const PLUSH_CRACKER_DRIVE = 2.2;
-const PLUSH_CRACKER_TONES = [[1200, .5], [1750, .4], [2350, .23]];
-const PLUSH_CRACKER_NOISE_WEIGHT = .12;
 const PLUSH_CONFETTI_COUNT = 22;
 const MOB_START_DELAY_MS = 500;
 const MOB_SOLO_INTERVAL_MS = 280;
@@ -118,10 +122,10 @@ function meter(level, measuredLevel = 0) {
 // The bubble and remaining count always share this single visibility boundary.
 // When singing is added, change the readiness condition here after song completion.
 function updateBlowCue() {
-  ui['blow-cue'].hidden = !(scene === 'song' && phase === 'active' && (playMode !== 'plush' || plushCalibrationComplete));
+  ui['blow-cue'].hidden = !(scene === 'song' && phase === 'active' && playMode === 'phone');
 }
 function updateGauge() {
-  const waiting = scene === 'song' && phase === 'active' && (playMode !== 'plush' || plushCalibrationComplete);
+  const waiting = scene === 'song' && phase === 'active' && playMode === 'phone';
   ui['volume-area'].hidden = !waiting;
   ui['debug-toggle'].hidden = !waiting;
   ui['debug-value'].hidden = !waiting || !showDebugValue;
@@ -156,12 +160,12 @@ function controls() {
   ui.fallback.hidden = playMode === 'plush' || scene !== 'song' || phase !== 'preparing';
   ui['plush-prepare'].hidden = scene !== 'plush-prepare';
   ui['plush-pop'].disabled = scene !== 'plush-prepare' || phase !== 'plush-ready';
-  ui['plush-again'].hidden = !(playMode === 'plush' && scene === 'song' && phase === 'singing');
+  ui['plush-again'].hidden = !(playMode === 'plush' && scene === 'song' && ['singing', 'plush-wait'].includes(phase));
   ui.reset.hidden = entry;
-  ui['cake-button'].disabled = scene !== 'song' || phase !== 'active' || (playMode === 'plush' && !plushCalibrationComplete);
+  ui['cake-button'].disabled = scene !== 'song' || phase !== 'active' || playMode === 'plush';
   ui['sound-test'].hidden = scene !== 'song' || !['active', 'complete'].includes(phase);
   ui['song-lyrics'].hidden = scene !== 'song';
-  ui['song-recipient'].hidden = scene !== 'song';
+  ui['song-recipient'].hidden = scene !== 'song' || (playMode === 'plush' && phase === 'plush-wait');
   ui['song-recipient'].textContent = ui.name.value.trim() ? `${ui.name.value.trim()}さんへ` : 'あなたへ';
   ui['blackout-copy'].hidden = scene !== 'blackout';
   ui['celebration-copy'].hidden = scene !== 'celebrate';
@@ -304,16 +308,20 @@ function playPlushCracker(ctx) {
   try {
     const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * PLUSH_CRACKER_DURATION_MS / 1000), ctx.sampleRate);
     const samples = buffer.getChannelData(0);
-    const attack = PLUSH_CRACKER_ATTACK_MS / 1000;
-    const hold = PLUSH_CRACKER_HOLD_MS / 1000;
     const duration = PLUSH_CRACKER_DURATION_MS / 1000;
+    const thumpDuration = PLUSH_CRACKER_THUMP_MS / 1000;
     const softLimit = PLUSH_CRACKER_GAIN / Math.tanh(PLUSH_CRACKER_DRIVE);
+    const frequencyDrop = (PLUSH_CRACKER_THUMP_START_HZ - PLUSH_CRACKER_THUMP_END_HZ) / thumpDuration;
     for (let i = 0; i < samples.length; i++) {
       const time = i / ctx.sampleRate;
-      const envelope = Math.min(1, time / attack, (duration - time) / (duration - hold));
-      const tones = PLUSH_CRACKER_TONES.reduce((sum, [hz, level]) => sum + level * Math.sin(2 * Math.PI * hz * time), 0);
-      const noise = PLUSH_CRACKER_NOISE_WEIGHT * (Math.random() * 2 - 1);
-      samples[i] = softLimit * Math.tanh(PLUSH_CRACKER_DRIVE * (tones + noise)) * Math.max(0, envelope);
+      const edge = Math.min(1, time * 1000 / PLUSH_CRACKER_ATTACK_MS, (duration - time) * 1000 / PLUSH_CRACKER_THUMP_MS);
+      const burst = .78 * Math.exp(-time * 1000 / PLUSH_CRACKER_MAIN_DECAY_MS)
+        + .32 * Math.exp(-time * 1000 / PLUSH_CRACKER_TAIL_DECAY_MS);
+      const thump = time < thumpDuration
+        ? .36 * Math.sin(2 * Math.PI * (PLUSH_CRACKER_THUMP_START_HZ * time - frequencyDrop * time * time / 2)) * (1 - time / thumpDuration)
+        : 0;
+      const crack = (Math.random() * 2 - 1) * burst + thump;
+      samples[i] = softLimit * Math.tanh(PLUSH_CRACKER_DRIVE * crack) * Math.max(0, edge);
     }
     const source = ctx.createBufferSource();
     source.buffer = buffer;
@@ -324,87 +332,68 @@ function playPlushCracker(ctx) {
     return true;
   } catch { return false; }
 }
-function attachPlushMicrophone(ctx, ticket) {
-  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { activateTap(); return; }
-  let request;
-  try { request = navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}, video: false}); } catch { activateTap(); return; }
-  void request.then(async incoming => {
-    if (ticket !== generation || scene !== 'song' || phase !== 'singing' || document.hidden) {
-      incoming.getTracks().forEach(track => track.stop()); return;
-    }
-    try {
-      await ctx.resume();
-      stream = incoming;
-      analyser = ctx.createAnalyser(); analyser.fftSize = 1024;
-      source = ctx.createMediaStreamSource(incoming); source.connect(analyser);
-      for (const track of incoming.getAudioTracks()) {
-        track.onended = () => { if (phase === 'active') activateTap(); };
-        track.onmute = () => { if (phase === 'active') pause(); };
-      }
-      plushCalibrationComplete = false;
-      phase = 'active'; controls();
-      status('まわりの音を測っています…');
-      listen(ctx, ticket);
-    } catch { incoming.getTracks().forEach(track => track.stop()); activateTap(); }
-  }).catch(() => activateTap());
-}
 function playPlushSong() {
-  if (playMode !== 'plush' || !['plush-ready', 'singing'].includes(phase)) return;
+  if (playMode !== 'plush' || !['plush-ready', 'singing', 'plush-wait'].includes(phase)) return;
+  const ctx = prepareSound(false);
+  if (!ctx || !playPlushCracker(ctx)) {
+    stopPending();
+    scene = 'plush-prepare'; phase = 'plush-ready';
+    controls();
+    status('音を再生できません。音量とブラウザーを確認して、もう一度タップしてください。', true);
+    return;
+  }
   stopPending();
   const ticket = generation;
-  const ctx = prepareSound(false);
-  if (!ctx) { tapOnly = true; }
-  scene = 'song'; phase = 'singing'; plushCalibrationComplete = false;
+  scene = 'song'; phase = 'singing';
+  ui['song-lyrics'].textContent = '';
   controls(); burstPlushConfetti();
-  if (ctx) {
-    if (!playPlushCracker(ctx)) status('音を再生できません。音量を確認して、もう一度鳴らしてください。', true);
-    void ctx.resume().catch(() => status('音を再生できません。もう一度鳴らしてください。', true));
-  }
+  status('歌が終わったら、ぬいぐるみに息を吹きかけてね。');
+  void ctx.resume().catch(() => {
+    if (ticket !== generation) return;
+    stopPending();
+    scene = 'plush-prepare'; phase = 'plush-ready';
+    controls();
+    status('音を再生できません。もう一度タップしてください。', true);
+  });
   const displayName = ui.name.value.trim() || 'あなた';
   PLUSH_SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => {
     if (ticket === generation && phase === 'singing') ui['song-lyrics'].textContent = lyric.replace('{name}', displayName);
   }, PLUSH_SONG_START_OFFSET_MS + offset)));
   timer = window.setTimeout(() => {
     if (ticket !== generation || phase !== 'singing') return;
-    if (tapOnly || !ctx) { activateTap(); return; }
-    attachPlushMicrophone(ctx, ticket);
+    phase = 'plush-wait';
+    ui['song-lyrics'].textContent = 'もうすぐ\nふーっ！';
+    controls();
+    status('micro:bit が息を待つまで、少し待ってね。');
   }, PLUSH_SONG_START_OFFSET_MS + PLUSH_SONG.durationMs);
+  songTimers.push(window.setTimeout(() => {
+    if (ticket !== generation || phase !== 'plush-wait') return;
+    ui['song-lyrics'].textContent = 'ぬいぐるみに\nふーっ！';
+    status('ぬいぐるみに息を吹きかけてね。スマホのお祝いは自動で始まります。');
+  }, PLUSH_SONG_START_OFFSET_MS + PLUSH_SONG.durationMs + PLUSH_MICROBIT_READY_DELAY_MS));
+  songTimers.push(window.setTimeout(() => {
+    if (ticket !== generation || phase !== 'plush-wait' || document.hidden) return;
+    phase = 'active';
+    extinguish(true);
+  }, PLUSH_CELEBRATION_DELAY_MS - BLACKOUT_DURATION_MS));
 }
 function beginPlushPreparation() {
-  scene = 'plush-prepare'; phase = 'preparing'; tapOnly = false; plushCalibrationComplete = false;
+  scene = 'plush-prepare'; phase = 'plush-ready'; tapOnly = false;
   stopPending();
-  const ticket = generation;
   const ctx = prepareSound(false);
   controls(); document.activeElement?.blur();
-  if (!ctx || !window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-    tapOnly = true; phase = 'plush-ready'; controls(); return;
-  }
-  let request;
-  try { request = navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}, video: false}); } catch { tapOnly = true; phase = 'plush-ready'; controls(); return; }
-  void request.then(incoming => {
-    incoming.getTracks().forEach(track => track.stop());
-    if (ticket !== generation || scene !== 'plush-prepare' || document.hidden) return;
-    timer = window.setTimeout(() => {
-      if (ticket !== generation || scene !== 'plush-prepare') return;
-      void ctx.resume().catch(() => {});
-      phase = 'plush-ready'; controls();
-    }, PLUSH_PERMISSION_SETTLE_MS);
-  }).catch(() => {
-    if (ticket !== generation || scene !== 'plush-prepare') return;
-    tapOnly = true; phase = 'plush-ready'; controls();
-  });
+  status(ctx ? 'スマホの音量を上げて、クラッカーをタップしてね。' : 'この端末では音を再生できません。音量とブラウザーを確認してください。', !ctx);
 }
 function activateTap() {
   stopPending();
   releaseMic();
   tapOnly = true;
-  plushCalibrationComplete = true;
   phase = 'active';
   controls();
   status('マイクはオフです。ケーキをタップして消せます。', true);
 }
 function pause() {
-  if (!['active', 'preparing', 'singing'].includes(phase)) return;
+  if (!['active', 'preparing', 'singing', 'plush-ready', 'plush-wait'].includes(phase)) return;
   stopPending();
   phase = 'paused';
   releaseAudio();
@@ -543,7 +532,7 @@ function extinguish(all = false) {
   timer = window.setTimeout(() => {
     if (scene !== 'blackout') return;
     beginCelebration();
-  }, 1000);
+  }, BLACKOUT_DURATION_MS);
 }
 function listen(ctx, ticket) {
   const samples = new Float32Array(analyser.fftSize);
@@ -567,7 +556,6 @@ function listen(ctx, ticket) {
       noiseSamples.sort((a, b) => a - b);
       baseline = noiseSamples[Math.floor(noiseSamples.length / 2)] || 0;
       detector = createBlowDetector(BLOW_SENSITIVITY);
-      if (playMode === 'plush') { plushCalibrationComplete = true; controls(); }
       status('準備OK！ 小さな声で少しずつ、大きな声で一気に。');
     }
     const delta = detector ? Math.max(0, raw - baseline) : 0;
@@ -584,6 +572,7 @@ function listen(ctx, ticket) {
 }
 function start(resuming = false) {
   if ((!resuming && phase !== 'idle') || (resuming && phase !== 'paused')) return;
+  if (resuming && playMode === 'plush') { beginPlushPreparation(); return; }
   if (!resuming) {
     const count = validCount(ui.count.value);
     if (count === null) { status('ろうそくは1〜99の整数で入力してね。', true); return; }
@@ -651,7 +640,6 @@ function reset() {
   releaseAudio();
   tapOnly = false;
   playMode = 'phone';
-  plushCalibrationComplete = false;
   ui['mode-phone'].checked = true;
   ui['mode-plush'].checked = false;
   renderCake();
