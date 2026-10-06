@@ -165,6 +165,7 @@ function controls() {
   ui['cake-button'].disabled = scene !== 'song' || phase !== 'active' || playMode === 'plush';
   ui['sound-test'].hidden = scene !== 'song' || !['active', 'complete'].includes(phase);
   ui['song-lyrics'].hidden = scene !== 'song';
+  if (scene !== 'song' || playMode !== 'plush' || phase !== 'plush-wait') $('plush-blow-note').hidden = true;
   ui['song-recipient'].hidden = scene !== 'song' || (playMode === 'plush' && phase === 'plush-wait');
   ui['song-recipient'].textContent = ui.name.value.trim() ? `${ui.name.value.trim()}さんへ` : 'あなたへ';
   ui['blackout-copy'].hidden = scene !== 'blackout';
@@ -347,7 +348,7 @@ function playPlushSong() {
   scene = 'song'; phase = 'singing';
   ui['song-lyrics'].textContent = '';
   controls(); burstPlushConfetti();
-  status('歌が終わったら、ぬいぐるみに息を吹きかけてね。');
+  status('歌が終わったら、ぬいぐるみのケーキの上の micro:bit に息を吹きかけてね。');
   void ctx.resume().catch(() => {
     if (ticket !== generation) return;
     stopPending();
@@ -368,8 +369,9 @@ function playPlushSong() {
   }, PLUSH_SONG_START_OFFSET_MS + PLUSH_SONG.durationMs);
   songTimers.push(window.setTimeout(() => {
     if (ticket !== generation || phase !== 'plush-wait') return;
-    ui['song-lyrics'].textContent = 'ぬいぐるみに\nふーっ！';
-    status('ぬいぐるみに息を吹きかけてね。スマホのお祝いは自動で始まります。');
+    ui['song-lyrics'].textContent = 'ぬいぐるみのケーキに\nふーっ！';
+    $('plush-blow-note').hidden = false;
+    status('ケーキの上の micro:bit に息を吹きかけてね。スマホのお祝いは自動で始まります。');
   }, PLUSH_SONG_START_OFFSET_MS + PLUSH_SONG.durationMs + PLUSH_MICROBIT_READY_DELAY_MS));
   songTimers.push(window.setTimeout(() => {
     if (ticket !== generation || phase !== 'plush-wait' || document.hidden) return;

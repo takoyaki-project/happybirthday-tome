@@ -279,12 +279,21 @@ try {
       await sleep(Math.max(0, 12300 - (await evaluate('performance.now()') - plushStartedAt)));
       assert.equal(await evaluate("document.getElementById('song-lyrics').textContent"), 'もうすぐ\nふーっ！');
       await sleep(Math.max(0, 13400 - (await evaluate('performance.now()') - plushStartedAt)));
-      assert.equal(await evaluate("document.getElementById('song-lyrics').textContent"), 'ぬいぐるみに\nふーっ！');
+      assert.equal(await evaluate("document.getElementById('song-lyrics').textContent"), 'ぬいぐるみのケーキに\nふーっ！');
       const blowGuide = (await visibleBounds('#song-lyrics'))[0];
       const plushCake = (await visibleBounds('#cake-button'))[0];
       assert.ok(blowGuide.bottom + 12 < plushCake.top, 'plush blow guide clears the cake');
       assert.equal(await evaluate("document.getElementById('volume-area').hidden"), true);
       await screenshot(`${reviewDir}/plush-blow-${size}.png`, height);
+      for (const [guideWidth, guideHeight] of [[320,700], [375,667], [430,932]]) {
+        await send('Emulation.setDeviceMetricsOverride', {width: guideWidth, height: guideHeight, deviceScaleFactor: 1, mobile: true, screenWidth: guideWidth, screenHeight: guideHeight});
+        const guideLines = await visibleBounds('#song-lyrics, #plush-blow-note span');
+        assert.equal(guideLines.length, 3);
+        const guideCake = (await visibleBounds('#cake-button'))[0];
+        for (const box of guideLines) assert.ok(box.left >= 16 && box.right <= guideWidth - 16 && box.scrollWidth <= box.clientWidth + 1 && box.bottom + 12 < guideCake.top, 'plush breath instructions fit above the cake');
+        await screenshot(`${reviewDir}/plush-blow-${guideWidth}x${guideHeight}.png`, guideHeight);
+      }
+      await send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: true, screenWidth: width, screenHeight: height});
       await sleep(Math.max(0, 18200 - (await evaluate('performance.now()') - plushStartedAt)));
       assert.equal(await evaluate('document.body.dataset.scene'), 'blackout');
       await sleep(Math.max(0, 19300 - (await evaluate('performance.now()') - plushStartedAt)));

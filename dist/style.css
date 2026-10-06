@@ -157,7 +157,9 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .party[data-scene="celebrate"] .stage::after { bottom: 60px; height: calc(100% - 60px); }
 .plush-prepare .plush-tip { margin: 14px 0 0; color: #ffe3af; font-size: 12px; font-weight: 700; line-height: 1.5; }
 @media (max-height: 740px) { .party[data-scene="plush-prepare"] .cake-button { top: 380px; } }
-.party[data-play-mode="plush"][data-mic-state="plush-wait"] .song-lyrics { color: #fff0cd; font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: clamp(27px, 7.8vw, 34px); font-style: normal; font-weight: 800; line-height: 1.25; letter-spacing: .04em; }
+.party[data-play-mode="plush"][data-mic-state="plush-wait"] .song-lyrics { color: #fff0cd; font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: clamp(23px, 6.8vw, 28px); font-style: normal; font-weight: 800; line-height: 1.4; letter-spacing: .02em; }
+.plush-blow-note { margin: 14px 0 0; color: #ead9c7; font-size: 13px; font-weight: 500; line-height: 1.7; }
+.plush-blow-note span { display: block; }
 
 /* Keep the cake fixed as the song becomes the blackout and then the celebration. */
 .party:not([data-scene="entry"]) { --stage-cake-top: clamp(392px, 47svh, 410px); --stage-cake-height: calc(min(100vw, 430px) * 235 / 360); }

@@ -284,7 +284,7 @@ test('plush mode needs no phone microphone and celebrates on the micro:bit timel
   app.runTimer(PLUSH_SONG.durationMs + 100);
   assert.equal(app.get('song-lyrics').textContent, 'もうすぐ\nふーっ！');
   app.runTimer(PLUSH_SONG.durationMs + 1100);
-  assert.equal(app.get('song-lyrics').textContent, 'ぬいぐるみに\nふーっ！');
+  assert.equal(app.get('song-lyrics').textContent, 'ぬいぐるみのケーキに\nふーっ！');
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('volume-area').hidden, true);
   assert.equal(app.get('cake-button').disabled, true);
