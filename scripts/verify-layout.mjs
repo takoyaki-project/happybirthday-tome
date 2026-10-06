@@ -226,12 +226,35 @@ try {
     const size = `${width}x${height}`;
     await send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: true, screenWidth: width, screenHeight: height});
     await send('Emulation.setEmulatedMedia', {features: [{name: 'prefers-reduced-motion', value: 'no-preference'}]});
-    await evaluate("document.getElementById('reset').click();document.getElementById('name').value='けいこ';document.getElementById('count').value='5';document.getElementById('count').dispatchEvent(new Event('input'))");
+    await evaluate("document.getElementById('reset').click();document.getElementById('name').value='';document.getElementById('count').value='5';document.getElementById('count').dispatchEvent(new Event('input'))");
     await sleep(120);
     const entryBounds = await visibleBounds('.eyebrow, .brand h1, .brand-copy, #setup, #start, .sound-hint');
     for (const box of entryBounds) { assert.ok(box.left >= 16 && box.right <= width-16, `entry width: ${size}`); assert.ok(box.bottom < height, `entry height: ${size}`); }
     assert.ok(entryBounds[0].top >= 70, 'curtains end above the brand');
+    const curtains = await evaluate("['::before','::after'].map(pseudo=>{const s=getComputedStyle(document.getElementById('party'),pseudo);return {top:s.top,height:s.height,width:parseFloat(s.width)};})");
+    for (const curtain of curtains) {
+      assert.equal(curtain.top, '0px'); assert.equal(curtain.height, '70px');
+      assert.ok(Math.abs(curtain.width - width * .28) < 1, 'entry decoration keeps its original bounds');
+    }
     await screenshot(`${reviewDir}/entry-${size}.png`, height);
+    if (width === 390) {
+      await evaluate("document.getElementById('mode-plush').click();document.getElementById('name').focus()");
+      await screenshot(`${reviewDir}/entry-focus-${size}.png`, height);
+      await evaluate("document.getElementById('name').blur();document.getElementById('mode-phone').click()");
+    }
+    await evaluate("delete window.__testSongDuration;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
+    await sleep(250);
+    const beforePauseCake = (await visibleBounds('#cake'))[0];
+    await evaluate("window.dispatchEvent(new Event('pagehide'))");
+    const resume = (await visibleBounds('#resume'))[0];
+    assert.ok(resume && Math.abs((resume.left + resume.right) / 2 - width / 2) < .5, `resume is horizontally centered ${size}`);
+    assert.ok(resume.top >= beforePauseCake.bottom && resume.bottom < height, `resume clears the cake ${size}`);
+    assert.deepEqual((await visibleBounds('#cake'))[0], beforePauseCake, 'pausing preserves the cake position');
+    await screenshot(`${reviewDir}/song-paused-${size}.png`, height);
+    await evaluate("document.getElementById('resume').click()");
+    await sleep(250);
+    assert.equal(await evaluate("document.getElementById('resume').hidden && document.body.dataset.scene === 'song'"), true, 'resume restarts the song');
+    await evaluate("document.getElementById('reset').click()");
     await evaluate("document.getElementById('mode-plush').checked=true;document.getElementById('start').click()");
     await sleep(500);
     const guide = await visibleBounds('.plush-prepare p span, #plush-pop, .plush-tip');
@@ -305,6 +328,7 @@ try {
   }
   await writeFile(path.join(output, 'review-2026-10-06/metrics.json'), JSON.stringify(review,null,2));
   console.log('PASS entry, cracker, shared English lyrics, real row waves and speech bounds at four phone sizes');
+  console.log('PASS unchanged entry decoration bounds and centered, working resume button at four phone sizes');
   console.log('PASS plush waits for the micro:bit breath window and celebrates at the scheduled time');
 
   assert.deepEqual(errors, []);

@@ -85,25 +85,34 @@ body[data-scene="song"]::before, body[data-scene="blackout"]::before, body[data-
 .plush-confetti { position: absolute; z-index: 14; inset: 0; overflow: hidden; pointer-events: none; }.plush-confetti span { position: absolute; top: 22%; left: var(--confetti-x); width: 8px; height: 13px; border-radius: 2px; background: hsl(calc((var(--confetti-x) * 3)), 86%, 68%); animation: plush-confetti .9s cubic-bezier(.18,.8,.3,1) var(--confetti-delay) both; }.plush-confetti span:nth-child(3n) { background: #ffd56d; }.plush-confetti span:nth-child(3n + 1) { background: #ff88a6; }.plush-confetti span:nth-child(3n + 2) { background: #a98aff; } @keyframes plush-confetti { from { opacity: 0; transform: translate(-50%, -26px) rotate(0); } 20% { opacity: 1; } to { opacity: 0; transform: translate(calc(-50% + var(--confetti-turn)), 210px) rotate(300deg); } }
 .party[data-scene="plush-prepare"] .scene-copy { top: max(76px, calc(env(safe-area-inset-top) + 38px)); }.party[data-scene="plush-prepare"] .cake-button { top: clamp(355px, 47svh, 410px); }.party[data-scene="plush-prepare"] .scene-controls { top: max(14px, env(safe-area-inset-top)); }
 @media (max-height: 740px) { .party[data-scene="plush-prepare"] .scene-copy { top: 48px; transform: scale(.9); transform-origin: top center; }.party[data-scene="plush-prepare"] .cake-button { top: 300px; } }
-/* A clear invitation: keep the curtain outside the text and give the form one rhythm. */
+/* Invitation details. Keep the existing curtain bounds and top inset fixed. */
 .party[data-scene="entry"] { padding-top: max(86px, calc(env(safe-area-inset-top) + 60px)); }
 .party[data-scene="entry"]::before, .party[data-scene="entry"]::after { width: 28%; height: 70px; opacity: .9; }
-.party[data-scene="entry"] .brand { margin-bottom: 34px; text-align: center; }
-.party[data-scene="entry"] .eyebrow { margin-bottom: 18px; color: #85506b; font-size: 11px; letter-spacing: .22em; }
-.party[data-scene="entry"] h1 { font-size: clamp(30px, 8.5vw, 37px); line-height: 1.4; letter-spacing: .015em; }
-.party[data-scene="entry"] .brand-copy { margin-top: 16px; color: #755464; font-size: 14px; font-weight: 500; }
-#setup { gap: 22px; }
-.field label { color: #593b50; }
-.field label span { color: #795c70; font-size: 12px; }
-input::placeholder { color: #8b7584; }
-.mode-switch { min-width: 0; padding: 4px; border-color: #cbb5c5; background: rgba(255,255,255,.5); }
+.party[data-scene="entry"] .brand { margin-bottom: 36px; text-align: center; }
+.party[data-scene="entry"] .eyebrow { margin-bottom: 18px; color: #845b72; font-size: 10px; font-weight: 600; line-height: 1.5; letter-spacing: .26em; }
+.party[data-scene="entry"] h1 { color: #39233f; font-size: clamp(30px, 8.5vw, 37px); font-weight: 800; line-height: 1.45; letter-spacing: .025em; }
+.party[data-scene="entry"] .brand-copy { margin-top: 16px; color: #795d6d; font-size: 13px; font-weight: 500; line-height: 1.8; letter-spacing: .025em; }
+#setup { gap: 24px; }
+#setup .field { gap: 9px; }
+#setup .field label { align-items: baseline; color: #593b50; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
+#setup .field label span { color: #7c6574; font-size: 11px; font-weight: 400; letter-spacing: 0; }
+#setup .field input { height: 52px; padding-left: 16px; border-color: #d7c5cf; border-radius: 14px; background: #fffcf9; box-shadow: 0 1px 2px rgba(73,35,63,.025); transition: border-color 160ms ease, box-shadow 160ms ease; }
+#setup .field input::placeholder { color: #806b79; }
+#setup .field input:focus { border-color: #896480; outline: 2px solid rgba(137,100,128,.22); outline-offset: 2px; box-shadow: none; }
+#setup .number-field > span { top: 0; bottom: 0; display: flex; align-items: center; color: #7c6574; }
+.mode-switch { min-width: 0; padding: 4px; border-color: #d7c5cf; border-radius: 16px; background: rgba(255,252,249,.62); }
 .mode-switch legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.mode-switch label, .mode-switch input:checked + span { min-height: 44px; }
-.mode-switch input:checked + span { background: var(--color-accent); box-shadow: 0 2px 5px rgba(62,27,78,.12); }
-#start { min-height: 54px; box-shadow: 0 7px 16px rgba(62,27,78,.2); }
-.sound-hint { margin-top: -10px; color: #795b6a; font-weight: 500; }
+.mode-switch label { min-height: 44px; color: #795d6d; font-weight: 500; }
+.mode-switch label > span { display: grid; width: 100%; min-height: 44px; place-items: center; border-radius: 11px; }
+.mode-switch input:checked + span { min-height: 44px; border-radius: 11px; background: #ebdde8; box-shadow: inset 0 0 0 1px rgba(110,71,105,.1); color: #51304e; font-weight: 700; }
+.mode-switch input:focus-visible + span { outline: 2px solid #896480; outline-offset: 1px; }
+#start { min-height: 56px; margin-top: 4px; border-radius: 18px; box-shadow: 0 5px 12px rgba(62,27,78,.14), inset 0 1px rgba(255,255,255,.1); font-weight: 700; letter-spacing: .045em; }
+.sound-hint { margin-top: -12px; color: #7c6574; font-size: 11px; font-weight: 400; line-height: 1.6; letter-spacing: .02em; }
 .primary { transition: transform 160ms ease, box-shadow 160ms ease; }
 .primary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 7px rgba(62,27,78,.2); }
+/* The resume action is centered in the stage, independent of the corner controls. */
+.party[data-mic-state="paused"] .scene-controls { max-width: none; align-items: end; }
+.party[data-mic-state="paused"] #resume { align-self: center; width: min(100%, 280px); }
 /* The preparation belongs to the same dark stage as the song. */
 body[data-scene="plush-prepare"] { background: var(--color-dark-background); }
 body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse at 50% 12%, rgba(247,189,103,.35), transparent 30%), radial-gradient(ellipse at 50% 72%, rgba(142,39,71,.27), transparent 48%), linear-gradient(180deg, #35102a 0%, var(--stage-wine-deep) 76%); }
