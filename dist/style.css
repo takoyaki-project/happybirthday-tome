@@ -145,6 +145,11 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .party[data-scene="song"] .scene-copy { top: max(84px, calc(env(safe-area-inset-top) + 45px)); }
 .party[data-scene="song"]::before, .party[data-scene="song"]::after { height: 80px; }
 .song-lyrics { font-size: clamp(27px, 7.6vw, 34px); letter-spacing: .035em; }
+.song-recipient { position: relative; left: 50%; width: calc(100vw - 16px); max-width: 414px; margin: 0 0 12px; transform: translateX(-50%); font-size: 36px; font-weight: 900; line-height: 1.22; letter-spacing: -.035em; overflow-wrap: anywhere; text-wrap: balance; }
+.song-recipient[data-name-length="medium"] { font-size: 28px; }
+.song-recipient[data-name-length="long"] { font-size: 22px; letter-spacing: -.045em; }
+.song-recipient #recipient-suffix { font-size: .6em; font-weight: 900; white-space: nowrap; }
+.song-lyrics .lyric-name { font-style: normal; font-weight: 900; }
 /* Confetti bursts from one point below the copy, rather than forming a line over it. */
 .plush-confetti { z-index: 4; }
 .plush-confetti span { top: 26%; left: 50%; opacity: 0; background: #ffd56d; }
@@ -169,19 +174,13 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 @media (min-height: 741px) { .party[data-scene="song"] .scene-copy { top: clamp(145px, 20svh, 185px); } }
 @media (max-height: 740px) { .party:not([data-scene="entry"]) { --stage-cake-top: 300px; } }
 
-/* A quiet second path on the sender's page; the invite itself needs one clear action. */
-.invite-maker { margin-top: 22px; padding-top: 18px; border-top: 1px solid #dbc9cf; }
-.invite-maker summary { color: #67445d; font-size: 13px; font-weight: 700; line-height: 1.5; cursor: pointer; text-align: center; }
-.invite-maker summary:focus-visible { outline: 2px solid #896480; outline-offset: 4px; }
-.invite-maker-content { display: grid; gap: 18px; padding: 20px 0 10px; }
-.invite-maker .field { gap: 8px; }
-.invite-maker .field label { color: #593b50; font-size: 13px; font-weight: 600; }
-.invite-maker .field label span, .field-note { color: #7c6574; font-size: 11px; font-weight: 400; }
-.invite-maker .field input { height: 52px; border-color: #d7c5cf; border-radius: 14px; background: #fffcf9; box-shadow: none; }
-.invite-maker .field input:focus { border-color: #896480; outline: 2px solid rgba(137,100,128,.22); outline-offset: 2px; }
-.field-note, .invite-error, .invite-feedback { margin: 0; line-height: 1.5; }
-.invite-error { color: #9d3158; font-size: 12px; font-weight: 700; }
-.invite-create { border: 1px solid #d5bed1; background: #f8edf3; box-shadow: none; color: #51304e; }
+/* The shared name and age fields feed either celebration or invitation. */
+.age-error, .invite-feedback { margin: 0; line-height: 1.5; }
+.age-error { color: #9d3158; font-size: 12px; font-weight: 700; }
+.field input[aria-invalid="true"] { border-color: #9d3158; }
+.invite-create { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 56px; border: 1px solid #a98da8; border-radius: 18px; background: rgba(255,250,249,.55); box-shadow: none; color: #51304e; font-weight: 700; }
+.invite-create svg { flex: none; }
+.invite-description { margin: -14px 0 0; color: #806a77; font-size: 11px; line-height: 1.5; text-align: center; }
 .invite-result { display: grid; gap: 10px; padding: 16px; border: 1px solid #ddcad2; border-radius: 16px; background: rgba(255,252,249,.72); }
 .invite-result label { color: #593b50; font-size: 12px; font-weight: 700; }
 .invite-result input { height: 44px; padding: 0 10px; box-shadow: none; font-family: Arial, sans-serif; font-size: 12px; }

@@ -3,13 +3,13 @@ import { INVITE_NAME_MAX_LENGTH, validCount, candleCounts, candleLayout, parseIn
 import { BLOW_SENSITIVITY } from './core.js';
 import { SONG, PLUSH_SONG } from './song.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'mode-phone', 'mode-plush', 'start', 'invite-maker', 'invite-name', 'invite-age', 'invite-create', 'invite-error', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'song-lyrics', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'age-error', 'mode-phone', 'mode-plush', 'start', 'invite-create', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'recipient-name', 'recipient-suffix', 'song-lyrics', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
-let total = 5;
-let chosenAge = 5;
-let remaining = 5;
+let total = 9;
+let chosenAge = null;
+let remaining = 9;
 let candles = [];
 let audio = null;
 let stream = null;
@@ -35,6 +35,7 @@ const TAP_READY_MESSAGE = 'ケーキをタップして、ろうそくを消し�
 const INVITE_CELEBRATION_MESSAGE = 'お誕生日、おめでとうございます！';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
+const AGE_ERROR_MESSAGE = '年齢は1〜99の整数で入力してね。';
 const RECENT_MESSAGE_LIMIT = 5;
 const MAX_GENTLE_BLOWS = 3;
 const MAX_MOBS = 40;
@@ -159,11 +160,10 @@ function controls() {
   ui['celebration-message'].textContent = complete ? (currentCelebrationMessage || completionMessage(ui.name.value)) : '';
   ui['celebration-title'].textContent = scene === 'celebrate' ? (ui.name.value.trim() ? `${ui.name.value.trim()}さん、おめでとう！` : 'おめでとう！') : 'おめでとう！';
   ui.setup.hidden = !entry || playMode === 'invite';
-  ui['invite-maker'].hidden = !entry || playMode === 'invite';
   ui['invite-card'].hidden = !entry || playMode !== 'invite';
   ui['invite-recipient'].textContent = ui.name.value.trim() ? `${ui.name.value.trim()}さんへ` : 'あなたへ';
   ui.started.hidden = entry;
-  ui.name.disabled = ui.count.disabled = ui['mode-phone'].disabled = ui['mode-plush'].disabled = ui.start.disabled = locked;
+  ui.name.disabled = ui.count.disabled = ui['mode-phone'].disabled = ui['mode-plush'].disabled = ui.start.disabled = ui['invite-create'].disabled = locked;
   ui.resume.hidden = phase !== 'paused';
   ui.fallback.hidden = playMode !== 'phone' || scene !== 'song' || phase !== 'preparing';
   ui['plush-prepare'].hidden = scene !== 'plush-prepare';
@@ -175,7 +175,10 @@ function controls() {
   ui['song-lyrics'].hidden = scene !== 'song';
   if (scene !== 'song' || playMode !== 'plush' || phase !== 'plush-wait') $('plush-blow-note').hidden = true;
   ui['song-recipient'].hidden = scene !== 'song' || (playMode === 'plush' && phase === 'plush-wait');
-  ui['song-recipient'].textContent = ui.name.value.trim() ? `${ui.name.value.trim()}さんへ` : 'あなたへ';
+  const recipient = ui.name.value.trim();
+  ui['recipient-name'].textContent = recipient || 'あなた';
+  ui['recipient-suffix'].textContent = recipient ? 'さんへ' : 'へ';
+  ui['song-recipient'].dataset.nameLength = Array.from(recipient).length <= 6 ? 'short' : Array.from(recipient).length <= 12 ? 'medium' : 'long';
   ui['blackout-copy'].hidden = scene !== 'blackout';
   ui['celebration-copy'].hidden = scene !== 'celebrate';
   ui['audio-note'].hidden = scene !== 'celebrate';
@@ -273,6 +276,14 @@ function prepareSound(playReadyTone = true) {
     return ctx;
   } catch { return null; }
 }
+function renderLyric(lyric, displayName) {
+  if (!lyric.includes('{name}')) { ui['song-lyrics'].textContent = lyric; return; }
+  const [before, after] = lyric.split('{name}');
+  const name = document.createElement('span');
+  name.className = 'lyric-name';
+  name.textContent = displayName;
+  ui['song-lyrics'].replaceChildren(document.createTextNode(before), name, document.createTextNode(after));
+}
 function playSong(ctx, ticket) {
   const displayName = ui.name.value.trim() || (playMode === 'invite' ? 'you' : 'わたし');
   for (const [offset, hz, duration] of SONG.notes) {
@@ -281,7 +292,7 @@ function playSong(ctx, ticket) {
     gain.gain.setValueAtTime(.001, at); gain.gain.exponentialRampToValueAtTime(.11, at + .02); gain.gain.exponentialRampToValueAtTime(.001, at + duration / 1000);
     oscillator.connect(gain).connect(ctx.destination); oscillator.start(at); oscillator.stop(at + duration / 1000 + .03);
   }
-  SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => { if (phase === 'singing') ui['song-lyrics'].textContent = lyric.replace('{name}', displayName); }, offset)));
+  SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => { if (phase === 'singing') renderLyric(lyric, displayName); }, offset)));
   const finish = () => {
     if (ticket !== generation || phase !== 'singing') return;
     if (tapOnly) { activateTap(); return; }
@@ -368,7 +379,7 @@ function playPlushSong() {
   });
   const displayName = ui.name.value.trim() || 'あなた';
   PLUSH_SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => {
-    if (ticket === generation && phase === 'singing') ui['song-lyrics'].textContent = lyric.replace('{name}', displayName);
+    if (ticket === generation && phase === 'singing') renderLyric(lyric, displayName);
   }, PLUSH_SONG_START_OFFSET_MS + offset)));
   timer = window.setTimeout(() => {
     if (ticket !== generation || phase !== 'singing') return;
@@ -591,6 +602,19 @@ function listen(ctx, ticket) {
   }
   frame = requestAnimationFrame(tick);
 }
+function selectedAge() {
+  const raw = ui.count.value.trim();
+  if (!raw) return null;
+  return /^[1-9]\d*$/.test(raw) ? (validCount(raw) ?? undefined) : undefined;
+}
+function checkedAge() {
+  const age = selectedAge();
+  const invalid = age === undefined;
+  ui['age-error'].hidden = !invalid;
+  ui['age-error'].textContent = invalid ? AGE_ERROR_MESSAGE : '';
+  ui.count.setAttribute('aria-invalid', String(invalid));
+  return age;
+}
 function start(resuming = false) {
   if ((!resuming && phase !== 'idle') || (resuming && phase !== 'paused')) return;
   if (playMode === 'invite') {
@@ -609,9 +633,9 @@ function start(resuming = false) {
   }
   if (resuming && playMode === 'plush') { beginPlushPreparation(); return; }
   if (!resuming) {
-    const count = validCount(ui.count.value);
-    if (count === null) { status('ろうそくは1〜99の整数で入力してね。', true); return; }
-    chosenAge = count;
+    const age = checkedAge();
+    if (age === undefined) return;
+    chosenAge = age;
     renderCake();
     tapOnly = false;
     playMode = ui['mode-plush'].checked ? 'plush' : 'phone';
@@ -685,29 +709,22 @@ function reset() {
 }
 ui.setup.addEventListener('submit', event => { event.preventDefault(); start(); });
 ui['invite-create'].addEventListener('click', () => {
-  const name = Array.from(ui['invite-name'].value.trim()).slice(0, INVITE_NAME_MAX_LENGTH).join('');
-  const rawAge = ui['invite-age'].value.trim();
-  const age = rawAge === '' ? null : validCount(rawAge);
-  if (rawAge && (!/^[1-9]\d*$/.test(rawAge) || age === null)) {
-    ui['invite-error'].textContent = '年齢は1〜99の整数で入力してね。';
-    ui['invite-error'].hidden = false;
-    ui['invite-result'].hidden = true;
-    ui['invite-age'].setAttribute('aria-invalid', 'true');
-    return;
-  }
-  ui['invite-error'].hidden = true;
-  ui['invite-age'].setAttribute('aria-invalid', 'false');
+  const name = Array.from(ui.name.value.trim()).slice(0, INVITE_NAME_MAX_LENGTH).join('');
+  const age = checkedAge();
+  if (age === undefined) { ui['invite-result'].hidden = true; return; }
   ui['invite-link'].value = inviteUrl(window.location.href, name, age);
   ui['invite-result'].hidden = false;
   ui['invite-feedback'].textContent = '';
   ui['invite-share'].hidden = typeof navigator.share !== 'function';
+  ui['invite-result'].scrollIntoView?.({block: 'nearest'});
 });
-for (const id of ['invite-name', 'invite-age']) ui[id].addEventListener('input', () => {
+for (const id of ['name', 'count']) ui[id].addEventListener('input', () => {
   ui['invite-result'].hidden = true;
-  ui['invite-error'].hidden = true;
+  ui['age-error'].hidden = true;
+  ui.count.setAttribute('aria-invalid', 'false');
 });
 ui['invite-share'].addEventListener('click', () => {
-  const name = ui['invite-name'].value.trim();
+  const name = ui.name.value.trim();
   const text = `${name ? `${name}さん、` : ''}お誕生日おめでとうございます。お祝いを届けます。`;
   void navigator.share({text, url: ui['invite-link'].value}).catch(() => {});
 });
@@ -726,8 +743,8 @@ ui['plush-again'].addEventListener('click', playPlushSong);
 ui['cake-button'].addEventListener('click', () => extinguish());
 ui.reset.addEventListener('click', reset);
 ui.count.addEventListener('input', () => {
-  const count = validCount(ui.count.value);
-  if (phase === 'idle' && count !== null && playMode !== 'invite') { chosenAge = count; renderCake(); }
+  const age = selectedAge();
+  if (phase === 'idle' && age !== undefined && playMode !== 'invite') { chosenAge = age; renderCake(); }
 });
 ui['sound-test'].addEventListener('click', () => {
   if (!prepareSound()) status('音を準備できませんでした。ケーキをタップして遊べます。', true);
@@ -743,7 +760,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', () => { pause(); releaseAudio(); });
 // Do not restore personal inputs from history or any browser storage.
 ui.name.value = '';
-ui.count.value = '5';
+ui.count.value = '';
 if (isInvitePage) {
   const invitation = parseInviteHash(window.location.hash);
   ui.name.value = invitation.name;

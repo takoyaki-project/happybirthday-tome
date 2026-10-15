@@ -15,7 +15,9 @@ class Element {
     this.classes = new Set();
     this.classList = {add: c => this.classes.add(c), remove: c => this.classes.delete(c), contains: c => this.classes.has(c)};
   }
-  addEventListener(name, callback) { this.events[name] = callback; }
+  get textContent() { return this.children.length ? this.children.map(child => child.textContent ?? '').join('') : this._textContent; }
+  set textContent(value) { this._textContent = value; this.children = []; }
+  addEventListener(name, callback) { const previous = this.events[name]; this.events[name] = previous ? (...args) => { previous(...args); callback(...args); } : callback; }
   setAttribute(key, value) { this.attributes[key] = value; }
   append(child) { this.children.push(child); }
   replaceChildren(...children) { this.children = children; }
@@ -24,6 +26,8 @@ class Element {
 function harness(getUserMedia, withAudio = true, songDuration = 0, pageUrl = 'https://example.com/happybirthday-tome/', withMessages = false) {
   const els = new Map();
   const get = id => { if (!els.has(id)) els.set(id, new Element()); return els.get(id); };
+  get('song-recipient').append(get('recipient-name'));
+  get('song-recipient').append(get('recipient-suffix'));
   const raf = new Map();
   const timers = new Map();
   const contexts = [];
@@ -154,7 +158,7 @@ test('hide releases microphone; explicit resume keeps remaining candle count', a
   const mics = [microphone(), microphone()]; let index = 0;
   const app = harness(() => Promise.resolve(mics[index++].stream));
   app.submit(); await flush(); app.get('cake-button').click();
-  assert.equal(app.get('remaining').textContent, 3);
+  assert.equal(app.get('remaining').textContent, 6);
   app.hide();
   assert.equal(mics[0].track.stopped, true);
   assert.equal(app.contexts[0].state, 'closed');
@@ -162,7 +166,7 @@ test('hide releases microphone; explicit resume keeps remaining candle count', a
   assert.equal(app.requested(), 1);
   app.get('resume').click(); await flush();
   assert.equal(app.requested(), 2);
-  assert.equal(app.get('remaining').textContent, 3);
+  assert.equal(app.get('remaining').textContent, 6);
   assert.equal(app.get('cake-button').disabled, false);
 });
 test('microphone disconnection switches to taps', async () => {
@@ -264,7 +268,7 @@ test('song keeps microphone cues and detection off until the song ends', async (
   assert.equal(app.get('blow-cue').hidden, true);
   assert.equal(app.get('volume-area').hidden, true);
   app.frames(20, .5);
-  assert.equal(app.get('remaining').textContent, 5);
+  assert.equal(app.get('remaining').textContent, 9);
   app.runTimer(SONG.durationMs);
   assert.equal(app.get('blow-cue').hidden, false);
   assert.equal(app.get('volume-area').hidden, false);
@@ -283,6 +287,8 @@ test('plush mode needs no phone microphone and celebrates on the micro:bit timel
   assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[0][1]);
   app.runTimer(6100);
   assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[2][1].replace('{name}', 'けいこ'));
+  assert.equal(app.get('song-lyrics').children[1].className, 'lyric-name');
+  assert.equal(app.get('song-lyrics').children[1].textContent, 'けいこ');
   app.runTimer(PLUSH_SONG.durationMs + 100);
   assert.equal(app.get('song-lyrics').textContent, 'もうすぐ\nふーっ！');
   app.runTimer(PLUSH_SONG.durationMs + 1100);
@@ -466,11 +472,13 @@ test('completion message uses the entered name, replaces the wish copy, and caps
     if (name === 'けいこ') assert.match(message, /けいこさん/);
   }
 });
-test('reference copy is editable HTML, the candle count stays required, and bubble and count have one parent', async () => {
+test('reference copy uses a shared optional age field and a direct invitation action', async () => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
-  for (const text of ['HAPPY BIRTHDAY', 'きょうは、', 'あなたが主役。', 'お名前', '省略OK', 'ろうそくは何本にする？', '1〜99本', 'お祝いをはじめる', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
+  for (const text of ['HAPPY BIRTHDAY', 'きょうは、', 'あなたが主役。', 'お名前', '年齢（省略OK）', '1〜99歳', 'お祝いをはじめる', '招待状をつくる', 'LINEなどで送れる、お祝いのリンクを作ります', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
   assert.doesNotMatch(html, /0〜120|パーティスタート|YOUR BIRTHDAY CAKE/);
-  assert.match(html, /id="count"[^>]*min="1"[^>]*max="99"[^>]*required/);
+  assert.match(html, /id="count"[^>]*type="text"[^>]*inputmode="numeric"/);
+  assert.doesNotMatch(html, /invite-name|invite-age|invite-maker|<details|id="count"[^>]*required/);
+  assert.match(html, /id="start"[\s\S]*id="invite-create"[\s\S]*<svg/);
   assert.match(html, /id="song-recipient"/);
   assert.match(html, /id="blow-cue"[^]*id="bubble"[^]*id="counter"[^]*id="remaining"/);
   assert.equal((code.match(/ui\['blow-cue'\]\.hidden =/g) || []).length, 1);
@@ -485,25 +493,41 @@ test('reference copy is editable HTML, the candle count stays required, and bubb
   assert.match(css, /--color-background:[^;]+;[\s\S]*--color-text:[^;]+;[\s\S]*--color-accent:[^;]+;[\s\S]*--color-emphasis:[^;]+;/);
 });
 
-test('sender creates an encoded invitation without changing the required personal count', () => {
+test('shared fields create an encoded invitation and reject invalid ages', () => {
   const app = harness(() => { throw new Error('not needed'); });
-  app.get('invite-name').value = ' A&B ';
-  app.get('invite-age').value = '49';
+  app.name(' A&B ');
+  app.count(49);
+  app.get('mode-plush').checked = true;
   app.get('invite-create').click();
   assert.equal(app.get('invite-link').value, 'https://example.com/happybirthday-tome/invite.html#name=A%26B&age=49');
   assert.equal(app.get('invite-result').hidden, false);
-  app.get('invite-age').value = '1.5';
+  app.count('1.5');
   app.get('invite-create').click();
   assert.equal(app.get('invite-result').hidden, true);
-  assert.match(app.get('invite-error').textContent, /1〜99/);
-  assert.equal(app.get('count').value, '5');
+  assert.match(app.get('age-error').textContent, /1〜99/);
+  app.count('');
+  app.get('invite-create').click();
+  assert.equal(app.get('invite-link').value, 'https://example.com/happybirthday-tome/invite.html#name=A%26B');
+  assert.equal(app.document.body.dataset.scene, 'entry');
   assert.equal(app.requested(), 0);
+});
+
+test('blank age starts with nine candles, while a typed invalid age blocks the celebration', () => {
+  const blank = harness(() => Promise.reject());
+  blank.submit();
+  assert.equal(blank.get('candles').children.length, 9);
+  assert.equal(blank.document.body.dataset.scene, 'song');
+  const invalid = harness(() => Promise.reject());
+  invalid.count('100');
+  invalid.submit();
+  assert.equal(invalid.document.body.dataset.scene, 'entry');
+  assert.equal(invalid.get('age-error').hidden, false);
+  assert.equal(invalid.requested(), 0);
 });
 
 test('invitation never requests the microphone, keeps its recipient on reset, and clears nine default candles in three taps', () => {
   const app = harness(() => { throw new Error('invite must not request microphone'); }, true, 0, 'https://example.com/happybirthday-tome/invite.html#name=%E3%81%91%E3%81%84%E3%81%93');
   assert.equal(app.get('setup').hidden, true);
-  assert.equal(app.get('invite-maker').hidden, true);
   assert.equal(app.get('invite-card').hidden, false);
   assert.equal(app.get('invite-recipient').textContent, 'けいこさんへ');
   assert.equal(app.get('candles').children.length, 9);

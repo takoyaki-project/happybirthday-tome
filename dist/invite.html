@@ -34,20 +34,13 @@
     <section class="message-card" aria-label="誕生日の準備とメッセージ">
       <form id="setup" autocomplete="off">
         <div class="field"><label for="name">お名前 <span>省略OK</span></label><input id="name" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="ニックネーム"></div>
-        <div class="field"><label for="count">ろうそくは何本にする？ <span>1〜99本</span></label><div class="number-field"><input id="count" type="number" min="1" max="99" step="1" value="5" inputmode="numeric" required autocomplete="off" aria-label="ろうそくの本数"><span>本</span></div></div><fieldset class="mode-switch"><legend>パーティーの相手</legend><label><input id="mode-phone" name="play-mode" type="radio" value="phone" checked><span>スマホだけ</span></label><label><input id="mode-plush" name="play-mode" type="radio" value="plush"><span>ぬいぐるみと</span></label></fieldset>
+        <div class="field"><label for="count">年齢（省略OK） <span>1〜99歳</span></label><div class="number-field"><input id="count" type="text" inputmode="numeric" autocomplete="off" aria-label="年齢" placeholder="空欄なら9本"><span>歳</span></div><p id="age-error" class="age-error" role="alert" hidden></p></div><fieldset class="mode-switch"><legend>パーティーの相手</legend><label><input id="mode-phone" name="play-mode" type="radio" value="phone" checked><span>スマホだけ</span></label><label><input id="mode-plush" name="play-mode" type="radio" value="plush"><span>ぬいぐるみと</span></label></fieldset>
         <button id="start" class="primary" type="submit">お祝いをはじめる</button>
+        <button id="invite-create" class="secondary invite-create" type="button"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/></svg><span>招待状をつくる</span></button>
+        <p class="invite-description">LINEなどで送れる、お祝いのリンクを作ります</p>
+        <div id="invite-result" class="invite-result" hidden><label for="invite-link">招待状リンク</label><input id="invite-link" type="url" readonly><div class="invite-actions"><button id="invite-share" type="button" class="secondary" hidden>共有する</button><button id="invite-copy" type="button" class="secondary">コピー</button><button id="invite-try" type="button" class="secondary">自分で試す</button></div><p id="invite-feedback" class="invite-feedback" role="status" aria-live="polite"></p></div>
         <p class="sound-hint">音をオンにして楽しもう</p>
       </form>
-      <details id="invite-maker" class="invite-maker">
-        <summary>お持ち帰り用の招待状をつくる</summary>
-        <div class="invite-maker-content">
-          <div class="field"><label for="invite-name">お名前 <span>省略OK</span></label><input id="invite-name" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="お祝いする人の名前"><p class="field-note">「さん」は自動でつきます</p></div>
-          <div class="field"><label for="invite-age">年齢 <span>省略OK・1〜99歳</span></label><input id="invite-age" type="text" inputmode="numeric" autocomplete="off" placeholder="わからなければ空欄でOK"></div>
-          <button id="invite-create" class="secondary invite-create" type="button">リンクをつくる</button>
-          <p id="invite-error" class="invite-error" role="alert" hidden></p>
-          <div id="invite-result" class="invite-result" hidden><label for="invite-link">招待状リンク</label><input id="invite-link" type="url" readonly><div class="invite-actions"><button id="invite-share" type="button" class="secondary" hidden>共有する</button><button id="invite-copy" type="button" class="secondary">コピー</button><button id="invite-try" type="button" class="secondary">自分で試す</button></div><p id="invite-feedback" class="invite-feedback" role="status" aria-live="polite"></p></div>
-        </div>
-      </details>
       <div id="invite-card" class="invite-card" hidden><p class="invite-kicker">A LITTLE CELEBRATION FOR YOU</p><h1 id="invite-recipient">あなたへ</h1><p class="invite-intro">お誕生日のお祝いが届いています</p><img class="invite-cake" src="./assets/cake-base-v2.png" alt="" aria-hidden="true"><button id="invite-open" class="primary" type="button">お祝いをひらく</button><p class="invite-sound-hint">音をオンにして楽しんでね</p></div>
       <div id="started" class="started" hidden>
         <div class="card-copy">
@@ -58,7 +51,7 @@
     </section>
     <section class="stage" aria-label="バースデーケーキ">
       <div id="scene-copy" class="scene-copy" aria-live="polite"><div id="plush-prepare" class="plush-prepare" hidden><p><span>スマホをぬいぐるみの</span><span>そばに置いてね</span></p><button id="plush-pop" class="primary" type="button" aria-label="クラッカーを鳴らして、お祝いをはじめる"><img src="./assets/party-popper.svg" width="72" height="72" alt="" aria-hidden="true"><span>タップ</span></button><p class="plush-tip">音量を上げてからタップ</p></div>
-        <p id="song-recipient" class="song-recipient" hidden>あなたへ</p>
+        <p id="song-recipient" class="song-recipient" hidden><span id="recipient-name">あなた</span><span id="recipient-suffix">へ</span></p>
         <p id="song-lyrics" class="song-lyrics" hidden>歌詞はここに表示</p>
         <p id="plush-blow-note" class="plush-blow-note" hidden><span>ケーキの上の micro:bit に</span><span>息を吹きかけてね</span></p>
         <div id="blackout-copy" class="blackout-copy" hidden>しーっ。願いごとの時間。</div>

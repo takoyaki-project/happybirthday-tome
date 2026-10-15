@@ -67,7 +67,7 @@ try {
   await send('Page.addScriptToEvaluateOnNewDocument', {source: 'window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;const context=new AudioContext();return context.createMediaStreamDestination().stream;};'});
   await send('Page.navigate', {url: origin});
   for (let i = 0; i < 60; i++) {
-    if (await evaluate("document.querySelectorAll('.candle').length===5")) break;
+    if (await evaluate("document.querySelectorAll('.candle').length===9")) break;
     await sleep(100);
   }
   const read = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};const visible=id=>!!document.getElementById(id).getClientRects().length;return{scene:document.body.dataset.scene,width:innerWidth,height:innerHeight,scrollY,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,cake:rect('cake'),cakeVisible:visible('cake'),bubble:visible('bubble'),counter:visible('counter'),gauge:visible('meter'),lyrics:visible('song-lyrics'),smoke:visible('smoke'),celebration:visible('celebration-copy'),setup:visible('setup'),message:document.getElementById('celebration-message').textContent,celebrationTitle:rect('celebration-title'),celebrationMessage:rect('celebration-message'),audioNote:rect('audio-note'),mobCount:document.querySelectorAll('.mob').length,candleCount:document.querySelectorAll('.candle').length,outCount:document.querySelectorAll('.candle.out').length,background:getComputedStyle(document.body).backgroundColor};})()");
@@ -96,14 +96,16 @@ try {
   fits(entry);
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
   await screenshot('entry-390x844.png');
-  await evaluate("document.getElementById('invite-maker').open=true;document.getElementById('invite-name').value='けいこ';document.getElementById('invite-age').value='1.5';document.getElementById('invite-create').click()");
-  assert.equal(await evaluate("!document.getElementById('invite-error').hidden && document.getElementById('invite-result').hidden"), true);
-  await evaluate("document.getElementById('invite-age').value='49';document.getElementById('invite-create').click()");
+  await evaluate("document.getElementById('name').value='けいこ';document.getElementById('count').value='1.5';document.getElementById('invite-create').click()");
+  assert.equal(await evaluate("!document.getElementById('age-error').hidden && document.getElementById('invite-result').hidden"), true);
+  await evaluate("document.getElementById('count').value='49';document.getElementById('invite-create').click()");
   assert.equal(await evaluate("document.getElementById('invite-link').value"), `${origin}/invite.html#name=${encodeURIComponent('けいこ')}&age=49`);
-  const makerTop = await evaluate("document.getElementById('invite-maker').getBoundingClientRect().top + scrollY");
-  const makerShot = await send('Page.captureScreenshot', {format: 'png', clip: {x: 0, y: Math.max(0, makerTop - 24), width: 390, height: 690, scale: 1}, captureBeyondViewport: true});
-  await writeFile(path.join(output, 'invite-maker-390x844.png'), Buffer.from(makerShot.data, 'base64'));
-  await evaluate("document.getElementById('invite-maker').open=false");
+  const inviteVisibility = await evaluate("(()=>({bottom:document.getElementById('invite-result').getBoundingClientRect().bottom,height:innerHeight,scrollY,scrollHeight:document.documentElement.scrollHeight}))()");
+  assert.ok(inviteVisibility.bottom <= inviteVisibility.height + 1, `invitation actions become visible after creation: ${JSON.stringify(inviteVisibility)}`);
+  const actionsShot = await send('Page.captureScreenshot', {format: 'png'});
+  await writeFile(path.join(output, 'invite-actions-390x844.png'), Buffer.from(actionsShot.data, 'base64'));
+  await screenshot('invite-form-390x844.png');
+  await evaluate("document.getElementById('count').value='5';document.getElementById('count').dispatchEvent(new Event('input'))");
 
   await evaluate("document.getElementById('mode-plush').checked=true;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
   await sleep(500);
@@ -125,6 +127,7 @@ try {
   fits(song);
   assert.equal(song.scene, 'song'); assert.ok(song.cakeVisible && song.lyrics && !song.bubble && !song.counter && !song.gauge);
   assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /Dear けいこ/);
+  assert.equal(await evaluate("(()=>{const name=document.querySelector('#song-lyrics .lyric-name');const style=getComputedStyle(name);return style.fontStyle+':'+style.fontWeight})()"), 'normal:900');
   assert.equal(song.background, 'rgb(25, 13, 29)');
   await screenshot('song-lyrics-390x844.png');
   await sleep(3600); await screenshot('song-line-4-390x844.png');
@@ -238,7 +241,8 @@ try {
     await evaluate("document.getElementById('reset').click();document.getElementById('name').value='';document.getElementById('count').value='5';document.getElementById('count').dispatchEvent(new Event('input'))");
     await sleep(120);
     const entryBounds = await visibleBounds('.eyebrow, .brand h1, .brand-copy, #setup, #start, .sound-hint');
-    for (const box of entryBounds) { assert.ok(box.left >= 16 && box.right <= width-16, `entry width: ${size}`); assert.ok(box.bottom < height, `entry height: ${size}`); }
+    for (const [index, box] of entryBounds.entries()) { assert.ok(box.left >= 16 && box.right <= width-16, `entry width: ${size}`); if ([0, 1, 2, 4].includes(index)) assert.ok(box.bottom < height, `entry heading and primary action: ${size}`); }
+    assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth && document.getElementById('invite-create').getBoundingClientRect().height>=56"), `invitation remains reachable without horizontal overflow: ${size}`);
     assert.ok(entryBounds[0].top >= 70, 'curtains end above the brand');
     const curtains = await evaluate("['::before','::after'].map(pseudo=>{const s=getComputedStyle(document.getElementById('party'),pseudo);return {top:s.top,height:s.height,width:parseFloat(s.width)};})");
     for (const curtain of curtains) {
@@ -405,6 +409,27 @@ try {
     }
   }
   console.log('PASS invitation card, song, taps, celebration, and reset at 390×844 and 390×740 without microphone calls');
+
+  for (const width of [390, 360]) for (const height of [844, 740]) for (const length of [1, 4, 10, 30]) {
+    const name = 'あ'.repeat(length);
+    await send('Emulation.setDeviceMetricsOverride', {width, height, deviceScaleFactor: 1, mobile: true, screenWidth: width, screenHeight: height});
+    await send('Page.navigate', {url: `${origin}/invite.html?recipient-${width}-${height}-${length}#name=${encodeURIComponent(name)}`});
+    for (let attempt = 0; attempt < 60; attempt++) {
+      if (await evaluate(`document.getElementById('invite-recipient').textContent===${JSON.stringify(name + 'さんへ')}`)) break;
+      await sleep(50);
+    }
+    await evaluate("window.__testSongDuration=1500;document.getElementById('invite-open').click()");
+    await sleep(110);
+    const bands = await evaluate("(()=>{const box=id=>{const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height}};const recipient=document.getElementById('song-recipient');const css=getComputedStyle(recipient);return {scene:document.body.dataset.scene,recipient:box('song-recipient'),lyrics:box('song-lyrics'),cake:box('cake'),fontSize:parseFloat(css.fontSize),lineHeight:parseFloat(css.lineHeight),suffixSize:parseFloat(getComputedStyle(document.getElementById('recipient-suffix')).fontSize),scrollWidth:document.documentElement.scrollWidth}})()");
+    assert.equal(bands.scene, 'song');
+    assert.equal(bands.fontSize, length <= 6 ? 36 : length <= 12 ? 28 : 22);
+    assert.ok(Math.abs(bands.suffixSize / bands.fontSize - .6) < .01);
+    assert.ok(bands.recipient.height <= bands.lineHeight * 2 + 2, `recipient is two lines at ${width}×${height}, ${length} chars`);
+    assert.ok(bands.recipient.left >= 0 && bands.recipient.right <= width && bands.scrollWidth <= width, `recipient fits ${width}×${height}, ${length} chars`);
+    assert.ok(bands.recipient.bottom + 4 <= bands.lyrics.top && bands.lyrics.bottom + 12 <= bands.cake.top, `recipient, lyrics, and cake do not overlap at ${width}×${height}, ${length} chars`);
+    await screenshot(`invite/name-${length}-${width}x${height}.png`, height);
+  }
+  console.log('PASS recipient sizes and clearances for 1, 4, 10, and 30 characters at 390/360 widths and 844/740 heights');
 
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
