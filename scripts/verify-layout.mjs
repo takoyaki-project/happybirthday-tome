@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import {candleCounts} from '../dist/core.js';
 
 const root = process.cwd();
 const output = path.join(root, 'verification');
@@ -15,7 +16,7 @@ await unlink(path.join(profile, 'DevToolsActivePort')).catch(error => { if (erro
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 const server = createServer(async (req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname;
-  if (!['/', '/index.html', '/app.js', '/core.js', '/celebration.js', '/song.js', '/messages.json', '/style.css'].includes(pathname) && !pathname.startsWith('/assets/')) { res.writeHead(404).end(); return; }
+  if (!['/', '/index.html', '/invite.html', '/app.js', '/core.js', '/celebration.js', '/song.js', '/messages.json', '/style.css'].includes(pathname) && !pathname.startsWith('/assets/')) { res.writeHead(404).end(); return; }
   const file = pathname === '/' ? 'index.html' : pathname.slice(1);
   const types = {html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8', json: 'application/json; charset=utf-8', css: 'text/css; charset=utf-8', png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml'};
   res.writeHead(200, {'Content-Type': types[file.split('.').pop()], 'Cache-Control': 'no-store'}).end(await readFile(path.join(root, 'dist', file)));
@@ -63,7 +64,7 @@ try {
   await send('Page.enable'); await send('Runtime.enable'); await send('Network.enable');
   await send('Emulation.setDeviceMetricsOverride', {width: 390, height: 844, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: 844});
   await send('Emulation.setEmulatedMedia', {features: [{name: 'prefers-reduced-motion', value: 'reduce'}]});
-  await send('Page.addScriptToEvaluateOnNewDocument', {source: 'navigator.mediaDevices.getUserMedia=async()=>{const context=new AudioContext();return context.createMediaStreamDestination().stream;};'});
+  await send('Page.addScriptToEvaluateOnNewDocument', {source: 'window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;const context=new AudioContext();return context.createMediaStreamDestination().stream;};'});
   await send('Page.navigate', {url: origin});
   for (let i = 0; i < 60; i++) {
     if (await evaluate("document.querySelectorAll('.candle').length===5")) break;
@@ -95,6 +96,14 @@ try {
   fits(entry);
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
   await screenshot('entry-390x844.png');
+  await evaluate("document.getElementById('invite-maker').open=true;document.getElementById('invite-name').value='けいこ';document.getElementById('invite-age').value='1.5';document.getElementById('invite-create').click()");
+  assert.equal(await evaluate("!document.getElementById('invite-error').hidden && document.getElementById('invite-result').hidden"), true);
+  await evaluate("document.getElementById('invite-age').value='49';document.getElementById('invite-create').click()");
+  assert.equal(await evaluate("document.getElementById('invite-link').value"), `${origin}/invite.html#name=${encodeURIComponent('けいこ')}&age=49`);
+  const makerTop = await evaluate("document.getElementById('invite-maker').getBoundingClientRect().top + scrollY");
+  const makerShot = await send('Page.captureScreenshot', {format: 'png', clip: {x: 0, y: Math.max(0, makerTop - 24), width: 390, height: 690, scale: 1}, captureBeyondViewport: true});
+  await writeFile(path.join(output, 'invite-maker-390x844.png'), Buffer.from(makerShot.data, 'base64'));
+  await evaluate("document.getElementById('invite-maker').open=false");
 
   await evaluate("document.getElementById('mode-plush').checked=true;document.getElementById('name').value='けいこ';document.getElementById('start').click()");
   await sleep(500);
@@ -187,7 +196,7 @@ try {
     }
     await sleep(100);
     const state = await read();
-    fits(state); assert.equal(state.scene, 'song'); assert.equal(state.candleCount, count);
+    fits(state); assert.equal(state.scene, 'song'); assert.equal(state.candleCount, candleCounts(count).total);
     await screenshot(`song-${count}-candles-390x844.png`);
     return state;
   };
@@ -195,12 +204,12 @@ try {
   await captureSongCount(10);
   await captureSongCount(50);
   const song99 = await captureSongCount(99);
-  fits(song99); assert.equal(song99.scene, 'song'); assert.equal(song99.candleCount, 99); assert.deepEqual(song99.cake, songReady.cake);
+  fits(song99); assert.equal(song99.scene, 'song'); assert.equal(song99.candleCount, 18); assert.deepEqual(song99.cake, songReady.cake);
 
   await evaluate("for(let i=0;i<5;i++)document.getElementById('cake-button').click()");
   await sleep(1100);
   const celebrate99 = await read();
-  fits(celebrate99); assert.equal(celebrate99.scene, 'celebrate'); assert.equal(celebrate99.outCount, 99);
+  fits(celebrate99); assert.equal(celebrate99.scene, 'celebrate'); assert.equal(celebrate99.outCount, 18);
   await setCelebrationCopy('おめでとう！', '最高！');
   await assertCelebrationBands();
   await screenshot('celebrate-99-message-1line-390x844.png');
@@ -340,6 +349,63 @@ try {
   console.log('PASS unchanged entry decoration bounds and centered, working resume button at four phone sizes');
   console.log('PASS plush waits for the micro:bit breath window and celebrates at the scheduled time');
 
+  const inviteOutput = path.join(output, 'invite');
+  await mkdir(inviteOutput, {recursive: true});
+  const inviteCases = [
+    {slug: 'no-age', hash: '', candles: 9, afterOne: 6, recipient: 'あなたへ'},
+    {slug: 'age-49', hash: '#name=%E3%81%91%E3%81%84%E3%81%93&age=49', candles: 13, afterOne: 8, recipient: 'けいこさんへ'},
+    {slug: 'age-99', hash: '#age=99', candles: 18, afterOne: 12, recipient: 'あなたへ'}
+  ];
+  const visibleInviteCopy = () => evaluate('document.body.innerText');
+  for (const height of [844, 740]) {
+    await send('Emulation.setDeviceMetricsOverride', {width: 390, height, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: height});
+    for (const item of inviteCases) {
+      await send('Page.navigate', {url: `${origin}/invite.html?layout=${item.slug}-${height}${item.hash}`});
+      for (let attempt = 0; attempt < 60; attempt++) {
+        if (await evaluate(`document.body.dataset.playMode==='invite' && document.querySelectorAll('.candle').length===${item.candles}`)) break;
+        await sleep(100);
+      }
+      const card = await read();
+      assert.equal(card.scene, 'entry'); assert.equal(card.candleCount, item.candles);
+      assert.equal(await evaluate("document.getElementById('invite-recipient').textContent"), item.recipient);
+      assert.equal(await evaluate("document.getElementById('setup').hidden && !document.getElementById('invite-card').hidden"), true);
+      assert.ok(card.scrollWidth <= 390 && card.scrollHeight <= height, `invite card fits 390×${height}`);
+      assert.doesNotMatch(await visibleInviteCopy(), /息|ふーっ|声|マイク/);
+      await screenshot(`invite/${item.slug}-card-390x${height}.png`, height);
+
+      await evaluate("window.__testSongDuration=180;document.getElementById('invite-open').click()");
+      await sleep(80);
+      assert.equal((await read()).scene, 'song');
+      assert.doesNotMatch(await visibleInviteCopy(), /息|ふーっ|声|マイク/);
+      await screenshot(`invite/${item.slug}-song-390x${height}.png`, height);
+      for (let attempt = 0; attempt < 30; attempt++) {
+        if (await evaluate("!document.getElementById('cake-button').disabled")) break;
+        await sleep(50);
+      }
+      const ready = await read();
+      assert.ok(ready.bubble && ready.counter && !ready.gauge);
+      assert.equal(await evaluate("document.getElementById('bubble').textContent"), 'タップ！');
+      assert.equal(await evaluate('window.__micRequests'), 0);
+      assert.doesNotMatch(await visibleInviteCopy(), /息|ふーっ|声|マイク/);
+      assert.ok(ready.scrollWidth <= 390 && ready.scrollHeight <= height, `invite tap screen fits 390×${height}`);
+      await screenshot(`invite/${item.slug}-tap-390x${height}.png`, height);
+      await evaluate("document.getElementById('cake-button').click()");
+      assert.equal((await read()).candleCount - (await read()).outCount, item.afterOne);
+      await screenshot(`invite/${item.slug}-after-one-390x${height}.png`, height);
+      await evaluate("document.getElementById('cake-button').click();document.getElementById('cake-button').click()");
+      await sleep(5200);
+      const finished = await read();
+      assert.equal(finished.scene, 'celebrate'); assert.equal(finished.outCount, item.candles); assert.equal(finished.mobCount, 40);
+      assert.equal(await evaluate('window.__micRequests'), 0);
+      assert.doesNotMatch(await visibleInviteCopy(), /息|ふーっ|声|マイク/);
+      await screenshot(`invite/${item.slug}-celebrate-390x${height}.png`, height);
+      await evaluate("document.getElementById('reset').click()");
+      assert.equal(await evaluate("document.getElementById('invite-recipient').textContent"), item.recipient);
+      assert.equal(await evaluate("document.body.dataset.scene==='entry' && !document.getElementById('invite-card').hidden"), true);
+    }
+  }
+  console.log('PASS invitation card, song, taps, celebration, and reset at 390×844 and 390×740 without microphone calls');
+
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
   console.log('PASS entry hides the cake and fits at 390×844');
@@ -348,7 +414,7 @@ try {
   console.log('PASS blackout keeps the cake fixed, hides the cue, shows smoke, and transitions within 1.5 seconds');
   console.log('PASS celebration introduces its crowd and reaches 40 layered mobs before the final capture');
   console.log('PASS celebration copy fits one line, 40 characters over three lines, and an eight-character name');
-  console.log('PASS reset returns celebration to entry; 99 candles fit in song');
+  console.log('PASS reset returns celebration to entry; age 99 uses 18 candles');
   console.log('PASS no browser runtime errors or external app requests');
   await writeFile(path.join(output, 'layout-results.json'), JSON.stringify({renderer: 'Headless Microsoft Edge (Chromium), simulated silent microphone; not physical iPhone', viewport: {width: 390, height: 844}, entry, song, blackout, celebrateInitial, celebrate, oneLine, threeLines, longName, song99, celebrate99, errors}, null, 2));
   await send('Browser.close').catch(() => {});

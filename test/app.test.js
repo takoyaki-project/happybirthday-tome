@@ -21,7 +21,7 @@ class Element {
   replaceChildren(...children) { this.children = children; }
   click() { if (!this.disabled) this.events.click?.(); }
 }
-function harness(getUserMedia, withAudio = true, songDuration = 0) {
+function harness(getUserMedia, withAudio = true, songDuration = 0, pageUrl = 'https://example.com/happybirthday-tome/', withMessages = false) {
   const els = new Map();
   const get = id => { if (!els.has(id)) els.set(id, new Element()); return els.get(id); };
   const raf = new Map();
@@ -50,10 +50,11 @@ function harness(getUserMedia, withAudio = true, songDuration = 0) {
     addEventListener(name, callback) { this.events[name] = callback; }
   };
   const window = {
-    isSecureContext: true, __testSongDuration: songDuration, AudioContext: withAudio ? AudioContext : undefined, events: {},
+    isSecureContext: true, __testSongDuration: songDuration, AudioContext: withAudio ? AudioContext : undefined, events: {}, location: new URL(pageUrl),
     setTimeout(callback, delay) { timers.set(++id, {callback, delay}); return id; },
     addEventListener(name, callback) { this.events[name] = callback; }
   };
+  if (withMessages) window.fetch = async () => ({ok: true, json: async () => messageData});
   const context = {
     ...core, ...celebration, SONG, PLUSH_SONG, messageData, document, window, navigator: {mediaDevices: {getUserMedia: (...args) => { requested++; return getUserMedia(...args); }}},
     performance: {now: () => now}, Float32Array,
@@ -81,33 +82,33 @@ function microphone() {
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
-test('nothing requests audio until start; count 99 renders 99 candle groups', () => {
+test('nothing requests audio until start; age 99 renders 18 candle groups', () => {
   const app = harness(() => Promise.reject());
   assert.equal(app.requested(), 0);
   assert.equal(app.contexts.length, 0);
   app.count(99);
-  assert.equal(app.get('candles').children.length, 99);
+  assert.equal(app.get('candles').children.length, 18);
   app.name('<img src=x onerror=alert(1)>');
   assert.equal(app.get('dedication').textContent, '今日の主役へ');
   assert.equal(app.get('dedication').children.length, 0);
 });
-test('microphone denial falls back to taps, completes all 99, and allows reset', async () => {
+test('microphone denial falls back to taps, completes age 99, and allows reset', async () => {
   const app = harness(() => Promise.reject(new Error('denied')));
   app.count(99);
   app.submit();
   await flush();
   assert.equal(app.get('cake-button').disabled, false);
   app.get('cake-button').click();
-  assert.equal(app.get('remaining').textContent, 66);
+  assert.equal(app.get('remaining').textContent, 12);
   app.get('cake-button').click();
-  assert.equal(app.get('remaining').textContent, 33);
+  assert.equal(app.get('remaining').textContent, 6);
   app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 0);
-  assert.equal(app.get('candles').children.filter(c => c.classList.contains('out')).length, 99);
+  assert.equal(app.get('candles').children.filter(c => c.classList.contains('out')).length, 18);
   assert.equal(app.contexts[0].state, 'running');
   app.get('reset').click();
   assert.equal(app.contexts[0].state, 'closed');
-  assert.equal(app.get('remaining').textContent, 99);
+  assert.equal(app.get('remaining').textContent, 18);
   assert.equal(app.get('name').disabled, false);
 });
 test('missing audio support also allows tap completion', () => {
@@ -176,13 +177,13 @@ test('calibration subtracts room noise; normal voice fills the meter in about on
   const app = harness(() => Promise.resolve(mic.stream));
   app.count(99); app.submit(); await flush();
   app.frames(30, .2);
-  assert.equal(app.get('remaining').textContent, 99);
+  assert.equal(app.get('remaining').textContent, 18);
   app.frames(70, 0);
   assert.equal(app.get('meter').attributes['aria-valuenow'], 0);
   app.frames(50, core.BLOW_SENSITIVITY.meterFullDelta);
   assert.equal(app.get('meter').attributes['aria-valuenow'], 100);
   assert.equal(app.get('debug-value').textContent, core.BLOW_SENSITIVITY.meterFullDelta.toFixed(3));
-  assert.equal(app.get('remaining').textContent, 66);
+  assert.equal(app.get('remaining').textContent, 12);
   app.get('debug-toggle').click();
   assert.equal(app.get('debug-value').hidden, true);
   assert.equal(app.get('debug-toggle').attributes['aria-pressed'], 'false');
@@ -468,7 +469,7 @@ test('completion message uses the entered name, replaces the wish copy, and caps
 test('reference copy is editable HTML, the candle count stays required, and bubble and count have one parent', async () => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
   for (const text of ['HAPPY BIRTHDAY', 'きょうは、', 'あなたが主役。', 'お名前', '省略OK', 'ろうそくは何本にする？', '1〜99本', 'お祝いをはじめる', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
-  assert.doesNotMatch(html, /年齢|0〜120|パーティスタート|YOUR BIRTHDAY CAKE/);
+  assert.doesNotMatch(html, /0〜120|パーティスタート|YOUR BIRTHDAY CAKE/);
   assert.match(html, /id="count"[^>]*min="1"[^>]*max="99"[^>]*required/);
   assert.match(html, /id="song-recipient"/);
   assert.match(html, /id="blow-cue"[^]*id="bubble"[^]*id="counter"[^]*id="remaining"/);
@@ -482,4 +483,78 @@ test('reference copy is editable HTML, the candle count stays required, and bubb
   assert.match(css, /--space-1: 8px;[\s\S]*--space-2: 16px;[\s\S]*--space-3: 24px;[\s\S]*--space-4: 40px;/);
   assert.match(css, /--font-large:[^;]+;[\s\S]*--font-medium:[^;]+;[\s\S]*--font-small:[^;]+;/);
   assert.match(css, /--color-background:[^;]+;[\s\S]*--color-text:[^;]+;[\s\S]*--color-accent:[^;]+;[\s\S]*--color-emphasis:[^;]+;/);
+});
+
+test('sender creates an encoded invitation without changing the required personal count', () => {
+  const app = harness(() => { throw new Error('not needed'); });
+  app.get('invite-name').value = ' A&B ';
+  app.get('invite-age').value = '49';
+  app.get('invite-create').click();
+  assert.equal(app.get('invite-link').value, 'https://example.com/happybirthday-tome/invite.html#name=A%26B&age=49');
+  assert.equal(app.get('invite-result').hidden, false);
+  app.get('invite-age').value = '1.5';
+  app.get('invite-create').click();
+  assert.equal(app.get('invite-result').hidden, true);
+  assert.match(app.get('invite-error').textContent, /1〜99/);
+  assert.equal(app.get('count').value, '5');
+  assert.equal(app.requested(), 0);
+});
+
+test('invitation never requests the microphone, keeps its recipient on reset, and clears nine default candles in three taps', () => {
+  const app = harness(() => { throw new Error('invite must not request microphone'); }, true, 0, 'https://example.com/happybirthday-tome/invite.html#name=%E3%81%91%E3%81%84%E3%81%93');
+  assert.equal(app.get('setup').hidden, true);
+  assert.equal(app.get('invite-maker').hidden, true);
+  assert.equal(app.get('invite-card').hidden, false);
+  assert.equal(app.get('invite-recipient').textContent, 'けいこさんへ');
+  assert.equal(app.get('candles').children.length, 9);
+  app.get('invite-open').click();
+  assert.equal(app.requested(), 0);
+  assert.equal(app.get('song-lyrics').hidden, false);
+  assert.equal(app.get('volume-area').hidden, true);
+  assert.equal(app.get('fallback').hidden, true);
+  assert.equal(app.get('bubble-word').textContent, 'タップ');
+  assert.equal(app.get('status').textContent, 'ケーキをタップして、ろうそくを消してね。');
+  assert.match(app.get('message-slot').textContent, /タップ/);
+  for (const expected of [6, 3, 0]) { app.get('cake-button').click(); assert.equal(app.get('remaining').textContent, expected); }
+  app.get('reset').click();
+  assert.equal(app.get('invite-card').hidden, false);
+  assert.equal(app.get('setup').hidden, true);
+  assert.equal(app.get('invite-recipient').textContent, 'けいこさんへ');
+  assert.equal(app.get('candles').children.length, 9);
+  assert.equal(app.requested(), 0);
+});
+
+test('age 49 invitation has four large and nine small candles, and unnamed lyrics use you', () => {
+  const app = harness(() => { throw new Error('invite must not request microphone'); }, true, 100, 'https://example.com/happybirthday-tome/invite.html#age=49');
+  assert.equal(app.get('invite-recipient').textContent, 'あなたへ');
+  assert.equal(app.get('candles').children.length, 13);
+  assert.equal(app.get('candles').children.filter(c => c.dataset.size === 'large').length, 4);
+  app.get('invite-open').click();
+  app.runTimer(6720);
+  assert.match(app.get('song-lyrics').textContent, /Dear you/);
+  app.runTimer(100);
+  assert.equal(app.get('cake-button').disabled, false);
+  app.get('cake-button').click();
+  assert.equal(app.get('remaining').textContent, 8);
+  assert.equal(app.get('candles').children.filter(c => c.dataset.size === 'large' && c.classList.contains('out')).length, 2);
+  assert.equal(app.get('candles').children.filter(c => c.dataset.size === 'small' && c.classList.contains('out')).length, 3);
+  app.get('cake-button').click(); app.get('cake-button').click();
+  assert.equal(app.get('remaining').textContent, 0);
+  assert.equal(app.requested(), 0);
+});
+
+test('invitation wishes stay age-neutral and work without a name', async () => {
+  assert.equal(messageData.inviteMessages.length, 8);
+  assert.ok(messageData.inviteMessages.filter(text => !text.includes('{name}')).length >= 4);
+  for (const text of messageData.inviteMessages) {
+    assert.ok(Array.from(text).length <= 40);
+    assert.doesNotMatch(text, /歳/);
+  }
+  const app = harness(() => { throw new Error('invite must not request microphone'); }, true, 0, 'https://example.com/happybirthday-tome/invite.html', true);
+  await flush();
+  app.get('invite-open').click();
+  for (let i = 0; i < 3; i++) app.get('cake-button').click();
+  app.runTimer(1000);
+  assert.ok(messageData.inviteMessages.includes(app.get('celebration-message').textContent));
+  assert.doesNotMatch(app.get('celebration-message').textContent, /歳|\{name\}|わたし/);
 });

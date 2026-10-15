@@ -164,7 +164,39 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 /* Keep the cake fixed as the song becomes the blackout and then the celebration. */
 .party:not([data-scene="entry"]) { --stage-cake-top: clamp(392px, 47svh, 410px); --stage-cake-height: calc(min(100vw, 430px) * 235 / 360); }
 .party:is([data-scene="song"], [data-scene="blackout"], [data-scene="celebrate"]) .cake-button { top: var(--stage-cake-top); }
-.party[data-play-mode="phone"][data-scene="song"] .blow-cue { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 6px); }
+.party:is([data-play-mode="phone"], [data-play-mode="invite"])[data-scene="song"] .blow-cue { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 6px); }
 .party[data-play-mode="phone"][data-scene="song"] .volume-area { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 65px); }
 @media (min-height: 741px) { .party[data-scene="song"] .scene-copy { top: clamp(145px, 20svh, 185px); } }
 @media (max-height: 740px) { .party:not([data-scene="entry"]) { --stage-cake-top: 300px; } }
+
+/* A quiet second path on the sender's page; the invite itself needs one clear action. */
+.invite-maker { margin-top: 22px; padding-top: 18px; border-top: 1px solid #dbc9cf; }
+.invite-maker summary { color: #67445d; font-size: 13px; font-weight: 700; line-height: 1.5; cursor: pointer; text-align: center; }
+.invite-maker summary:focus-visible { outline: 2px solid #896480; outline-offset: 4px; }
+.invite-maker-content { display: grid; gap: 18px; padding: 20px 0 10px; }
+.invite-maker .field { gap: 8px; }
+.invite-maker .field label { color: #593b50; font-size: 13px; font-weight: 600; }
+.invite-maker .field label span, .field-note { color: #7c6574; font-size: 11px; font-weight: 400; }
+.invite-maker .field input { height: 52px; border-color: #d7c5cf; border-radius: 14px; background: #fffcf9; box-shadow: none; }
+.invite-maker .field input:focus { border-color: #896480; outline: 2px solid rgba(137,100,128,.22); outline-offset: 2px; }
+.field-note, .invite-error, .invite-feedback { margin: 0; line-height: 1.5; }
+.invite-error { color: #9d3158; font-size: 12px; font-weight: 700; }
+.invite-create { border: 1px solid #d5bed1; background: #f8edf3; box-shadow: none; color: #51304e; }
+.invite-result { display: grid; gap: 10px; padding: 16px; border: 1px solid #ddcad2; border-radius: 16px; background: rgba(255,252,249,.72); }
+.invite-result label { color: #593b50; font-size: 12px; font-weight: 700; }
+.invite-result input { height: 44px; padding: 0 10px; box-shadow: none; font-family: Arial, sans-serif; font-size: 12px; }
+.invite-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.invite-actions button { flex: 1 1 80px; min-height: 42px; padding: 8px; border: 1px solid #d5bed1; background: #f8edf3; box-shadow: none; color: #51304e; font-size: 12px; font-weight: 700; }
+.invite-feedback { min-height: 1.5em; color: #67445d; font-size: 12px; }
+.party[data-play-mode="invite"][data-scene="entry"] { display: flex; flex-direction: column; justify-content: center; padding-top: max(86px, calc(env(safe-area-inset-top) + 60px)); }
+.party[data-play-mode="invite"][data-scene="entry"] .brand { display: none; }
+.party[data-play-mode="invite"][data-scene="entry"] .message-card { width: 100%; }
+.invite-card { display: grid; justify-items: center; gap: 17px; padding: 28px 18px 24px; border: 1px solid #e5ced4; border-radius: 28px; background: radial-gradient(ellipse at 50% 4%, #fffdf7, #fff2e9 70%, #f9e3dc); box-shadow: 0 15px 32px rgba(108,52,85,.12), inset 0 1px rgba(255,255,255,.9); text-align: center; }
+.invite-kicker { margin: 0; color: #946179; font-family: Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .22em; }
+.party[data-scene="entry"] .invite-card h1 { max-width: 100%; margin: 0; color: #39233f; font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: clamp(26px, 7vw, 34px); line-height: 1.3; overflow-wrap: anywhere; }
+.invite-intro { margin: 0; color: #68465a; font-size: 15px; font-weight: 700; line-height: 1.6; }
+.invite-cake { width: min(100%, 300px); height: auto; margin: -10px 0 -7px; filter: drop-shadow(0 10px 12px rgba(89,42,67,.22)); }
+.invite-card .primary { min-height: 56px; border-radius: 18px; box-shadow: 0 5px 12px rgba(62,27,78,.14); font-weight: 700; }
+.invite-sound-hint { margin: -7px 0 0; color: #806a77; font-size: 11px; }
+.bubble #bubble-word { color: var(--color-dark-text); }
+@media (max-height: 740px) { .party[data-play-mode="invite"][data-scene="entry"] { padding-top: max(72px, calc(env(safe-area-inset-top) + 44px)); }.invite-card { gap: 12px; padding: 22px 18px 20px; }.invite-cake { width: min(100%, 255px); } }

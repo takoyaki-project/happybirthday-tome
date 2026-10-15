@@ -1,26 +1,82 @@
+export const INVITE_NAME_MAX_LENGTH = 30;
+const CANDLES_PER_ROW = 6;
+const CANDLE_SURFACE = Object.freeze({x: 180, y: 55, rx: 98, ry: 26});
+const CANDLE_STEMS = Object.freeze({large: {height: 27, width: 9, flame: 14}, small: {height: 18, width: 6, flame: 10}});
+
 export function validCount(value) {
   const number = Number(value);
   return String(value).trim() !== '' && Number.isInteger(number) && number >= 1 && number <= 99 ? number : null;
 }
 
-export function candleLayout(count) {
-  if (validCount(count) === null) throw new RangeError('Candle count must be 1–99');
-  const rows = Math.ceil(count / 11);
+export function candleCounts(age) {
+  if (age !== null && validCount(age) === null) throw new RangeError('Age must be 1–99 or null');
+  const large = age === null ? 3 : Math.floor(age / 10);
+  const small = age === null ? 6 : age % 10;
+  return {large, small, total: large + small};
+}
+
+export function candleLayout(age) {
+  const {large, total} = candleCounts(age);
+  const rows = Math.ceil(total / CANDLES_PER_ROW);
   // These dimensions are measured from the exposed cream oval in cake-base-v2.png.
   // Keep every root inside that oval; flames extend upward from it.
-  const surface = {x: 180, y: 55, rx: 98, ry: 26};
-  const stem = rows === 1 ? {height: 28, width: 8, flame: 14} : rows <= 3 ? {height: 22, width: 6, flame: 11} : rows <= 5 ? {height: 17, width: 5, flame: 9} : {height: 13, width: 3.8, flame: 7};
+  const surface = CANDLE_SURFACE;
+  // Fill the back row before the middle row when three rows are needed.
+  // A short candle behind a tall one would otherwise put two flames together.
+  const rowColumns = row => Math.floor(total / rows) + (row < total % rows ? 1 : 0);
+  const distribute = (count, capacity, offset = 0) => Array.from({length: count}, (_, i) => offset + Math.floor((i + .5) * capacity / count));
+  const backColumns = rowColumns(0);
+  const middleColumns = rows === 3 ? rowColumns(1) : 0;
+  const largeIndices = rows === 3 && large <= backColumns + middleColumns
+    ? large <= backColumns ? distribute(large, backColumns) : [...distribute(backColumns, backColumns), ...distribute(large - backColumns, middleColumns, backColumns)]
+    : distribute(large, total);
+  const largePositions = new Set(largeIndices);
   const result = [];
   for (let row = 0; row < rows; row++) {
-    const columns = Math.floor(count / rows) + (row < count % rows ? 1 : 0);
-    const y = rows === 1 ? surface.y + 2 : 39 + row * 29 / (rows - 1);
+    const columns = rowColumns(row);
+    const y = rows === 1 ? surface.y + 2 : rows === 2 ? 47 + row * 23 : 43 + row * 16;
     const radius = Math.sqrt(1 - ((y - surface.y) / surface.ry) ** 2) * surface.rx;
     for (let column = 0; column < columns; column++) {
       const x = columns === 1 ? surface.x : surface.x - radius + (column + .5) * (2 * radius / columns);
-      result.push({x, y, ...stem});
+      const size = largePositions.has(result.length) ? 'large' : 'small';
+      result.push({x, y, size, ...CANDLE_STEMS[size]});
     }
   }
   return result;
+}
+
+export function parseInviteHash(hash) {
+  const empty = {name: '', age: null};
+  if (typeof hash !== 'string' || !hash.startsWith('#')) return empty;
+  try {
+    const values = new Map();
+    for (const pair of hash.slice(1).split('&').filter(Boolean)) {
+      const separator = pair.indexOf('=');
+      if (separator < 0) return empty;
+      const key = decodeURIComponent(pair.slice(0, separator));
+      const value = decodeURIComponent(pair.slice(separator + 1));
+      if (values.has(key)) return empty;
+      values.set(key, value);
+    }
+    const name = Array.from((values.get('name') || '').trim()).slice(0, INVITE_NAME_MAX_LENGTH).join('');
+    const ageValue = values.get('age');
+    if (ageValue !== undefined && !/^[1-9]\d*$/.test(ageValue)) return empty;
+    const age = ageValue === undefined ? null : validCount(ageValue);
+    return ageValue !== undefined && age === null ? empty : {name, age};
+  } catch { return empty; }
+}
+
+export function inviteUrl(pageUrl, name, age) {
+  const page = new URL('./invite.html', pageUrl);
+  const parts = [];
+  if (name.trim()) parts.push(`name=${encodeURIComponent(Array.from(name.trim()).slice(0, INVITE_NAME_MAX_LENGTH).join(''))}`);
+  if (age !== null) {
+    const value = validCount(age);
+    if (value === null) throw new RangeError('Invite age must be 1–99 or null');
+    parts.push(`age=${value}`);
+  }
+  page.hash = parts.join('&');
+  return page.href;
 }
 
 export function rms(samples) {

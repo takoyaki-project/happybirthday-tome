@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#fff0e7">
+  <meta name="description" content="ケーキをタップして、ろうそくを消してね。">
+  <meta name="author" content="TAKOYAKI PROJECT">
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="canonical" href="https://takoyaki-project.github.io/happybirthday-tome/invite.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="お誕生日のお祝いが届いています">
+  <meta property="og:description" content="ケーキをタップして、ろうそくを消してね。">
+  <meta property="og:url" content="https://takoyaki-project.github.io/happybirthday-tome/invite.html">
+  <meta property="og:image" content="https://takoyaki-project.github.io/happybirthday-tome/ogp-invite.png?v=2">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="お誕生日のお祝いが届いています">
+  <meta name="twitter:description" content="ケーキをタップして、ろうそくを消してね。">
+  <meta name="twitter:image" content="https://takoyaki-project.github.io/happybirthday-tome/ogp-invite.png?v=2">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>お誕生日のお祝いが届いています</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <main id="party" class="party" data-scene="entry">
+    <div class="brand" aria-label="誕生日のお祝い">
+      <p class="eyebrow">HAPPY BIRTHDAY</p>
+      <h1>きょうは、<br><span>あなたが主役。</span></h1>
+      <p class="brand-copy">ふーっと吹いて、お祝いしよう。</p>
+    </div>
+    <section class="message-card" aria-label="誕生日の準備とメッセージ">
+      <form id="setup" autocomplete="off">
+        <div class="field"><label for="name">お名前 <span>省略OK</span></label><input id="name" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="ニックネーム"></div>
+        <div class="field"><label for="count">ろうそくは何本にする？ <span>1〜99本</span></label><div class="number-field"><input id="count" type="number" min="1" max="99" step="1" value="5" inputmode="numeric" required autocomplete="off" aria-label="ろうそくの本数"><span>本</span></div></div><fieldset class="mode-switch"><legend>パーティーの相手</legend><label><input id="mode-phone" name="play-mode" type="radio" value="phone" checked><span>スマホだけ</span></label><label><input id="mode-plush" name="play-mode" type="radio" value="plush"><span>ぬいぐるみと</span></label></fieldset>
+        <button id="start" class="primary" type="submit">お祝いをはじめる</button>
+        <p class="sound-hint">音をオンにして楽しもう</p>
+      </form>
+      <details id="invite-maker" class="invite-maker">
+        <summary>お持ち帰り用の招待状をつくる</summary>
+        <div class="invite-maker-content">
+          <div class="field"><label for="invite-name">お名前 <span>省略OK</span></label><input id="invite-name" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="お祝いする人の名前"><p class="field-note">「さん」は自動でつきます</p></div>
+          <div class="field"><label for="invite-age">年齢 <span>省略OK・1〜99歳</span></label><input id="invite-age" type="text" inputmode="numeric" autocomplete="off" placeholder="わからなければ空欄でOK"></div>
+          <button id="invite-create" class="secondary invite-create" type="button">リンクをつくる</button>
+          <p id="invite-error" class="invite-error" role="alert" hidden></p>
+          <div id="invite-result" class="invite-result" hidden><label for="invite-link">招待状リンク</label><input id="invite-link" type="url" readonly><div class="invite-actions"><button id="invite-share" type="button" class="secondary" hidden>共有する</button><button id="invite-copy" type="button" class="secondary">コピー</button><button id="invite-try" type="button" class="secondary">自分で試す</button></div><p id="invite-feedback" class="invite-feedback" role="status" aria-live="polite"></p></div>
+        </div>
+      </details>
+      <div id="invite-card" class="invite-card" hidden><p class="invite-kicker">A LITTLE CELEBRATION FOR YOU</p><h1 id="invite-recipient">あなたへ</h1><p class="invite-intro">お誕生日のお祝いが届いています</p><img class="invite-cake" src="./assets/cake-base-v2.png" alt="" aria-hidden="true"><button id="invite-open" class="primary" type="button">お祝いをひらく</button><p class="invite-sound-hint">音をオンにして楽しんでね</p></div>
+      <div id="started" class="started" hidden>
+        <div class="card-copy">
+          <div class="card-heading"><p id="dedication">今日の主役へ</p><h2 id="cake-heading">願いごと、決まった？</h2></div>
+          <p id="message-slot" class="message-slot">願いごとをひとつ。あとは、思いっきりふーっ。</p>
+        </div>
+      </div>
+    </section>
+    <section class="stage" aria-label="バースデーケーキ">
+      <div id="scene-copy" class="scene-copy" aria-live="polite"><div id="plush-prepare" class="plush-prepare" hidden><p><span>スマホをぬいぐるみの</span><span>そばに置いてね</span></p><button id="plush-pop" class="primary" type="button" aria-label="クラッカーを鳴らして、お祝いをはじめる"><img src="./assets/party-popper.svg" width="72" height="72" alt="" aria-hidden="true"><span>タップ</span></button><p class="plush-tip">音量を上げてからタップ</p></div>
+        <p id="song-recipient" class="song-recipient" hidden>あなたへ</p>
+        <p id="song-lyrics" class="song-lyrics" hidden>歌詞はここに表示</p>
+        <p id="plush-blow-note" class="plush-blow-note" hidden><span>ケーキの上の micro:bit に</span><span>息を吹きかけてね</span></p>
+        <div id="blackout-copy" class="blackout-copy" hidden>しーっ。願いごとの時間。</div>
+        <div id="celebration-copy" class="celebration-copy" hidden><div class="frame-shell"><div class="frame-paper"><div class="frame-window"><h2 id="celebration-title">おめでとう！</h2><svg class="frame-ornament" viewBox="0 0 56 10" aria-hidden="true"><path d="M0 5h20m16 0h20M28 1l4 4-4 4-4-4Z"/></svg><p id="celebration-message"></p></div></div><img class="frame-gold" src="./assets/frame-gold.webp" alt="" aria-hidden="true"></div></div>
+      </div>
+      <div id="scene-controls" class="scene-controls"><button id="resume" class="primary" type="button" hidden>タップして再開</button><button id="plush-again" class="secondary plush-again" type="button" hidden>もう一度鳴らす</button><button id="fallback" class="secondary" type="button" hidden>マイクを使わずに始める</button><button id="sound-test" class="icon-button" type="button" aria-label="音の確認" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4Z"/><path d="M17 8q4 4 0 8M20 5q7 7 0 14"/></svg></button><button id="reset" class="icon-button" type="button" aria-label="もう一度、火をつける" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8a8 8 0 1 1-1 7M5 3v5h5"/></svg></button><button id="debug-toggle" class="icon-button debug-toggle" type="button" aria-label="現在の音量の数値を隠す" aria-pressed="true" hidden>数</button></div>
+      <div id="plush-confetti" class="plush-confetti" aria-hidden="true"></div><div id="smoke" class="smoke" aria-hidden="true" hidden><span></span><span></span><span></span><span></span><span></span></div>
+      <div id="blow-cue" class="blow-cue" hidden>
+        <div id="bubble" class="bubble" aria-hidden="true"><span id="bubble-word">ふーっ</span><span>！</span></div>
+        <span id="counter" class="counter">あと <strong id="remaining">5</strong> 本</span>
+      </div>
+      <button id="cake-button" class="cake-button" type="button" aria-label="ケーキをタップしてろうそくを消す" disabled>
+          <svg id="cake" viewBox="0 0 360 235" role="img" aria-labelledby="cake-title"><title id="cake-title">5本のろうそくが立ったケーキ</title>
+            <defs>
+              <linearGradient id="candle-pink" x1="0" x2="1"><stop stop-color="#ed5b86"/><stop offset=".45" stop-color="#ff9cb5"/><stop offset="1" stop-color="#bc376a"/></linearGradient>
+              <linearGradient id="candle-purple" x1="0" x2="1"><stop stop-color="#5d368f"/><stop offset=".48" stop-color="#ae8be4"/><stop offset="1" stop-color="#3c2167"/></linearGradient>
+              <radialGradient id="candle-flame" cx="50%" cy="82%"><stop stop-color="#fffbe6"/><stop offset=".38" stop-color="#ffdf75"/><stop offset="1" stop-color="#ff7a61"/></radialGradient>
+            </defs>
+            <image href="./assets/cake-base-v2.png" x="0" y="0" width="360" height="235" preserveAspectRatio="none"/>
+            <g id="candles"></g>
+          </svg>
+      </button>
+      <div id="volume-area" class="volume-area" hidden>
+        <div class="volume-label"><span>声のボリューム <output id="debug-value" aria-label="現在の音量">0.000</output></span><span>小さく ー 大きく</span></div>
+        <div id="meter" class="meter" role="meter" aria-label="声の大きさ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="meter-fill"></div></div>
+      </div>
+      <div id="mob-crowd" class="mob-crowd" aria-label="お祝いのモブ" hidden></div>
+      <p id="audio-note" class="audio-note" hidden>音が出ないときは、消音設定と音量を確認<br>額縁：LittleDream</p>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+</body>
+</html>

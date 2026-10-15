@@ -1,21 +1,43 @@
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validCount, candleLayout, rms, BLOW_SENSITIVITY, createBlowDetector } from '../dist/core.js';
+import { validCount, candleCounts, candleLayout, parseInviteHash, inviteUrl, rms, BLOW_SENSITIVITY, createBlowDetector } from '../dist/core.js';
 
 test('only whole candle counts 1–99 are accepted', () => {
   for (const value of ['', ' ', 0, 100, -1, 1.5, 'no', Infinity]) assert.equal(validCount(value), null);
   for (const value of [1, '5', 99]) assert.equal(validCount(value), Number(value));
 });
-test('every count has exactly that many distinct candles inside the cake', () => {
-  for (let count = 1; count <= 99; count++) {
-    const candles = candleLayout(count);
-    assert.equal(candles.length, count);
-    assert.equal(new Set(candles.map(c => `${c.x},${c.y}`)).size, count);
+test('ages use tens as large candles, ones as small candles, and unknown age uses nine', () => {
+  for (const [age, large, small] of [[null, 3, 6], [9, 0, 9], [10, 1, 0], [20, 2, 0], [49, 4, 9], [99, 9, 9]]) {
+    assert.deepEqual(candleCounts(age), {large, small, total: large + small});
+    const candles = candleLayout(age);
+    assert.equal(candles.length, large + small);
+    assert.equal(candles.filter(c => c.size === 'large').length, large);
+    assert.equal(candles.filter(c => c.size === 'small').length, small);
+    assert.equal(new Set(candles.map(c => `${c.x},${c.y}`)).size, candles.length);
     for (const {x, y, height, flame} of candles) {
-      assert.ok(((x - 180) / 98) ** 2 + ((y - 55) / 26) ** 2 < 1, `${count} candles stay on the exposed cream`);
-      assert.ok(y - height - flame > 0, `${count} candle flame stays inside the SVG viewport`);
+      assert.ok(((x - 180) / 98) ** 2 + ((y - 55) / 26) ** 2 < 1, `${age} roots stay on the exposed cream`);
+      assert.ok(y - height - flame > 0, `${age} flames stay inside the SVG viewport`);
     }
   }
+  const biggest = candleLayout(99);
+  for (let i = 0; i < biggest.length; i++) for (let j = i + 1; j < biggest.length; j++) {
+    const a = biggest[i], b = biggest[j];
+    const separatedHorizontally = Math.abs(a.x - b.x) >= (a.width + b.width) * .9;
+    const separatedVertically = a.y - a.height - 2 <= b.y - b.height - b.flame || b.y - b.height - 2 <= a.y - a.height - a.flame;
+    assert.ok(separatedHorizontally || separatedVertically, '99-year candle flames do not overlap');
+  }
+  assert.ok(biggest.some(c => c.size === 'large' && c.x < 180));
+  assert.ok(biggest.some(c => c.size === 'large' && c.x > 180));
+  assert.equal(biggest.find(c => c.size === 'large').width / biggest.find(c => c.size === 'small').width, 1.5);
+});
+test('invite fragments preserve special names and reject invalid ages or malformed encoding', () => {
+  assert.deepEqual(parseInviteHash(''), {name: '', age: null});
+  assert.deepEqual(parseInviteHash('#name=%E3%81%91%E3%81%84%E3%81%93&age=49'), {name: 'けいこ', age: 49});
+  assert.deepEqual(parseInviteHash('#name=A%26B%20%3C3'), {name: 'A&B <3', age: null});
+  for (const hash of ['#age=0', '#age=100', '#age=1.5', '#age=abc', '#name=%E3%ZZ']) assert.deepEqual(parseInviteHash(hash), {name: '', age: null});
+  assert.equal(parseInviteHash(`#name=${encodeURIComponent('あ'.repeat(40))}`).name.length, 30);
+  assert.equal(inviteUrl('https://example.com/birthday/index.html', ' A&B ', 49), 'https://example.com/birthday/invite.html#name=A%26B&age=49');
+  assert.equal(inviteUrl('https://example.com/birthday/', '', null), 'https://example.com/birthday/invite.html');
 });
 test('RMS ignores DC offset but measures alternating sound', () => {
   assert.equal(rms(new Float32Array([.5, .5, .5, .5])), 0);
