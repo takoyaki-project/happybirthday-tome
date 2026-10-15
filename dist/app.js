@@ -3,7 +3,7 @@ import { INVITE_NAME_MAX_LENGTH, validCount, candleCounts, candleLayout, parseIn
 import { BLOW_SENSITIVITY } from './core.js';
 import { SONG, PLUSH_SONG } from './song.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'age-error', 'mode-phone', 'mode-plush', 'start', 'invite-create', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'recipient-name', 'recipient-suffix', 'song-lyrics', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'age-error', 'mode-phone', 'mode-plush', 'mode-description', 'start', 'invite-create', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'recipient-name', 'recipient-suffix', 'song-lyrics', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -36,6 +36,10 @@ const INVITE_CELEBRATION_MESSAGE = 'お誕生日、おめでとうございま�
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
 const AGE_ERROR_MESSAGE = '年齢は1〜99の整数で入力してね。';
+const MODE_DESCRIPTIONS = {
+  phone: 'スマホに向かって、ふーっと息を吹いて、ろうそくを消します。',
+  plush: 'micro:bitを仕込んだ、手作りのぬいぐるみケーキと遊ぶモードです。持っていない場合は『スマホだけ』を選んでください。'
+};
 const RECENT_MESSAGE_LIMIT = 5;
 const MAX_GENTLE_BLOWS = 3;
 const MAX_MOBS = 40;
@@ -153,6 +157,7 @@ function controls() {
   ui.party.classList[scene === 'celebrate' && messageLength > 16 && messageLength <= 28 ? 'add' : 'remove']('medium-celebration-message');
   ui.party.classList[scene === 'celebrate' && messageLength > 28 ? 'add' : 'remove']('long-celebration-message');
   ui.start.textContent = 'お祝いをはじめる';
+  ui['mode-description'].textContent = ui['mode-plush'].checked ? MODE_DESCRIPTIONS.plush : MODE_DESCRIPTIONS.phone;
   ui.dedication.textContent = '今日の主役へ';
   const complete = ['blackout', 'celebrate'].includes(scene);
   ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
@@ -708,6 +713,9 @@ function reset() {
   status(playMode === 'invite' ? '' : 'スタートすると、マイクの許可を確認します。');
 }
 ui.setup.addEventListener('submit', event => { event.preventDefault(); start(); });
+for (const id of ['mode-phone', 'mode-plush']) ui[id].addEventListener('change', () => {
+  ui['mode-description'].textContent = ui['mode-plush'].checked ? MODE_DESCRIPTIONS.plush : MODE_DESCRIPTIONS.phone;
+});
 ui['invite-create'].addEventListener('click', () => {
   const name = Array.from(ui.name.value.trim()).slice(0, INVITE_NAME_MAX_LENGTH).join('');
   const age = checkedAge();

@@ -474,10 +474,13 @@ test('completion message uses the entered name, replaces the wish copy, and caps
 });
 test('reference copy uses a shared optional age field and a direct invitation action', async () => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
-  for (const text of ['HAPPY BIRTHDAY', 'きょうは、', 'あなたが主役。', 'お名前', '年齢（省略OK）', '1〜99歳', 'お祝いをはじめる', '招待状をつくる', 'LINEなどで送れる、お祝いのリンクを作ります', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
+  for (const text of ['HAPPY BIRTHDAY TO ME.', 'ハッピーバースデー', 'トゥーミー', 'きょうは、あなたが主役。', 'お名前', '年齢（省略OK）', '1〜99歳', 'お祝いをはじめる', '招待状をつくる', 'LINEなどで送れる、お祝いのリンクを作ります', 'TAKOYAKI PROJECT', 'このアプリについて', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
+  assert.match(html, /<h1>ハッピーバースデー<br><span>トゥーミー<\/span><\/h1>/);
+  assert.doesNotMatch(html, /ふーっと吹いて、お祝いしよう。|placeholder="空欄なら9本"/);
   assert.doesNotMatch(html, /0〜120|パーティスタート|YOUR BIRTHDAY CAKE/);
   assert.match(html, /id="count"[^>]*type="text"[^>]*inputmode="numeric"/);
-  assert.doesNotMatch(html, /invite-name|invite-age|invite-maker|<details|id="count"[^>]*required/);
+  assert.doesNotMatch(html, /invite-name|invite-age|invite-maker|id="count"[^>]*required/);
+  assert.match(html, /<details id="about-app"[\s\S]*<summary>このアプリについて<\/summary>/);
   assert.match(html, /id="start"[\s\S]*id="invite-create"[\s\S]*<svg/);
   assert.match(html, /id="song-recipient"/);
   assert.match(html, /id="blow-cue"[^]*id="bubble"[^]*id="counter"[^]*id="remaining"/);
@@ -491,6 +494,16 @@ test('reference copy uses a shared optional age field and a direct invitation ac
   assert.match(css, /--space-1: 8px;[\s\S]*--space-2: 16px;[\s\S]*--space-3: 24px;[\s\S]*--space-4: 40px;/);
   assert.match(css, /--font-large:[^;]+;[\s\S]*--font-medium:[^;]+;[\s\S]*--font-small:[^;]+;/);
   assert.match(css, /--color-background:[^;]+;[\s\S]*--color-text:[^;]+;[\s\S]*--color-accent:[^;]+;[\s\S]*--color-emphasis:[^;]+;/);
+});
+
+test('mode choice updates its explanation without starting either experience', () => {
+  const app = harness(() => { throw new Error('no microphone before start'); });
+  assert.equal(app.get('mode-description').textContent, 'スマホに向かって、ふーっと息を吹いて、ろうそくを消します。');
+  app.get('mode-plush').checked = true;
+  app.get('mode-plush').events.change();
+  assert.equal(app.get('mode-description').textContent, 'micro:bitを仕込んだ、手作りのぬいぐるみケーキと遊ぶモードです。持っていない場合は『スマホだけ』を選んでください。');
+  assert.equal(app.document.body.dataset.scene, 'entry');
+  assert.equal(app.requested(), 0);
 });
 
 test('shared fields create an encoded invitation and reject invalid ages', () => {

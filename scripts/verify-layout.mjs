@@ -79,7 +79,7 @@ try {
   };
   const fits = state => {
     assert.equal(state.width, 390); assert.equal(state.height, 844);
-    assert.ok(state.scrollWidth <= 390); assert.ok(state.scrollHeight <= 844);
+    assert.ok(state.scrollWidth <= 390); if (state.scene !== 'entry') assert.ok(state.scrollHeight <= 844);
   };
   const celebrationBands = () => evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{top:r.top,bottom:r.bottom,height:r.height};};return{copy:rect('celebration-copy'),cake:rect('cake'),crowd:rect('mob-crowd'),note:rect('audio-note'),top:document.documentElement.getBoundingClientRect().top,scrollY};})()");
   const assertCelebrationBands = async () => {
@@ -95,6 +95,12 @@ try {
   const entry = await read();
   fits(entry);
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
+  assert.ok(await evaluate("scrollY===0 && document.getElementById('start').getBoundingClientRect().bottom<=innerHeight"), 'start is visible without scrolling at 390×844');
+  assert.equal(await evaluate("document.querySelector('.brand h1').textContent"), 'ハッピーバースデートゥーミー');
+  assert.ok(await evaluate("(()=>{const size=parseFloat(getComputedStyle(document.querySelector('.brand h1')).fontSize);return size>=34 && size<=38})()"), 'entry title uses the requested type size');
+  await evaluate("document.getElementById('about-app').open=true");
+  assert.ok(await evaluate("document.querySelector('.about-app-copy').getClientRects().length>0"), 'about this app expands');
+  await evaluate("document.getElementById('about-app').open=false");
   await screenshot('entry-390x844.png');
   await evaluate("document.getElementById('name').value='けいこ';document.getElementById('count').value='1.5';document.getElementById('invite-create').click()");
   assert.equal(await evaluate("!document.getElementById('age-error').hidden && document.getElementById('invite-result').hidden"), true);
@@ -251,7 +257,13 @@ try {
     }
     await screenshot(`${reviewDir}/entry-${size}.png`, height);
     if (width === 390) {
-      await evaluate("document.getElementById('mode-plush').click();document.getElementById('name').focus()");
+      await evaluate("document.getElementById('mode-plush').click()");
+      const plushEntry = await evaluate("(()=>{const description=document.getElementById('mode-description');const style=getComputedStyle(description);return {text:description.textContent,height:description.getBoundingClientRect().height,lineHeight:parseFloat(style.lineHeight),startBottom:document.getElementById('start').getBoundingClientRect().bottom}})()");
+      assert.match(plushEntry.text, /micro:bitを仕込んだ/);
+      assert.ok(plushEntry.height <= plushEntry.lineHeight * 2 + 1, 'plush mode explanation stays within two lines at 390px');
+      if (height === 844) assert.ok(plushEntry.startBottom <= height, 'start stays visible in plush mode at 390×844');
+      await screenshot(`${reviewDir}/entry-plush-${size}.png`, height);
+      await evaluate("document.getElementById('name').focus()");
       await screenshot(`${reviewDir}/entry-focus-${size}.png`, height);
       await evaluate("document.getElementById('name').blur();document.getElementById('mode-phone').click()");
     }

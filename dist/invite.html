@@ -27,20 +27,23 @@
 <body>
   <main id="party" class="party" data-scene="entry">
     <div class="brand" aria-label="誕生日のお祝い">
-      <p class="eyebrow">HAPPY BIRTHDAY</p>
-      <h1>きょうは、<br><span>あなたが主役。</span></h1>
-      <p class="brand-copy">ふーっと吹いて、お祝いしよう。</p>
+      <p class="eyebrow">HAPPY BIRTHDAY TO ME.</p>
+      <h1>ハッピーバースデー<br><span>トゥーミー</span></h1>
+      <p class="brand-copy">きょうは、あなたが主役。</p>
     </div>
     <section class="message-card" aria-label="誕生日の準備とメッセージ">
       <form id="setup" autocomplete="off">
         <div class="field"><label for="name">お名前 <span>省略OK</span></label><input id="name" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="ニックネーム"></div>
-        <div class="field"><label for="count">年齢（省略OK） <span>1〜99歳</span></label><div class="number-field"><input id="count" type="text" inputmode="numeric" autocomplete="off" aria-label="年齢" placeholder="空欄なら9本"><span>歳</span></div><p id="age-error" class="age-error" role="alert" hidden></p></div><fieldset class="mode-switch"><legend>パーティーの相手</legend><label><input id="mode-phone" name="play-mode" type="radio" value="phone" checked><span>スマホだけ</span></label><label><input id="mode-plush" name="play-mode" type="radio" value="plush"><span>ぬいぐるみと</span></label></fieldset>
+        <div class="field"><label for="count">年齢（省略OK） <span>1〜99歳</span></label><div class="number-field"><input id="count" type="text" inputmode="numeric" autocomplete="off" aria-label="年齢"><span>歳</span></div><p id="age-error" class="age-error" role="alert" hidden></p></div><fieldset class="mode-switch" aria-describedby="mode-description"><legend>パーティーの相手</legend><label><input id="mode-phone" name="play-mode" type="radio" value="phone" checked><span>スマホだけ</span></label><label><input id="mode-plush" name="play-mode" type="radio" value="plush"><span>ぬいぐるみと</span></label></fieldset>
+        <p id="mode-description" class="mode-description" aria-live="polite">スマホに向かって、ふーっと息を吹いて、ろうそくを消します。</p>
         <button id="start" class="primary" type="submit">お祝いをはじめる</button>
         <button id="invite-create" class="secondary invite-create" type="button"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/></svg><span>招待状をつくる</span></button>
         <p class="invite-description">LINEなどで送れる、お祝いのリンクを作ります</p>
         <div id="invite-result" class="invite-result" hidden><label for="invite-link">招待状リンク</label><input id="invite-link" type="url" readonly><div class="invite-actions"><button id="invite-share" type="button" class="secondary" hidden>共有する</button><button id="invite-copy" type="button" class="secondary">コピー</button><button id="invite-try" type="button" class="secondary">自分で試す</button></div><p id="invite-feedback" class="invite-feedback" role="status" aria-live="polite"></p></div>
         <p class="sound-hint">音をオンにして楽しもう</p>
+        <p class="project-credit">TAKOYAKI PROJECT</p>
       </form>
+      <details id="about-app" class="about-app"><summary>このアプリについて</summary><div class="about-app-copy"><p>名前と年齢を入れて、歌を聴いて、ろうそくを吹き消すと、お祝いが始まります。</p><p>ぬいぐるみモードでは、スマホの合図の音でmicro:bitが歌います。息はケーキの上のmicro:bitに吹きかけてください。お祝いはスマホで自動で始まります。</p></div></details>
       <div id="invite-card" class="invite-card" hidden><p class="invite-kicker">A LITTLE CELEBRATION FOR YOU</p><h1 id="invite-recipient">あなたへ</h1><p class="invite-intro">お誕生日のお祝いが届いています</p><img class="invite-cake" src="./assets/cake-base-v2.png" alt="" aria-hidden="true"><button id="invite-open" class="primary" type="button">お祝いをひらく</button><p class="invite-sound-hint">音をオンにして楽しんでね</p></div>
       <div id="started" class="started" hidden>
         <div class="card-copy">
