@@ -477,7 +477,7 @@ try {
     await sleep(4000);
     bands = await songSpacing();
     assert.equal(bands.recipientOpacity, '1');
-    assert.ok(bands.cue.top - bands.cake.bottom >= 39 && bands.cue.top - bands.cake.bottom <= 51, `plate-to-cue gap at 390×${height}: ${JSON.stringify(bands)}`);
+    assert.ok(bands.cue.top - bands.cake.bottom >= 20 && bands.cue.top - bands.cake.bottom <= 30, `plate-to-cue gap at 390×${height}: ${JSON.stringify(bands)}`);
     assert.equal(bands.statusBand, false);
     assert.equal(bands.noteVisible, false);
     assert.ok(bands.cue.bottom <= height && bands.scrollWidth <= 390 && bands.scrollHeight <= height);

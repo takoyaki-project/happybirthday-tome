@@ -251,3 +251,10 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .celebration-copy > .frame-shell .frame-window { gap: 4px; padding: 6px 4px; }
 .celebration-copy > .frame-shell .frame-window #celebration-title { flex-shrink: 0; font-size: clamp(16px, 4.7vw, 18px); line-height: 1.25; }
 .celebration-copy > .frame-shell .frame-paper #celebration-message { flex-shrink: 0; line-height: 1.3; }
+/* Keep the blow controls comfortably inside the song screen. */
+.party:is([data-play-mode="phone"], [data-play-mode="invite"])[data-scene="song"] .blow-cue {
+  top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 24px);
+}
+.party[data-play-mode="phone"][data-scene="song"] .volume-area {
+  top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 88px);
+}
