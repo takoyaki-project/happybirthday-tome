@@ -97,11 +97,15 @@ test('nothing requests audio until start; age 99 renders 18 candle groups', () =
   assert.equal(app.get('dedication').children.length, 0);
 });
 test('microphone denial falls back to taps, completes age 99, and allows reset', async () => {
-  const app = harness(() => Promise.reject(new Error('denied')));
+  const app = harness(() => Promise.reject(Object.assign(new Error('denied'), {name: 'NotAllowedError'})));
   app.count(99);
   app.submit();
   await flush();
   assert.equal(app.get('cake-button').disabled, false);
+  assert.equal(app.get('tap-mic-note').hidden, false);
+  assert.equal(app.get('status').classList.contains('notice'), false);
+  app.runTimer(4000);
+  assert.equal(app.get('tap-mic-note').hidden, true);
   app.get('cake-button').click();
   assert.equal(app.get('remaining').textContent, 12);
   app.get('cake-button').click();
@@ -173,8 +177,17 @@ test('microphone disconnection switches to taps', async () => {
   const mic = microphone();
   const app = harness(() => Promise.resolve(mic.stream));
   app.submit(); await flush(); mic.track.onended();
-  assert.match(app.get('status').textContent, /マイクはオフ/);
+  assert.equal(app.get('status').textContent, 'ケーキをタップして、ろうそくを消してね。');
+  assert.equal(app.get('tap-mic-note').hidden, true);
+  assert.equal(app.get('status').classList.contains('notice'), false);
   assert.equal(mic.track.stopped, true);
+});
+test('an unavailable microphone still uses taps without the permission-denied note', async () => {
+  const app = harness(() => Promise.reject(Object.assign(new Error('no device'), {name: 'NotFoundError'})));
+  app.submit(); await flush();
+  assert.equal(app.get('cake-button').disabled, false);
+  assert.equal(app.get('tap-mic-note').hidden, true);
+  assert.equal(app.get('status').classList.contains('notice'), false);
 });
 test('calibration subtracts room noise; normal voice fills the meter in about one second, gentle voice removes some, and loud voice removes all', async () => {
   const mic = microphone();
@@ -285,11 +298,14 @@ test('plush mode needs no phone microphone and celebrates on the micro:bit timel
   assert.equal(app.get('plush-again').hidden, false);
   app.runTimer(100);
   assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[0][1]);
+  assert.equal(app.get('song-recipient').classList.contains('is-dear'), false);
   app.runTimer(6100);
   assert.equal(app.get('song-lyrics').textContent, SONG.lyrics[2][1].replace('{name}', 'けいこ'));
   assert.equal(app.get('song-lyrics').children[1].className, 'lyric-name');
   assert.equal(app.get('song-lyrics').children[1].textContent, 'けいこ');
+  assert.equal(app.get('song-recipient').classList.contains('is-dear'), true);
   app.runTimer(PLUSH_SONG.durationMs + 100);
+  assert.equal(app.get('song-recipient').classList.contains('is-dear'), false);
   assert.equal(app.get('song-lyrics').textContent, 'もうすぐ\nふーっ！');
   app.runTimer(PLUSH_SONG.durationMs + 1100);
   assert.equal(app.get('song-lyrics').textContent, 'ぬいぐるみのケーキに\nふーっ！');
@@ -475,7 +491,9 @@ test('completion message uses the entered name, replaces the wish copy, and caps
 test('reference copy uses a shared optional age field and a direct invitation action', async () => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
   for (const text of ['HAPPY BIRTHDAY TO ME.', 'ハッピーバースデー', 'トゥーミー', 'きょうは、あなたが主役。', 'お名前', '年齢（省略OK）', '1〜99歳', 'お祝いをはじめる', '招待状をつくる', 'LINEなどで送れる、お祝いのリンクを作ります', 'TAKOYAKI PROJECT', 'このアプリについて', '今日の主役へ', '願いごと、決まった？']) assert.ok(html.replace(/<[^>]+>/g, '').includes(text));
-  assert.match(html, /<h1>ハッピーバースデー<br><span>トゥーミー<\/span><\/h1>/);
+  assert.match(html, /<h1 class="eyebrow">HAPPY BIRTHDAY TO ME\.<\/h1>/);
+  assert.match(html, /<p class="brand-reading">ハッピーバースデートゥーミー<\/p>/);
+  assert.match(html, /<p class="brand-copy">きょうは、<br>あなたが主役。<\/p>/);
   assert.doesNotMatch(html, /ふーっと吹いて、お祝いしよう。|placeholder="空欄なら9本"/);
   assert.doesNotMatch(html, /0〜120|パーティスタート|YOUR BIRTHDAY CAKE/);
   assert.match(html, /id="count"[^>]*type="text"[^>]*inputmode="numeric"/);

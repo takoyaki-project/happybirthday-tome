@@ -86,14 +86,12 @@ body[data-scene="song"]::before, body[data-scene="blackout"]::before, body[data-
 .party[data-scene="plush-prepare"] .scene-copy { top: max(76px, calc(env(safe-area-inset-top) + 38px)); }.party[data-scene="plush-prepare"] .cake-button { top: clamp(355px, 47svh, 410px); }.party[data-scene="plush-prepare"] .scene-controls { top: max(14px, env(safe-area-inset-top)); }
 @media (max-height: 740px) { .party[data-scene="plush-prepare"] .scene-copy { top: 48px; transform: scale(.9); transform-origin: top center; }.party[data-scene="plush-prepare"] .cake-button { top: 300px; } }
 /* Invitation details. Keep the existing curtain bounds and top inset fixed. */
-.party[data-scene="entry"] { padding-top: max(86px, calc(env(safe-area-inset-top) + 60px)); }
+.party[data-scene="entry"] { padding-top: max(44px, calc(env(safe-area-inset-top) + 20px)); }
 .party[data-scene="entry"]::before, .party[data-scene="entry"]::after { width: 28%; height: 70px; opacity: .9; }
-.party[data-scene="entry"] .brand { margin-bottom: 28px; text-align: center; }
-.party[data-scene="entry"] .eyebrow { margin-bottom: 12px; color: #845b72; font-size: 10px; font-weight: 600; line-height: 1.5; letter-spacing: .22em; }
-.party[data-scene="entry"] h1 { color: #39233f; font-size: clamp(34px, 9.4vw, 38px); font-weight: 800; line-height: 1.25; letter-spacing: -.015em; white-space: nowrap; }
-.party[data-scene="entry"] h1 span { display: inline-flex; align-items: center; gap: 10px; font-size: 38px; letter-spacing: .08em; }
-.party[data-scene="entry"] h1 span::before, .party[data-scene="entry"] h1 span::after { display: block; width: clamp(28px, 10vw, 42px); height: 1px; flex: none; content: ""; background: #c9a9b8; }
-.party[data-scene="entry"] .brand-copy { margin-top: 12px; color: #593b50; font-size: 19px; font-weight: 700; line-height: 1.45; letter-spacing: .02em; }
+.party[data-scene="entry"] .brand { margin-bottom: 22px; text-align: center; }
+.party[data-scene="entry"] h1.eyebrow { margin: 0; color: #845b72; font-size: 18px; font-weight: 300; line-height: 1.45; letter-spacing: .22em; white-space: nowrap; }
+.party[data-scene="entry"] .brand-reading { margin: 3px 0 0; color: #846779; font-size: 12px; font-weight: 500; line-height: 1.5; letter-spacing: .03em; }
+.party[data-scene="entry"] .brand-copy { margin-top: 22px; color: #39233f; font-size: clamp(34px, 9.4vw, 38px); font-weight: 800; line-height: 1.25; letter-spacing: -.015em; }
 #setup { gap: 18px; }
 #setup .field { gap: 9px; }
 #setup .field label { align-items: baseline; color: #593b50; font-size: 13px; font-weight: 600; letter-spacing: .02em; }
@@ -109,6 +107,7 @@ body[data-scene="song"]::before, body[data-scene="blackout"]::before, body[data-
 .mode-switch input:checked + span { min-height: 44px; border-radius: 11px; background: #ebdde8; box-shadow: inset 0 0 0 1px rgba(110,71,105,.1); color: #51304e; font-weight: 700; }
 .mode-switch input:focus-visible + span { outline: 2px solid #896480; outline-offset: 1px; }
 .mode-description { min-height: 37px; margin: -12px 0 0; color: #745b6b; font-size: 12px; font-weight: 500; line-height: 1.55; text-align: center; text-wrap: pretty; }
+.mode-description span { display: block; white-space: nowrap; }
 #start { min-height: 56px; margin-top: 4px; border-radius: 18px; box-shadow: 0 5px 12px rgba(62,27,78,.14), inset 0 1px rgba(255,255,255,.1); font-weight: 700; letter-spacing: .045em; }
 .sound-hint { margin-top: -12px; color: #7c6574; font-size: 11px; font-weight: 400; line-height: 1.6; letter-spacing: .02em; }
 .project-credit { margin: -12px 0 0; color: #947987; font-family: Arial, sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .2em; line-height: 1.5; text-align: center; }
@@ -134,15 +133,14 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .plush-prepare .primary:disabled { opacity: .5; cursor: wait; }
 .party:not([data-scene="song"]) .plush-confetti { display: none; }
 @media (max-height: 740px) {
-  .party[data-scene="entry"] { padding-top: max(72px, calc(env(safe-area-inset-top) + 44px)); }
+  .party[data-scene="entry"] { padding-top: max(42px, calc(env(safe-area-inset-top) + 18px)); }
   .party[data-scene="entry"] .brand { margin-bottom: 24px; }
-  .party[data-scene="entry"] .eyebrow { margin-bottom: 12px; }
-  .party[data-scene="entry"] .brand-copy { margin-top: 12px; }
+  .party[data-scene="entry"] .brand-copy { margin-top: 18px; }
   #setup { gap: 18px; }
   .party[data-scene="plush-prepare"] .scene-copy { top: 65px; transform: none; }
   .party[data-scene="plush-prepare"] .cake-button { top: 340px; }
 }
-@media (max-width: 359px) { .party[data-scene="entry"] h1 { font-size: 30px; }.party[data-scene="entry"] h1 span { font-size: 34px; } }
+@media (max-width: 359px) { .party[data-scene="entry"] h1.eyebrow { font-size: 16px; }.party[data-scene="entry"] .brand-copy { font-size: 32px; }.mode-description span { font-size: 11px; } }
 @media (prefers-reduced-motion: reduce) { .plush-confetti { display: none; } }
 
 .party[data-play-mode="plush"][data-scene="song"] .plush-again { position: absolute; top: calc(100svh - 96px); right: 0; font-size: 13px; }
@@ -156,11 +154,13 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .party[data-scene="song"] .scene-copy { top: max(84px, calc(env(safe-area-inset-top) + 45px)); }
 .party[data-scene="song"]::before, .party[data-scene="song"]::after { height: 80px; }
 .song-lyrics { font-size: clamp(27px, 7.6vw, 34px); letter-spacing: .035em; }
-.song-recipient { position: relative; left: 50%; width: calc(100vw - 16px); max-width: 414px; margin: 0 0 12px; transform: translateX(-50%); font-size: 36px; font-weight: 900; line-height: 1.22; letter-spacing: -.035em; overflow-wrap: anywhere; text-wrap: balance; }
+.song-recipient { position: relative; left: 50%; width: calc(100vw - 16px); max-width: 414px; margin: 0 0 12px; transform: translateX(-50%); color: #fff1d2; font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 36px; font-weight: 800; line-height: 1.22; letter-spacing: -.035em; overflow-wrap: anywhere; text-wrap: balance; opacity: 1; transition: opacity 300ms ease; }
+.song-recipient.is-dear { opacity: .45; }
 .song-recipient[data-name-length="medium"] { font-size: 28px; }
 .song-recipient[data-name-length="long"] { font-size: 22px; letter-spacing: -.045em; }
 .song-recipient #recipient-suffix { font-size: .6em; font-weight: 900; white-space: nowrap; }
-.song-lyrics .lyric-name { font-style: normal; font-weight: 900; }
+.song-lyrics .lyric-name { color: #fff1d2; font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 1em; font-style: normal; font-weight: 800; }
+.tap-mic-note { margin: 4px -8px 0; color: #ead9c7; font-size: 11px; font-weight: 500; line-height: 1.4; white-space: nowrap; }
 /* Confetti bursts from one point below the copy, rather than forming a line over it. */
 .plush-confetti { z-index: 4; }
 .plush-confetti span { top: 26%; left: 50%; opacity: 0; background: #ffd56d; }
@@ -178,12 +178,12 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .plush-blow-note span { display: block; }
 
 /* Keep the cake fixed as the song becomes the blackout and then the celebration. */
-.party:not([data-scene="entry"]) { --stage-cake-top: clamp(392px, 47svh, 410px); --stage-cake-height: calc(min(100vw, 430px) * 235 / 360); }
+.party:not([data-scene="entry"]) { --stage-cake-top: clamp(252px, calc(72svh - 216px), 392px); --stage-cake-height: calc(min(100vw, 430px) * 235 / 360); }
 .party:is([data-scene="song"], [data-scene="blackout"], [data-scene="celebrate"]) .cake-button { top: var(--stage-cake-top); }
-.party:is([data-play-mode="phone"], [data-play-mode="invite"])[data-scene="song"] .blow-cue { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 6px); }
-.party[data-play-mode="phone"][data-scene="song"] .volume-area { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 65px); }
-@media (min-height: 741px) { .party[data-scene="song"] .scene-copy { top: clamp(145px, 20svh, 185px); } }
-@media (max-height: 740px) { .party:not([data-scene="entry"]) { --stage-cake-top: 300px; } }
+.party:is([data-play-mode="phone"], [data-play-mode="invite"])[data-scene="song"] .blow-cue { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 45px); }
+.party[data-play-mode="phone"][data-scene="song"] .volume-area { top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 110px); }
+.party[data-scene="song"] .scene-copy { top: calc(var(--stage-cake-top) - 172px); }
+@media (max-height: 700px) { .party[data-scene="celebrate"] .scene-copy { top: 6px; transform: scale(.65); } }
 
 /* The shared name and age fields feed either celebration or invitation. */
 .age-error, .invite-feedback { margin: 0; line-height: 1.5; }
@@ -210,3 +210,4 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .invite-sound-hint { margin: -7px 0 0; color: #806a77; font-size: 11px; }
 .bubble #bubble-word { color: var(--color-dark-text); }
 @media (max-height: 740px) { .party[data-play-mode="invite"][data-scene="entry"] { padding-top: max(72px, calc(env(safe-area-inset-top) + 44px)); }.invite-card { gap: 12px; padding: 22px 18px 20px; }.invite-cake { width: min(100%, 255px); } }
+#cake { overflow: visible; }

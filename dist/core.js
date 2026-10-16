@@ -1,7 +1,11 @@
 export const INVITE_NAME_MAX_LENGTH = 30;
 const CANDLES_PER_ROW = 6;
 const CANDLE_SURFACE = Object.freeze({x: 180, y: 55, rx: 98, ry: 26});
-const CANDLE_STEMS = Object.freeze({large: {height: 27, width: 9, flame: 14}, small: {height: 18, width: 6, flame: 10}});
+const CANDLE_STEMS = Object.freeze([
+  {max: 9, large: {height: 42, width: 13, flame: 20}, small: {height: 29, width: 9, flame: 15}},
+  {max: 13, large: {height: 37, width: 12, flame: 18}, small: {height: 26, width: 8, flame: 13}},
+  {max: 99, large: {height: 32, width: 10, flame: 16}, small: {height: 22, width: 7, flame: 12}}
+]);
 
 export function validCount(value) {
   const number = Number(value);
@@ -31,15 +35,17 @@ export function candleLayout(age) {
     ? large <= backColumns ? distribute(large, backColumns) : [...distribute(backColumns, backColumns), ...distribute(large - backColumns, middleColumns, backColumns)]
     : distribute(large, total);
   const largePositions = new Set(largeIndices);
+  const stems = CANDLE_STEMS.find(tier => total <= tier.max);
   const result = [];
   for (let row = 0; row < rows; row++) {
     const columns = rowColumns(row);
     const y = rows === 1 ? surface.y + 2 : rows === 2 ? 47 + row * 23 : 43 + row * 16;
     const radius = Math.sqrt(1 - ((y - surface.y) / surface.ry) ** 2) * surface.rx;
     for (let column = 0; column < columns; column++) {
-      const x = columns === 1 ? surface.x : surface.x - radius + (column + .5) * (2 * radius / columns);
+      const stagger = rows > 1 ? (row % 2 ? .2 : -.2) : 0;
+      const x = columns === 1 ? surface.x : surface.x - radius + (column + .5 + stagger) * (2 * radius / columns);
       const size = largePositions.has(result.length) ? 'large' : 'small';
-      result.push({x, y, size, ...CANDLE_STEMS[size]});
+      result.push({x, y, size, ...stems[size]});
     }
   }
   return result;

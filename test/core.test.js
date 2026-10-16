@@ -16,7 +16,7 @@ test('ages use tens as large candles, ones as small candles, and unknown age use
     assert.equal(new Set(candles.map(c => `${c.x},${c.y}`)).size, candles.length);
     for (const {x, y, height, flame} of candles) {
       assert.ok(((x - 180) / 98) ** 2 + ((y - 55) / 26) ** 2 < 1, `${age} roots stay on the exposed cream`);
-      assert.ok(y - height - flame > 0, `${age} flames stay inside the SVG viewport`);
+      assert.ok(y - height - flame > -24, `${age} flames stay within the visible cake area`);
     }
   }
   const biggest = candleLayout(99);
@@ -28,7 +28,10 @@ test('ages use tens as large candles, ones as small candles, and unknown age use
   }
   assert.ok(biggest.some(c => c.size === 'large' && c.x < 180));
   assert.ok(biggest.some(c => c.size === 'large' && c.x > 180));
-  assert.equal(biggest.find(c => c.size === 'large').width / biggest.find(c => c.size === 'small').width, 1.5);
+  assert.equal(biggest.find(c => c.size === 'large').width, 10);
+  assert.equal(biggest.find(c => c.size === 'small').width, 7);
+  assert.deepEqual([candleLayout(null), candleLayout(49), candleLayout(99)].map(layout => layout.find(c => c.size === 'large').height), [42, 37, 32]);
+  assert.notEqual(candleLayout(49)[0].x, candleLayout(49)[7].x, 'rows are staggered');
 });
 test('invite fragments preserve special names and reject invalid ages or malformed encoding', () => {
   assert.deepEqual(parseInviteHash(''), {name: '', age: null});

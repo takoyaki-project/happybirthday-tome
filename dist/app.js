@@ -3,7 +3,7 @@ import { INVITE_NAME_MAX_LENGTH, validCount, candleCounts, candleLayout, parseIn
 import { BLOW_SENSITIVITY } from './core.js';
 import { SONG, PLUSH_SONG } from './song.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'age-error', 'mode-phone', 'mode-plush', 'mode-description', 'start', 'invite-create', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'recipient-name', 'recipient-suffix', 'song-lyrics', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'age-error', 'mode-phone', 'mode-plush', 'mode-description', 'start', 'invite-create', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'recipient-name', 'recipient-suffix', 'song-lyrics', 'tap-mic-note', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -21,6 +21,8 @@ let timer = 0;
 let songTimers = [];
 let ignoreUntil = 0;
 let tapOnly = false;
+let micDenied = false;
+let micNoteTimer = 0;
 let showDebugValue = true;
 let recentMessageIds = [];
 let currentCelebrationMessage = '';
@@ -42,6 +44,8 @@ const MODE_DESCRIPTIONS = {
 };
 const RECENT_MESSAGE_LIMIT = 5;
 const MAX_GENTLE_BLOWS = 3;
+const SONG_NOTE_MS = 4000;
+const MIC_PERMISSION_ERROR_NAMES = ['NotAllowedError', 'PermissionDeniedError', 'SecurityError'];
 const MAX_MOBS = 40;
 const PLUSH_SONG_START_OFFSET_MS = 100;
 const PLUSH_MICROBIT_READY_DELAY_MS = 1000;
@@ -120,7 +124,20 @@ function keepLatestMobs(mobs, additions) { return [...mobs, ...additions].slice(
 
 function status(message, visible = false) {
   ui.status.textContent = message;
-  ui.status.classList[visible ? 'add' : 'remove']('notice');
+  ui.status.classList[visible && scene !== 'song' ? 'add' : 'remove']('notice');
+  if (visible && scene === 'song') showSongNote(message);
+}
+function showSongNote(message) {
+  clearTimeout(micNoteTimer);
+  ui['tap-mic-note'].textContent = message;
+  ui['tap-mic-note'].hidden = false;
+  micNoteTimer = window.setTimeout(() => { ui['tap-mic-note'].hidden = true; micNoteTimer = 0; }, SONG_NOTE_MS);
+}
+function modeDescription() {
+  if (ui['mode-plush'].checked) { ui['mode-description'].textContent = MODE_DESCRIPTIONS.plush; return; }
+  const secondLine = document.createElement('span');
+  secondLine.textContent = 'ふーっと息を吹いて、ろうそくを消します。';
+  ui['mode-description'].replaceChildren(document.createTextNode('スマホに向かって、'), secondLine);
 }
 function meter(level, measuredLevel = 0) {
   const percent = Math.round(Math.max(0, Math.min(1, level)) * 100);
@@ -157,7 +174,7 @@ function controls() {
   ui.party.classList[scene === 'celebrate' && messageLength > 16 && messageLength <= 28 ? 'add' : 'remove']('medium-celebration-message');
   ui.party.classList[scene === 'celebrate' && messageLength > 28 ? 'add' : 'remove']('long-celebration-message');
   ui.start.textContent = 'お祝いをはじめる';
-  ui['mode-description'].textContent = ui['mode-plush'].checked ? MODE_DESCRIPTIONS.plush : MODE_DESCRIPTIONS.phone;
+  modeDescription();
   ui.dedication.textContent = '今日の主役へ';
   const complete = ['blackout', 'celebrate'].includes(scene);
   ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
@@ -178,6 +195,8 @@ function controls() {
   ui['cake-button'].disabled = scene !== 'song' || phase !== 'active' || playMode === 'plush';
   ui['sound-test'].hidden = scene !== 'song' || !['active', 'complete'].includes(phase);
   ui['song-lyrics'].hidden = scene !== 'song';
+  if (scene !== 'song' || phase !== 'active') ui['tap-mic-note'].hidden = true;
+  if (scene !== 'song') ui['song-recipient'].classList.remove('is-dear');
   if (scene !== 'song' || playMode !== 'plush' || phase !== 'plush-wait') $('plush-blow-note').hidden = true;
   ui['song-recipient'].hidden = scene !== 'song' || (playMode === 'plush' && phase === 'plush-wait');
   const recipient = ui.name.value.trim();
@@ -248,7 +267,7 @@ function releaseAudio() {
     void old.close().catch(() => {});
   }
 }
-function stopPending() { generation++; clearTimeout(timer); timer = 0; songTimers.forEach(clearTimeout); songTimers = []; }
+function stopPending() { generation++; clearTimeout(timer); timer = 0; clearTimeout(micNoteTimer); micNoteTimer = 0; ui['tap-mic-note'].hidden = true; songTimers.forEach(clearTimeout); songTimers = []; }
 
 // Always called synchronously inside a tap/click handler, before requesting the mic.
 function prepareSound(playReadyTone = true) {
@@ -282,6 +301,7 @@ function prepareSound(playReadyTone = true) {
   } catch { return null; }
 }
 function renderLyric(lyric, displayName) {
+  ui['song-recipient'].classList[lyric.includes('{name}') ? 'add' : 'remove']('is-dear');
   if (!lyric.includes('{name}')) { ui['song-lyrics'].textContent = lyric; return; }
   const [before, after] = lyric.split('{name}');
   const name = document.createElement('span');
@@ -314,6 +334,7 @@ function beginSong(ctx, ticket, useTap = false) {
   if (ticket !== generation) return;
   phase = 'singing';
   tapOnly = useTap;
+  ui['song-recipient'].classList.remove('is-dear');
   status('歌が終わるまで、みんなで歌ってね。');
   controls();
   playSong(ctx, ticket);
@@ -373,6 +394,7 @@ function playPlushSong() {
   const ticket = generation;
   scene = 'song'; phase = 'singing';
   ui['song-lyrics'].textContent = '';
+  ui['song-recipient'].classList.remove('is-dear');
   controls(); burstPlushConfetti();
   status('歌が終わったら、ぬいぐるみのケーキの上の micro:bit に息を吹きかけてね。');
   void ctx.resume().catch(() => {
@@ -390,6 +412,7 @@ function playPlushSong() {
     if (ticket !== generation || phase !== 'singing') return;
     phase = 'plush-wait';
     ui['song-lyrics'].textContent = 'もうすぐ\nふーっ！';
+    ui['song-recipient'].classList.remove('is-dear');
     controls();
     status('micro:bit が息を待つまで、少し待ってね。');
   }, PLUSH_SONG_START_OFFSET_MS + PLUSH_SONG.durationMs);
@@ -418,7 +441,9 @@ function activateTap() {
   tapOnly = true;
   phase = 'active';
   controls();
-  status(playMode === 'invite' ? TAP_READY_MESSAGE : 'マイクはオフです。ケーキをタップして消せます。', playMode !== 'invite');
+  status(playMode === 'invite' ? TAP_READY_MESSAGE : 'ケーキをタップして、ろうそくを消してね。');
+  if (micDenied && playMode === 'phone') showSongNote('マイクはオフです。ケーキをタップして消せます。');
+  micDenied = false;
 }
 function pause() {
   if (!['active', 'preparing', 'singing', 'plush-ready', 'plush-wait'].includes(phase)) return;
@@ -643,6 +668,7 @@ function start(resuming = false) {
     chosenAge = age;
     renderCake();
     tapOnly = false;
+    micDenied = false;
     playMode = ui['mode-plush'].checked ? 'plush' : 'phone';
     if (playMode === 'plush') { beginPlushPreparation(); return; }
     scene = 'song';
@@ -665,7 +691,7 @@ function start(resuming = false) {
   let request;
   try {
     request = navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}, video: false});
-  } catch { beginSong(ctx, ticket, true); return; }
+  } catch (error) { micDenied = MIC_PERMISSION_ERROR_NAMES.includes(error?.name); beginSong(ctx, ticket, true); return; }
   void request.then(async (incoming) => {
     if (ticket !== generation || phase !== 'preparing' || document.hidden) {
       incoming.getTracks().forEach(track => track.stop());
@@ -691,8 +717,8 @@ function start(resuming = false) {
       }
       beginSong(ctx, ticket);
     } catch { beginSong(ctx, ticket, true); }
-  }).catch(() => {
-    if (ticket === generation && phase === 'preparing') beginSong(ctx, ticket, true);
+  }).catch(error => {
+    if (ticket === generation && phase === 'preparing') { micDenied = MIC_PERMISSION_ERROR_NAMES.includes(error?.name); beginSong(ctx, ticket, true); }
   });
 }
 function reset() {
@@ -703,6 +729,7 @@ function reset() {
   currentCelebrationMessage = '';
   releaseAudio();
   tapOnly = false;
+  micDenied = false;
   if (playMode !== 'invite') {
     playMode = 'phone';
     ui['mode-phone'].checked = true;
@@ -714,7 +741,7 @@ function reset() {
 }
 ui.setup.addEventListener('submit', event => { event.preventDefault(); start(); });
 for (const id of ['mode-phone', 'mode-plush']) ui[id].addEventListener('change', () => {
-  ui['mode-description'].textContent = ui['mode-plush'].checked ? MODE_DESCRIPTIONS.plush : MODE_DESCRIPTIONS.phone;
+  modeDescription();
 });
 ui['invite-create'].addEventListener('click', () => {
   const name = Array.from(ui.name.value.trim()).slice(0, INVITE_NAME_MAX_LENGTH).join('');

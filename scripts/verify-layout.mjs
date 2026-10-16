@@ -95,9 +95,9 @@ try {
   const entry = await read();
   fits(entry);
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
-  assert.ok(await evaluate("scrollY===0 && document.getElementById('start').getBoundingClientRect().bottom<=innerHeight"), 'start is visible without scrolling at 390×844');
-  assert.equal(await evaluate("document.querySelector('.brand h1').textContent"), 'ハッピーバースデートゥーミー');
-  assert.ok(await evaluate("(()=>{const size=parseFloat(getComputedStyle(document.querySelector('.brand h1')).fontSize);return size>=34 && size<=38})()"), 'entry title uses the requested type size');
+  assert.ok(await evaluate("scrollY===0 && ['start','invite-create'].every(id=>document.getElementById(id).getBoundingClientRect().bottom<=innerHeight)"), 'both actions are visible without scrolling at 390×844');
+  assert.equal(await evaluate("document.querySelector('.brand h1').textContent"), 'HAPPY BIRTHDAY TO ME.');
+  assert.ok(await evaluate("(()=>{const title=document.querySelector('.brand h1'),copy=document.querySelector('.brand-copy');const titleSize=parseFloat(getComputedStyle(title).fontSize),copySize=parseFloat(getComputedStyle(copy).fontSize);return titleSize>=18&&titleSize<=20&&title.getBoundingClientRect().height<34&&copySize>=34&&copySize<=38})()"), 'entry title and leading copy use the requested type sizes');
   await evaluate("document.getElementById('about-app').open=true");
   assert.ok(await evaluate("document.querySelector('.about-app-copy').getClientRects().length>0"), 'about this app expands');
   await evaluate("document.getElementById('about-app').open=false");
@@ -133,7 +133,7 @@ try {
   fits(song);
   assert.equal(song.scene, 'song'); assert.ok(song.cakeVisible && song.lyrics && !song.bubble && !song.counter && !song.gauge);
   assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /Dear けいこ/);
-  assert.equal(await evaluate("(()=>{const name=document.querySelector('#song-lyrics .lyric-name');const style=getComputedStyle(name);return style.fontStyle+':'+style.fontWeight})()"), 'normal:900');
+  assert.equal(await evaluate("(()=>{const name=document.querySelector('#song-lyrics .lyric-name');const style=getComputedStyle(name);return style.fontStyle+':'+style.fontWeight})()"), 'normal:800');
   assert.equal(song.background, 'rgb(25, 13, 29)');
   await screenshot('song-lyrics-390x844.png');
   await sleep(3600); await screenshot('song-line-4-390x844.png');
@@ -246,10 +246,10 @@ try {
     await send('Emulation.setEmulatedMedia', {features: [{name: 'prefers-reduced-motion', value: 'no-preference'}]});
     await evaluate("document.getElementById('reset').click();document.getElementById('name').value='';document.getElementById('count').value='5';document.getElementById('count').dispatchEvent(new Event('input'))");
     await sleep(120);
-    const entryBounds = await visibleBounds('.eyebrow, .brand h1, .brand-copy, #setup, #start, .sound-hint');
+    const entryBounds = await visibleBounds('.eyebrow, .brand-reading, .brand-copy, #setup, #start, .sound-hint');
     for (const [index, box] of entryBounds.entries()) { assert.ok(box.left >= 16 && box.right <= width-16, `entry width: ${size}`); if ([0, 1, 2, 4].includes(index)) assert.ok(box.bottom < height, `entry heading and primary action: ${size}`); }
     assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth && document.getElementById('invite-create').getBoundingClientRect().height>=56"), `invitation remains reachable without horizontal overflow: ${size}`);
-    assert.ok(entryBounds[0].top >= 70, 'curtains end above the brand');
+    assert.ok(entryBounds[0].top >= 40, 'title clears the top inset');
     const curtains = await evaluate("['::before','::after'].map(pseudo=>{const s=getComputedStyle(document.getElementById('party'),pseudo);return {top:s.top,height:s.height,width:parseFloat(s.width)};})");
     for (const curtain of curtains) {
       assert.equal(curtain.top, '0px'); assert.equal(curtain.height, '70px');
@@ -352,7 +352,7 @@ try {
     const frameBounds = (await visibleBounds('.frame-shell'))[0];
     const cakeBounds = (await visibleBounds('#cake'))[0];
     assert.ok(Math.abs(cakeBounds.top - songCake.top) < 1, `celebration cake stays fixed ${size}`);
-    assert.ok(frameBounds.bottom + 8 <= cakeBounds.top, 'frame has breathing room above cake');
+    assert.ok(frameBounds.bottom + 8 <= cakeBounds.top, `frame has breathing room above cake ${size}: ${JSON.stringify({frame:frameBounds.bottom,cake:cakeBounds.top})}`);
     for (const box of shouts) assert.ok(box.left >= 8 && box.right <= width-8 && box.top >= 0 && box.bottom <= height-30, `speech fits ${size}: ${JSON.stringify(box)}`);
     assert.equal(await evaluate("document.querySelectorAll('.mob').length"), 40);
     assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight"), true);
@@ -442,6 +442,43 @@ try {
     await screenshot(`invite/name-${length}-${width}x${height}.png`, height);
   }
   console.log('PASS recipient sizes and clearances for 1, 4, 10, and 30 characters at 390/360 widths and 844/740 heights');
+
+  const songSpacing = () => evaluate("(()=>{const box=el=>{const r=el.getBoundingClientRect();return{top:r.top,bottom:r.bottom,height:r.height}};const flames=Array.from(document.querySelectorAll('.candle:not(.out) .flame path')).map(el=>box(el).top);return{lyrics:box(document.getElementById('song-lyrics')),flameTop:Math.min(...flames),cake:box(document.getElementById('cake')),cue:box(document.getElementById('blow-cue')),recipient:box(document.getElementById('song-recipient')),recipientOpacity:getComputedStyle(document.getElementById('song-recipient')).opacity,noteVisible:!!document.getElementById('tap-mic-note').getClientRects().length,statusBand:document.getElementById('status').classList.contains('notice'),scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight}})()");
+  for (const height of [844, 700]) for (const [candles, age] of [[9, null], [13, 49], [18, 99]]) {
+    await send('Emulation.setDeviceMetricsOverride', {width: 390, height, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: height});
+    await send('Page.navigate', {url: `${origin}/invite.html?candles-${candles}-${height}#name=${encodeURIComponent('けいこ')}${age === null ? '' : `&age=${age}`}`});
+    for (let attempt = 0; attempt < 60; attempt++) { if (await evaluate(`location.search==='?candles-${candles}-${height}'&&document.body.dataset.scene==='entry'&&document.querySelectorAll('.candle').length===${candles}`)) break; await sleep(50); }
+    assert.equal(await evaluate(`location.search==='?candles-${candles}-${height}'&&document.body.dataset.scene==='entry'`), true);
+    await evaluate("window.__testSongDuration=1500;document.getElementById('invite-open').click()");
+    await sleep(150);
+    const bands = await songSpacing();
+    assert.ok(bands.flameTop - bands.lyrics.bottom >= 18, `lyrics clear ${candles} candle flames at 390×${height}: ${JSON.stringify(bands)}`);
+    assert.ok(bands.cake.top - bands.lyrics.bottom >= 38 && bands.cake.top - bands.lyrics.bottom <= 54, `lyrics-to-cake gap at 390×${height}: ${JSON.stringify(bands)}`);
+    assert.ok(bands.scrollWidth <= 390 && bands.scrollHeight <= height);
+    await screenshot(`song-${candles}-candles-390x${height}.png`, height);
+  }
+  for (const height of [650, 750, 844]) {
+    await send('Emulation.setDeviceMetricsOverride', {width: 390, height, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: height});
+    await send('Page.navigate', {url: `${origin}/invite.html?song-detail-${height}#name=${encodeURIComponent('けいこ')}&age=49`});
+    for (let attempt = 0; attempt < 60; attempt++) { if (await evaluate(`location.search==='?song-detail-${height}'&&document.body.dataset.scene==='entry'&&document.getElementById('invite-recipient').textContent==='けいこさんへ'`)) break; await sleep(50); }
+    assert.equal(await evaluate(`location.search==='?song-detail-${height}'&&document.body.dataset.scene==='entry'`), true);
+    await evaluate("window.__testSongDuration=11000;document.getElementById('invite-open').click()");
+    await sleep(7200);
+    let bands = await songSpacing();
+    assert.match(await evaluate("document.getElementById('song-lyrics').textContent"), /Dear けいこ/);
+    assert.equal(bands.recipientOpacity, '0.45');
+    assert.ok(bands.flameTop - bands.lyrics.bottom >= 18, `Dear lyric clears flames at 390×${height}: ${JSON.stringify(bands)}`);
+    await screenshot(`song-dear-390x${height}.png`, height);
+    await sleep(4000);
+    bands = await songSpacing();
+    assert.equal(bands.recipientOpacity, '1');
+    assert.ok(bands.cue.top - bands.cake.bottom >= 39 && bands.cue.top - bands.cake.bottom <= 51, `plate-to-cue gap at 390×${height}: ${JSON.stringify(bands)}`);
+    assert.equal(bands.statusBand, false);
+    assert.equal(bands.noteVisible, false);
+    assert.ok(bands.cue.bottom <= height && bands.scrollWidth <= 390 && bands.scrollHeight <= height);
+    await screenshot(`song-tap-390x${height}.png`, height);
+  }
+  console.log('PASS 9/13/18 candle flames, Dear lyric, and tap cue at the requested viewport sizes');
 
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
