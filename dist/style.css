@@ -235,3 +235,14 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .party.long-celebration-message .celebration-copy > .frame-shell .frame-paper #celebration-message { font-size: clamp(16px, 4.6vw, 19px); }
 @media (max-height: 740px) { .party[data-scene="celebrate"] .scene-copy { top: 10px; transform: scale(.86); } .party[data-scene="celebrate"] .cake-button { top: 290px; } }
 @media (max-height: 700px) { .party[data-scene="celebrate"] .scene-copy { top: 8px; transform: scale(.84); } .party[data-scene="celebrate"] .cake-button { top: 285px; } }
+
+/* celebration: split title and fit the wish within the frame */
+.celebration-copy > .frame-shell .frame-window #celebration-title { white-space: pre-line; font-size: clamp(14px, 4vw, 16px); line-height: 1.35; max-height: none; }
+.celebration-copy > .frame-shell .frame-window { gap: 8px; padding: 12px 4px; }
+.celebration-copy > .frame-shell .frame-paper #celebration-message { max-height: none; width: 100%; line-height: 1.4; text-wrap: balance; }
+.party.medium-celebration-message .celebration-copy > .frame-shell .frame-paper #celebration-message,
+.party.long-celebration-message .celebration-copy > .frame-shell .frame-paper #celebration-message { font-size: inherit; }
+/* mic-less button centered */
+.party[data-mic-state="preparing"] .scene-controls { align-items: center; max-width: none; }
+#fallback { width: min(100%, 320px); align-self: center; }
+.party[data-mic-state="preparing"] #reset { align-self: flex-start; }

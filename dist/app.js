@@ -37,6 +37,7 @@ const TAP_READY_MESSAGE = 'ケーキをタップして、ろうそくを消し�
 const INVITE_CELEBRATION_MESSAGE = 'お誕生日、おめでとうございます！';
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
+const SONG_NOTE_PEAK_GAIN = .35;
 const AGE_ERROR_MESSAGE = '年齢は1〜99の整数で入力してね。';
 const MODE_DESCRIPTIONS = {
   phone: 'スマホに向かって、ふーっと息を吹いて、ろうそくを消します。',
@@ -163,6 +164,32 @@ function completionMessage(name, template = CELEBRATION_TEMPLATE) {
   const displayName = name.trim();
   return Array.from(displayName ? template.replaceAll('{name}', displayName) : withoutName(template)).slice(0, MAX_MESSAGE_LENGTH).join('');
 }
+function fitCelebrationMessage() {
+  const el = ui['celebration-message'];
+  if (!el || el.offsetParent === null) return;
+  const MAX = 34, MIN = 15, LINE = 1.4;
+  const THREE_LINE_LENGTH = 29, TWO_LINE_READABLE_SIZE = 20;
+  el.style.lineHeight = String(LINE);
+  const fits = (size, lines) => {
+    el.style.fontSize = `${size}px`;
+    return el.scrollHeight <= Math.ceil(size * LINE * lines) + 1;
+  };
+  const largestFit = lines => {
+    let size = MAX;
+    while (size >= MIN && !fits(size, lines)) size -= 1;
+    return size;
+  };
+  const twoLineSize = largestFit(2);
+  // A tiny two-line long wish is harder to read than the same wish in three larger lines.
+  if (twoLineSize >= MIN && (Array.from(el.textContent).length < THREE_LINE_LENGTH || twoLineSize >= TWO_LINE_READABLE_SIZE)) {
+    el.style.fontSize = `${twoLineSize}px`;
+    return;
+  }
+  const threeLineSize = largestFit(3);
+  el.style.fontSize = `${threeLineSize >= MIN ? Math.max(threeLineSize, twoLineSize) : Math.max(MIN, twoLineSize)}px`;
+}
+window.addEventListener('resize', fitCelebrationMessage);
+if (document.fonts?.ready) void document.fonts.ready.then(fitCelebrationMessage);
 function controls() {
   const entry = scene === 'entry';
   const locked = !entry;
@@ -180,7 +207,10 @@ function controls() {
   ui['cake-heading'].textContent = complete ? 'ぜんぶ消えた。おめでとう！' : '願いごと、決まった？';
   ui['message-slot'].textContent = complete ? (playMode === 'invite' ? INVITE_CELEBRATION_MESSAGE : completionMessage(ui.name.value)) : (tapOnly ? TAP_WISH_MESSAGE : WISH_MESSAGE);
   ui['celebration-message'].textContent = complete ? (currentCelebrationMessage || completionMessage(ui.name.value)) : '';
-  ui['celebration-title'].textContent = scene === 'celebrate' ? (ui.name.value.trim() ? `${ui.name.value.trim()}さん、おめでとう！` : 'おめでとう！') : 'おめでとう！';
+  ui['celebration-title'].textContent = scene === 'celebrate'
+    ? (ui.name.value.trim() ? `${ui.name.value.trim()}さん\nおめでとう！` : 'おめでとう！')
+    : 'おめでとう！';
+  if (scene === 'celebrate') requestAnimationFrame(fitCelebrationMessage);
   ui.setup.hidden = !entry || playMode === 'invite';
   ui['invite-card'].hidden = !entry || playMode !== 'invite';
   ui['invite-recipient'].textContent = ui.name.value.trim() ? `${ui.name.value.trim()}さんへ` : 'あなたへ';
@@ -314,7 +344,7 @@ function playSong(ctx, ticket) {
   for (const [offset, hz, duration] of SONG.notes) {
     const oscillator = ctx.createOscillator(); const gain = ctx.createGain(); const at = ctx.currentTime + offset / 1000;
     oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(hz, at);
-    gain.gain.setValueAtTime(.001, at); gain.gain.exponentialRampToValueAtTime(.11, at + .02); gain.gain.exponentialRampToValueAtTime(.001, at + duration / 1000);
+    gain.gain.setValueAtTime(.001, at); gain.gain.exponentialRampToValueAtTime(SONG_NOTE_PEAK_GAIN, at + .02); gain.gain.exponentialRampToValueAtTime(.001, at + duration / 1000);
     oscillator.connect(gain).connect(ctx.destination); oscillator.start(at); oscillator.stop(at + duration / 1000 + .03);
   }
   SONG.lyrics.forEach(([offset, lyric]) => songTimers.push(window.setTimeout(() => { if (phase === 'singing') renderLyric(lyric, displayName); }, offset)));

@@ -144,8 +144,10 @@ try {
 
   await evaluate("window.__testMic=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=()=>new Promise(()=>{});document.getElementById('reset').click();document.getElementById('start').click()");
   await sleep(100);
-  const fallbackLayout = await evaluate("(()=>{const fallback=document.getElementById('fallback').getBoundingClientRect();const lyrics=document.getElementById('song-lyrics').getBoundingClientRect();return{visible:!!document.getElementById('fallback').getClientRects().length,fallbackTop:fallback.top,lyricsBottom:lyrics.bottom};})()");
-  assert.ok(fallbackLayout.visible && fallbackLayout.fallbackTop >= fallbackLayout.lyricsBottom);
+  const fallbackLayout = await evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};return{visible:!!document.getElementById('fallback').getClientRects().length,fallback:rect('fallback'),reset:rect('reset'),lyrics:rect('song-lyrics'),viewport:innerWidth};})()");
+  assert.ok(fallbackLayout.visible && fallbackLayout.fallback.top >= fallbackLayout.lyrics.bottom);
+  assert.ok(Math.abs(fallbackLayout.fallback.left - (fallbackLayout.viewport - fallbackLayout.fallback.right)) <= 1 && fallbackLayout.fallback.width <= 320, 'mic-less button is centered and at most 320px wide');
+  assert.ok(fallbackLayout.reset.right < fallbackLayout.fallback.right && fallbackLayout.reset.top >= fallbackLayout.fallback.bottom, 'reset stays at lower left without overlapping the mic-less button');
   await screenshot('song-fallback-390x844.png');
   await evaluate("window.__testSongDuration=600;document.getElementById('reset').click();navigator.mediaDevices.getUserMedia=window.__testMic;document.getElementById('start').click()");
   for (let i = 0; i < 40; i++) {
@@ -177,7 +179,7 @@ try {
   await screenshot('celebrate-40-390x844.png');
 
   const setCelebrationCopy = async (title, message) => {
-    await evaluate(`document.getElementById('celebration-title').textContent=${JSON.stringify(title)};document.getElementById('celebration-message').textContent=${JSON.stringify(message)};document.getElementById('party').classList.toggle('long-celebration-message',Array.from(${JSON.stringify(message)}).length>28);document.getElementById('party').classList.toggle('medium-celebration-message',Array.from(${JSON.stringify(message)}).length>16&&Array.from(${JSON.stringify(message)}).length<=28)`);
+    await evaluate(`document.getElementById('celebration-title').textContent=${JSON.stringify(title)};document.getElementById('celebration-message').textContent=${JSON.stringify(message)};document.getElementById('party').classList.toggle('long-celebration-message',Array.from(${JSON.stringify(message)}).length>28);document.getElementById('party').classList.toggle('medium-celebration-message',Array.from(${JSON.stringify(message)}).length>16&&Array.from(${JSON.stringify(message)}).length<=28);window.dispatchEvent(new Event('resize'))`);
     await sleep(100);
   };
   await setCelebrationCopy('おめでとう！', '最高！');
@@ -193,9 +195,10 @@ try {
   await assertCelebrationBands();
   await screenshot('celebrate-5-message-3lines-390x844.png');
 
-  await setCelebrationCopy('あいうえおかきくさん、おめでとう！', '最高！');
+  await setCelebrationCopy('あいうえおかきくさん\nおめでとう！', '最高！');
   const longName = await read();
   fits(longName); assert.ok(longName.celebrationTitle.height <= 68); assert.ok(longName.celebrationMessage.bottom < longName.cake.y);
+  assert.equal(await evaluate("document.getElementById('celebration-title').textContent.split('\\n').length"), 2);
   await screenshot('celebrate-name-8chars-390x844.png');
 
   const captureSongCount = async count => {
@@ -500,17 +503,46 @@ try {
   for (let attempt = 0; attempt < 40; attempt++) { if (await evaluate("document.body.dataset.scene==='celebrate'")) break; await sleep(100); }
   assert.equal(await evaluate("document.body.dataset.scene"), 'celebrate');
   await sleep(4400);
-  const compactFrame = () => evaluate("(()=>{const box=el=>{const r=el.getBoundingClientRect();return{top:r.top,bottom:r.bottom,width:r.width}};const frame=document.querySelector('.frame-shell'),title=document.getElementById('celebration-title'),message=document.getElementById('celebration-message');return{frame:box(frame),cake:box(document.getElementById('cake')),title:{height:box(title).bottom-box(title).top,scrollHeight:title.scrollHeight,clientHeight:title.clientHeight,whiteSpace:getComputedStyle(title).whiteSpace,textOverflow:getComputedStyle(title).textOverflow},message:{fontSize:parseFloat(getComputedStyle(message).fontSize),scrollHeight:message.scrollHeight,clientHeight:message.clientHeight},scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight}})()");
-  await setCelebrationCopy('でんでんむしむしかたつむりさん、おめでとう！', '最高！');
+  const compactFrame = () => evaluate("(()=>{const box=el=>{const r=el.getBoundingClientRect();return{top:r.top,bottom:r.bottom,width:r.width}};const frame=document.querySelector('.frame-shell'),title=document.getElementById('celebration-title'),message=document.getElementById('celebration-message');return{frame:box(frame),cake:box(document.getElementById('cake')),title:{height:box(title).bottom-box(title).top,scrollHeight:title.scrollHeight,clientHeight:title.clientHeight,whiteSpace:getComputedStyle(title).whiteSpace,textOverflow:getComputedStyle(title).textOverflow},message:{fontSize:parseFloat(getComputedStyle(message).fontSize),lineHeight:parseFloat(getComputedStyle(message).lineHeight),scrollHeight:message.scrollHeight,clientHeight:message.clientHeight},scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight}})()");
+  await setCelebrationCopy('でんでんむしむしかたつむりさん\nおめでとう！', '最高！');
   let frame = await compactFrame();
   assert.ok(frame.frame.width >= 315 && frame.frame.width <= 325 && frame.frame.bottom <= frame.cake.top && frame.cake.top === 285, `frame clears cake at 390×646: ${JSON.stringify(frame)}`);
-  assert.ok(frame.title.scrollHeight <= frame.title.clientHeight + 1 && frame.title.whiteSpace === 'normal' && frame.title.textOverflow === 'clip', `full long title remains visible: ${JSON.stringify(frame)}`);
+  assert.ok(frame.title.scrollHeight <= frame.title.clientHeight + 1 && frame.title.whiteSpace === 'pre-line' && frame.title.textOverflow === 'clip', `full long title remains visible: ${JSON.stringify(frame)}`);
   assert.ok(frame.message.fontSize >= 25 && frame.message.scrollHeight <= frame.message.clientHeight + 1 && frame.scrollWidth <= 390 && frame.scrollHeight <= 646);
   await screenshot('celebrate-frame-390x646.png', 646);
-  await setCelebrationCopy('でんでんむしむしかたつむりさん、おめでとう！', 'けいこさんの誕生日、本日より祝日に決定しました。');
+  await setCelebrationCopy('でんでんむしむしかたつむりさん\nおめでとう！', 'けいこさんの誕生日、本日より祝日に決定しました。');
   frame = await compactFrame();
   assert.ok(frame.title.scrollHeight <= frame.title.clientHeight + 1 && frame.message.scrollHeight <= frame.message.clientHeight + 1, `long title and message fit: ${JSON.stringify(frame)}`);
   await screenshot('celebrate-frame-long-name-390x646.png', 646);
+  for (const [height, message, minSize, maxLines, shot] of [
+    [646, '最高！', 33, 2, 'celebrate-text-short-390x646.png'],
+    [646, '前世で世界を3回くらい救いましたね？', 21, 2, 'celebrate-text-medium-390x646.png'],
+    [646, 'けいこさんの誕生日、本日より祝日に決定しました。', 17, 2, 'celebrate-text-24chars-390x646.png'],
+    [646, '誕生日の今日が、あなたにとって最高の一日になりますように。', 20, 3, 'celebrate-text-long-390x646.png'],
+    [844, '最高！', 33, 2, 'celebrate-text-short-390x844.png'],
+    [844, '前世で世界を3回くらい救いましたね？', 21, 2, 'celebrate-text-medium-390x844.png'],
+    [844, 'けいこさんの誕生日、本日より祝日に決定しました。', 17, 2, 'celebrate-text-24chars-390x844.png'],
+    [844, '誕生日の今日が、あなたにとって最高の一日になりますように。', 20, 3, 'celebrate-text-long-390x844.png']
+  ]) {
+    await send('Emulation.setDeviceMetricsOverride', {width: 390, height, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: height});
+    await setCelebrationCopy('たろうさん\nおめでとう！', message);
+    frame = await compactFrame();
+    const lines = frame.message.scrollHeight / frame.message.lineHeight;
+    console.log(`FRAME 390×${height}: ${Array.from(message).length} chars, ${frame.message.fontSize}px, ${lines.toFixed(1)} lines`);
+    assert.ok(frame.message.fontSize >= minSize && lines <= maxLines + .05 && frame.message.scrollHeight <= frame.message.clientHeight + 1, `wish fills at most ${maxLines} lines at 390×${height}: ${JSON.stringify({message, frame})}`);
+    if (Array.from(message).length >= 29) assert.ok(lines >= 2.95, 'long wishes use three readable lines');
+    assert.ok(frame.frame.bottom < frame.cake.top && frame.scrollWidth <= 390 && frame.scrollHeight <= height, `frame clears cake at 390×${height}`);
+    assert.equal(await evaluate("document.getElementById('celebration-title').textContent"), 'たろうさん\nおめでとう！');
+    await screenshot(shot, height);
+  }
+  await send('Emulation.setDeviceMetricsOverride', {width: 390, height: 646, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: 646});
+  await send('Page.navigate', {url: `${origin}/?compact-fallback`});
+  for (let attempt = 0; attempt < 60; attempt++) { if (await evaluate("location.search==='?compact-fallback'&&document.body.dataset.scene==='entry'")) break; await sleep(50); }
+  await evaluate("navigator.mediaDevices.getUserMedia=()=>new Promise(()=>{});document.getElementById('start').click()");
+  await sleep(120);
+  const compactFallback = await evaluate("(()=>{const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width}};return{fallback:rect('fallback'),reset:rect('reset'),lyrics:rect('song-lyrics'),visible:!!document.getElementById('fallback').getClientRects().length}})()");
+  assert.ok(compactFallback.visible && Math.abs(compactFallback.fallback.left - (390 - compactFallback.fallback.right)) <= 1 && compactFallback.fallback.width <= 320 && compactFallback.fallback.top >= compactFallback.lyrics.bottom && compactFallback.reset.top >= compactFallback.fallback.bottom, `fallback fits and stays centered at 390×646: ${JSON.stringify(compactFallback)}`);
+  await screenshot('song-fallback-390x646.png', 646);
   console.log('PASS compact 390×646 entry and enlarged celebration frame with a long name');
 
   assert.deepEqual(errors, []);

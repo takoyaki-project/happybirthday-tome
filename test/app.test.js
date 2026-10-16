@@ -468,8 +468,9 @@ test('cake base is a local candle-free asset and candles remain dynamic SVG', as
 });
 test('celebration uses a visual pop with synthesized applause and cheers, without browser speech', async () => {
   const app = harness(() => Promise.reject());
-  app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
+  app.name('たろう'); app.count(1); app.submit(); await flush(); app.get('cake-button').click(); app.runTimer(1000);
   assert.ok(app.get('celebration-message').classList.contains('celebration-pop'));
+  assert.equal(app.get('celebration-title').textContent, 'たろうさん\nおめでとう！');
   const source = await readFile(new URL('../dist/app.js', import.meta.url), 'utf8');
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
   assert.match(source, /playCrowdCheer\(\);/);
