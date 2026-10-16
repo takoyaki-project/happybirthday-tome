@@ -211,3 +211,27 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .bubble #bubble-word { color: var(--color-dark-text); }
 @media (max-height: 740px) { .party[data-play-mode="invite"][data-scene="entry"] { padding-top: max(72px, calc(env(safe-area-inset-top) + 44px)); }.invite-card { gap: 12px; padding: 22px 18px 20px; }.invite-cake { width: min(100%, 255px); } }
 #cake { overflow: visible; }
+
+/* entry: fit through invite button in one viewport (390x646) */
+.party[data-scene="entry"]:not([data-play-mode="invite"]) { padding-top: max(30px, calc(env(safe-area-inset-top) + 12px)); padding-bottom: 16px; }
+.party[data-scene="entry"] .brand { margin-bottom: 8px; }
+.party[data-scene="entry"] .brand-copy { margin-top: 10px; font-size: clamp(28px, 7.8vw, 32px); line-height: 1.2; }
+#setup { gap: 12px; }
+#setup .field { gap: 5px; }
+#setup .field input { height: 46px; }
+.mode-switch label, .mode-switch label > span, .mode-switch input:checked + span { min-height: 38px; }
+.mode-description { min-height: 0; margin-top: -4px; }
+#start, .invite-create { min-height: 50px; }
+.invite-description { margin-top: -6px; }
+.sound-hint { margin-top: -4px; }
+.project-credit { margin-top: -4px; }
+
+/* celebration: larger frame + larger message */
+.party[data-scene="celebrate"] .celebration-copy { width: min(98vw, 400px); }
+.celebration-copy > .frame-shell .frame-window { gap: 10px; padding: 12px; }
+.celebration-copy > .frame-shell .frame-window #celebration-title { font-size: clamp(14px, 4.3vw, 17px); line-height: 1.35; max-height: 2.7em; white-space: normal; text-overflow: clip; }
+.celebration-copy > .frame-shell .frame-paper #celebration-message { max-height: 4.6em; font-size: clamp(22px, 6.6vw, 27px); line-height: 1.5; }
+.party.medium-celebration-message .celebration-copy > .frame-shell .frame-paper #celebration-message { font-size: clamp(18px, 5.4vw, 22px); }
+.party.long-celebration-message .celebration-copy > .frame-shell .frame-paper #celebration-message { font-size: clamp(16px, 4.6vw, 19px); }
+@media (max-height: 740px) { .party[data-scene="celebrate"] .scene-copy { top: 10px; transform: scale(.86); } .party[data-scene="celebrate"] .cake-button { top: 290px; } }
+@media (max-height: 700px) { .party[data-scene="celebrate"] .scene-copy { top: 8px; transform: scale(.84); } .party[data-scene="celebrate"] .cake-button { top: 285px; } }

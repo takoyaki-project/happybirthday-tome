@@ -97,7 +97,7 @@ try {
   assert.equal(entry.scene, 'entry'); assert.ok(entry.setup); assert.ok(!entry.cakeVisible);
   assert.ok(await evaluate("scrollY===0 && ['start','invite-create'].every(id=>document.getElementById(id).getBoundingClientRect().bottom<=innerHeight)"), 'both actions are visible without scrolling at 390×844');
   assert.equal(await evaluate("document.querySelector('.brand h1').textContent"), 'HAPPY BIRTHDAY TO ME.');
-  assert.ok(await evaluate("(()=>{const title=document.querySelector('.brand h1'),copy=document.querySelector('.brand-copy');const titleSize=parseFloat(getComputedStyle(title).fontSize),copySize=parseFloat(getComputedStyle(copy).fontSize);return titleSize>=18&&titleSize<=20&&title.getBoundingClientRect().height<34&&copySize>=34&&copySize<=38})()"), 'entry title and leading copy use the requested type sizes');
+  assert.ok(await evaluate("(()=>{const title=document.querySelector('.brand h1'),copy=document.querySelector('.brand-copy');const titleSize=parseFloat(getComputedStyle(title).fontSize),copySize=parseFloat(getComputedStyle(copy).fontSize);return titleSize>=18&&titleSize<=20&&title.getBoundingClientRect().height<34&&copySize>=28&&copySize<=32})()"), 'entry title and compact leading copy use the requested type sizes');
   await evaluate("document.getElementById('about-app').open=true");
   assert.ok(await evaluate("document.querySelector('.about-app-copy').getClientRects().length>0"), 'about this app expands');
   await evaluate("document.getElementById('about-app').open=false");
@@ -183,6 +183,7 @@ try {
   await setCelebrationCopy('おめでとう！', '最高！');
   const oneLine = await read();
   fits(oneLine); assert.ok(oneLine.celebrationMessage.bottom < oneLine.cake.y); assert.ok(oneLine.audioNote.y > oneLine.cake.bottom);
+  assert.ok(await evaluate("(()=>{const frame=document.querySelector('.frame-shell');const message=document.getElementById('celebration-message');return frame.getBoundingClientRect().width>=380&&parseFloat(getComputedStyle(message).fontSize)>=25})()"), 'larger frame and short wish are prominent at 390×844');
   await assertCelebrationBands();
   await screenshot('celebrate-5-message-1line-390x844.png');
 
@@ -248,8 +249,8 @@ try {
     await sleep(120);
     const entryBounds = await visibleBounds('.eyebrow, .brand-reading, .brand-copy, #setup, #start, .sound-hint');
     for (const [index, box] of entryBounds.entries()) { assert.ok(box.left >= 16 && box.right <= width-16, `entry width: ${size}`); if ([0, 1, 2, 4].includes(index)) assert.ok(box.bottom < height, `entry heading and primary action: ${size}`); }
-    assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth && document.getElementById('invite-create').getBoundingClientRect().height>=56"), `invitation remains reachable without horizontal overflow: ${size}`);
-    assert.ok(entryBounds[0].top >= 40, 'title clears the top inset');
+    assert.ok(await evaluate("document.documentElement.scrollWidth<=innerWidth && document.getElementById('invite-create').getBoundingClientRect().height>=50"), `invitation remains reachable without horizontal overflow: ${size}`);
+    assert.ok(entryBounds[0].top >= 30, 'compact title clears the top inset');
     const curtains = await evaluate("['::before','::after'].map(pseudo=>{const s=getComputedStyle(document.getElementById('party'),pseudo);return {top:s.top,height:s.height,width:parseFloat(s.width)};})");
     for (const curtain of curtains) {
       assert.equal(curtain.top, '0px'); assert.equal(curtain.height, '70px');
@@ -323,7 +324,7 @@ try {
       assert.equal(await evaluate('document.body.dataset.scene'), 'blackout');
       await sleep(Math.max(0, 19300 - (await evaluate('performance.now()') - plushStartedAt)));
       assert.equal(await evaluate('document.body.dataset.scene'), 'celebrate');
-      assert.ok(Math.abs((await visibleBounds('#cake'))[0].top - songCake.top) < 1, 'plush cake stays fixed through celebration');
+      assert.ok(Math.abs((await visibleBounds('#cake'))[0].top - (height <= 700 ? 285 : height <= 740 ? 290 : songCake.top)) < 1, 'plush celebration cake clears the enlarged frame');
       await screenshot(`${reviewDir}/plush-celebrate-${size}.png`, height);
     }
     await evaluate("document.getElementById('reset').click();window.__testSongDuration=100;document.getElementById('start').click()");
@@ -351,8 +352,8 @@ try {
     assert.equal(await evaluate("Array.from(document.querySelectorAll('.mob.is-speaking')).every(el=>Number(getComputedStyle(el).zIndex)>5)"), true);
     const frameBounds = (await visibleBounds('.frame-shell'))[0];
     const cakeBounds = (await visibleBounds('#cake'))[0];
-    assert.ok(Math.abs(cakeBounds.top - songCake.top) < 1, `celebration cake stays fixed ${size}`);
-    assert.ok(frameBounds.bottom + 8 <= cakeBounds.top, `frame has breathing room above cake ${size}: ${JSON.stringify({frame:frameBounds.bottom,cake:cakeBounds.top})}`);
+    assert.ok(Math.abs(cakeBounds.top - (height <= 700 ? 285 : height <= 740 ? 290 : songCake.top)) < 1, `celebration cake clears the enlarged frame ${size}`);
+    assert.ok(frameBounds.bottom + 1 <= cakeBounds.top, `frame clears cake ${size}: ${JSON.stringify({frame:frameBounds.bottom,cake:cakeBounds.top})}`);
     for (const box of shouts) assert.ok(box.left >= 8 && box.right <= width-8 && box.top >= 0 && box.bottom <= height-30, `speech fits ${size}: ${JSON.stringify(box)}`);
     assert.equal(await evaluate("document.querySelectorAll('.mob').length"), 40);
     assert.equal(await evaluate("document.documentElement.scrollWidth <= innerWidth && document.documentElement.scrollHeight <= innerHeight"), true);
@@ -479,6 +480,38 @@ try {
     await screenshot(`song-tap-390x${height}.png`, height);
   }
   console.log('PASS 9/13/18 candle flames, Dear lyric, and tap cue at the requested viewport sizes');
+
+  await send('Emulation.setDeviceMetricsOverride', {width: 390, height: 646, deviceScaleFactor: 1, mobile: true, screenWidth: 390, screenHeight: 646});
+  await send('Page.navigate', {url: `${origin}/?compact-entry`});
+  for (let attempt = 0; attempt < 60; attempt++) { if (await evaluate("location.search==='?compact-entry'&&document.body.dataset.scene==='entry'")) break; await sleep(50); }
+  const compactEntry = () => evaluate("(()=>{const bottom=id=>document.getElementById(id).getBoundingClientRect().bottom;return{invite:bottom('invite-create'),credit:document.querySelector('.project-credit').getBoundingClientRect().bottom,scrollWidth:document.documentElement.scrollWidth,scrollY}})()");
+  let compact = await compactEntry();
+  assert.ok(compact.invite <= 560 && compact.credit <= 640 && compact.scrollWidth <= 390 && compact.scrollY === 0, `phone entry fits 390×646: ${JSON.stringify(compact)}`);
+  await evaluate("document.getElementById('mode-plush').click()");
+  compact = await compactEntry();
+  assert.ok(compact.invite <= 560 && compact.credit <= 640, `plush entry fits 390×646: ${JSON.stringify(compact)}`);
+  await screenshot('entry-plush-390x646.png', 646);
+  await evaluate("document.getElementById('mode-phone').click();document.getElementById('name').value='でんでんむしむしかたつむり';document.getElementById('count').value='48';document.getElementById('count').focus()");
+  await screenshot('entry-390x646.png', 646);
+  await evaluate("window.__testSongDuration=0;document.getElementById('start').click()");
+  for (let attempt = 0; attempt < 60; attempt++) { if (await evaluate("document.body.dataset.scene==='song'&&!document.getElementById('cake-button').disabled")) break; await sleep(50); }
+  assert.equal(await evaluate("document.body.dataset.scene==='song'&&!document.getElementById('cake-button').disabled"), true);
+  await evaluate("for(let i=0;i<3;i++)document.getElementById('cake-button').click()");
+  for (let attempt = 0; attempt < 40; attempt++) { if (await evaluate("document.body.dataset.scene==='celebrate'")) break; await sleep(100); }
+  assert.equal(await evaluate("document.body.dataset.scene"), 'celebrate');
+  await sleep(4400);
+  const compactFrame = () => evaluate("(()=>{const box=el=>{const r=el.getBoundingClientRect();return{top:r.top,bottom:r.bottom,width:r.width}};const frame=document.querySelector('.frame-shell'),title=document.getElementById('celebration-title'),message=document.getElementById('celebration-message');return{frame:box(frame),cake:box(document.getElementById('cake')),title:{height:box(title).bottom-box(title).top,scrollHeight:title.scrollHeight,clientHeight:title.clientHeight,whiteSpace:getComputedStyle(title).whiteSpace,textOverflow:getComputedStyle(title).textOverflow},message:{fontSize:parseFloat(getComputedStyle(message).fontSize),scrollHeight:message.scrollHeight,clientHeight:message.clientHeight},scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight}})()");
+  await setCelebrationCopy('でんでんむしむしかたつむりさん、おめでとう！', '最高！');
+  let frame = await compactFrame();
+  assert.ok(frame.frame.width >= 315 && frame.frame.width <= 325 && frame.frame.bottom <= frame.cake.top && frame.cake.top === 285, `frame clears cake at 390×646: ${JSON.stringify(frame)}`);
+  assert.ok(frame.title.scrollHeight <= frame.title.clientHeight + 1 && frame.title.whiteSpace === 'normal' && frame.title.textOverflow === 'clip', `full long title remains visible: ${JSON.stringify(frame)}`);
+  assert.ok(frame.message.fontSize >= 25 && frame.message.scrollHeight <= frame.message.clientHeight + 1 && frame.scrollWidth <= 390 && frame.scrollHeight <= 646);
+  await screenshot('celebrate-frame-390x646.png', 646);
+  await setCelebrationCopy('でんでんむしむしかたつむりさん、おめでとう！', 'けいこさんの誕生日、本日より祝日に決定しました。');
+  frame = await compactFrame();
+  assert.ok(frame.title.scrollHeight <= frame.title.clientHeight + 1 && frame.message.scrollHeight <= frame.message.clientHeight + 1, `long title and message fit: ${JSON.stringify(frame)}`);
+  await screenshot('celebrate-frame-long-name-390x646.png', 646);
+  console.log('PASS compact 390×646 entry and enlarged celebration frame with a long name');
 
   assert.deepEqual(errors, []);
   assert.ok(requests.every(url => url.startsWith(origin) || url === 'about:blank'));
