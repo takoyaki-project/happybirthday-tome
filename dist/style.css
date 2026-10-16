@@ -246,3 +246,8 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .party[data-mic-state="preparing"] .scene-controls { align-items: center; max-width: none; }
 #fallback { width: min(100%, 320px); align-self: center; }
 .party[data-mic-state="preparing"] #reset { align-self: flex-start; }
+
+/* Use the paper's height for larger wishes while keeping every letter inside the frame. */
+.celebration-copy > .frame-shell .frame-window { gap: 4px; padding: 6px 4px; }
+.celebration-copy > .frame-shell .frame-window #celebration-title { flex-shrink: 0; font-size: clamp(16px, 4.7vw, 18px); line-height: 1.25; }
+.celebration-copy > .frame-shell .frame-paper #celebration-message { flex-shrink: 0; line-height: 1.3; }

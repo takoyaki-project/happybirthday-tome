@@ -166,27 +166,29 @@ function completionMessage(name, template = CELEBRATION_TEMPLATE) {
 }
 function fitCelebrationMessage() {
   const el = ui['celebration-message'];
-  if (!el || el.offsetParent === null) return;
-  const MAX = 34, MIN = 15, LINE = 1.4;
-  const THREE_LINE_LENGTH = 29, TWO_LINE_READABLE_SIZE = 20;
-  el.style.lineHeight = String(LINE);
-  const fits = (size, lines) => {
-    el.style.fontSize = `${size}px`;
-    return el.scrollHeight <= Math.ceil(size * LINE * lines) + 1;
-  };
-  const largestFit = lines => {
-    let size = MAX;
-    while (size >= MIN && !fits(size, lines)) size -= 1;
-    return size;
-  };
-  const twoLineSize = largestFit(2);
-  // A tiny two-line long wish is harder to read than the same wish in three larger lines.
-  if (twoLineSize >= MIN && (Array.from(el.textContent).length < THREE_LINE_LENGTH || twoLineSize >= TWO_LINE_READABLE_SIZE)) {
-    el.style.fontSize = `${twoLineSize}px`;
-    return;
+  const windowEl = el?.parentElement;
+  if (!windowEl || el.offsetParent === null) return;
+  const MAX = 40, MIN = 18, LINE = 1.3;
+  const title = ui['celebration-title'];
+  title.style.fontSize = '';
+  const titleMax = parseFloat(getComputedStyle(title).fontSize);
+  const titleLines = title.textContent.includes('\n') ? 2 : 1;
+  for (let size = titleMax; size >= 14; size -= 1) {
+    title.style.fontSize = `${size}px`;
+    if (title.scrollHeight <= Math.ceil(parseFloat(getComputedStyle(title).lineHeight) * titleLines) + 1) break;
   }
-  const threeLineSize = largestFit(3);
-  el.style.fontSize = `${threeLineSize >= MIN ? Math.max(threeLineSize, twoLineSize) : Math.max(MIN, twoLineSize)}px`;
+  el.style.lineHeight = String(LINE);
+  const style = getComputedStyle(windowEl);
+  const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  const gap = parseFloat(style.rowGap) || 0;
+  const titleHeight = title.scrollHeight;
+  const ornamentHeight = parseFloat(getComputedStyle(windowEl.querySelector('.frame-ornament')).height);
+  const messageRoom = windowEl.clientHeight - padding - titleHeight - ornamentHeight - gap * 2 - 2;
+  for (let size = MAX; size >= MIN; size -= 1) {
+    el.style.fontSize = `${size}px`;
+    if (el.scrollHeight <= messageRoom) return;
+  }
+  el.style.fontSize = `${MIN}px`;
 }
 window.addEventListener('resize', fitCelebrationMessage);
 if (document.fonts?.ready) void document.fonts.ready.then(fitCelebrationMessage);
