@@ -3,7 +3,7 @@ import { INVITE_NAME_MAX_LENGTH, validCount, candleCounts, candleLayout, parseIn
 import { BLOW_SENSITIVITY } from './core.js';
 import { SONG, PLUSH_SONG } from './song.js';
 const $ = (id) => document.getElementById(id);
-const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'age-error', 'mode-phone', 'mode-plush', 'mode-description', 'start', 'invite-create', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'recipient-name', 'recipient-suffix', 'song-lyrics', 'tap-mic-note', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
+const ui = Object.fromEntries(['party', 'setup', 'started', 'name', 'count', 'age-error', 'mode-phone', 'mode-plush', 'mode-description', 'start', 'invite-create', 'invite-result', 'invite-link', 'invite-share', 'invite-copy', 'invite-try', 'invite-feedback', 'invite-card', 'invite-recipient', 'invite-open', 'invite-home', 'resume', 'fallback', 'reset', 'status', 'sound-test', 'debug-toggle', 'debug-value', 'remaining', 'dedication', 'cake-heading', 'cake-title', 'cake-button', 'candles', 'bubble', 'bubble-word', 'blow-cue', 'volume-area', 'meter', 'meter-fill', 'message-slot', 'song-recipient', 'recipient-name', 'recipient-suffix', 'song-lyrics', 'tap-mic-note', 'plush-prepare', 'plush-pop', 'plush-again', 'plush-confetti', 'blackout-copy', 'celebration-copy', 'celebration-title', 'celebration-message', 'audio-note', 'mob-crowd', 'smoke'].map(id => [id, $(id)]));
 const svgNS = 'http://www.w3.org/2000/svg';
 let phase = 'idle';
 let scene = 'entry';
@@ -38,6 +38,8 @@ const INVITE_CELEBRATION_MESSAGE = 'お誕生日、おめでとうございま�
 const CELEBRATION_TEMPLATE = '{name}さんが今日の主役！大きな拍手を送りましょう。';
 const MAX_MESSAGE_LENGTH = 40;
 const SONG_NOTE_PEAK_GAIN = .35;
+const CROWD_CLAP_PEAK_GAIN = .075;
+const CROWD_VOICE_PEAK_GAIN = .095;
 const AGE_ERROR_MESSAGE = '年齢は1〜99の整数で入力してね。';
 const MODE_DESCRIPTIONS = {
   phone: 'スマホに向かって、ふーっと息を吹いて、ろうそくを消します。',
@@ -238,6 +240,7 @@ function controls() {
   ui['blackout-copy'].hidden = scene !== 'blackout';
   ui['celebration-copy'].hidden = scene !== 'celebrate';
   ui['audio-note'].hidden = scene !== 'celebrate';
+  ui['invite-home'].hidden = scene !== 'celebrate' || playMode !== 'invite';
   ui['mob-crowd'].hidden = scene !== 'celebrate';
   ui.smoke.hidden = scene !== 'blackout';
   updateBlowCue();
@@ -561,7 +564,7 @@ function playCrowdCheer() {
       const at = audio.currentTime + .04 + i * .095;
       noise.buffer = buffer;
       gain.gain.setValueAtTime(.001, at);
-      gain.gain.exponentialRampToValueAtTime(.045, at + .008);
+      gain.gain.exponentialRampToValueAtTime(CROWD_CLAP_PEAK_GAIN, at + .008);
       gain.gain.exponentialRampToValueAtTime(.001, at + .075);
       noise.connect(gain).connect(audio.destination); noise.start(at); noise.stop(at + .08);
     }
@@ -574,7 +577,7 @@ function playCrowdCheer() {
       voice.frequency.setValueAtTime(420 + i * 90, at);
       voice.frequency.exponentialRampToValueAtTime(760 + i * 80, at + .42);
       voiceGain.gain.setValueAtTime(.001, at);
-      voiceGain.gain.exponentialRampToValueAtTime(.028, at + .05);
+      voiceGain.gain.exponentialRampToValueAtTime(CROWD_VOICE_PEAK_GAIN, at + .05);
       voiceGain.gain.exponentialRampToValueAtTime(.001, at + .5);
       voice.connect(voiceGain).connect(audio.destination); voice.start(at); voice.stop(at + .52);
     }

@@ -371,6 +371,7 @@ test('pause hides both cue children; resume shows both; completion hides both', 
   assert.equal(app.document.body.dataset.scene, 'blackout');
   app.runTimer(1000);
   assert.equal(app.document.body.dataset.scene, 'celebrate');
+  assert.equal(app.get('invite-home').hidden, true);
   app.get('reset').click();
   assert.equal(app.get('setup').hidden, false);
   assert.equal(app.get('started').hidden, true);
@@ -561,6 +562,7 @@ test('invitation never requests the microphone, keeps its recipient on reset, an
   const app = harness(() => { throw new Error('invite must not request microphone'); }, true, 0, 'https://example.com/happybirthday-tome/invite.html#name=%E3%81%91%E3%81%84%E3%81%93');
   assert.equal(app.get('setup').hidden, true);
   assert.equal(app.get('invite-card').hidden, false);
+  assert.equal(app.get('invite-home').hidden, true);
   assert.equal(app.get('invite-recipient').textContent, 'けいこさんへ');
   assert.equal(app.get('candles').children.length, 9);
   app.get('invite-open').click();
@@ -572,8 +574,11 @@ test('invitation never requests the microphone, keeps its recipient on reset, an
   assert.equal(app.get('status').textContent, 'ケーキをタップして、ろうそくを消してね。');
   assert.match(app.get('message-slot').textContent, /タップ/);
   for (const expected of [6, 3, 0]) { app.get('cake-button').click(); assert.equal(app.get('remaining').textContent, expected); }
+  app.runTimer(1000);
+  assert.equal(app.get('invite-home').hidden, false);
   app.get('reset').click();
   assert.equal(app.get('invite-card').hidden, false);
+  assert.equal(app.get('invite-home').hidden, true);
   assert.equal(app.get('setup').hidden, true);
   assert.equal(app.get('invite-recipient').textContent, 'けいこさんへ');
   assert.equal(app.get('candles').children.length, 9);

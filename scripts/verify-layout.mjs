@@ -417,6 +417,8 @@ try {
       await sleep(5200);
       const finished = await read();
       assert.equal(finished.scene, 'celebrate'); assert.equal(finished.outCount, item.candles); assert.equal(finished.mobCount, 40);
+      const home = await evaluate("(()=>{const link=document.getElementById('invite-home');const button=link.getBoundingClientRect();const note=document.getElementById('audio-note').getBoundingClientRect();return{visible:!!link.getClientRects().length,href:link.getAttribute('href'),top:button.top,bottom:button.bottom,noteTop:note.top}})()");
+      assert.ok(home.visible && home.href === './' && home.top >= 0 && home.bottom + 8 < home.noteTop, `invite home link clears the audio note at 390×${height}: ${JSON.stringify(home)}`);
       assert.equal(await evaluate('window.__micRequests'), 0);
       assert.doesNotMatch(await visibleInviteCopy(), /息|ふーっ|声|マイク/);
       await screenshot(`invite/${item.slug}-celebrate-390x${height}.png`, height);

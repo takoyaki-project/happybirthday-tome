@@ -258,3 +258,5 @@ body[data-scene="plush-prepare"]::before { background: radial-gradient(ellipse a
 .party[data-play-mode="phone"][data-scene="song"] .volume-area {
   top: calc(var(--stage-cake-top) + var(--stage-cake-height) + 88px);
 }
+.invite-home { position: absolute; z-index: 18; right: 50%; bottom: calc(max(13px, env(safe-area-inset-bottom)) + 24px); display: flex; min-height: 44px; align-items: center; justify-content: center; padding: 0 20px; border: 1px solid rgba(255,231,176,.72); border-radius: 999px; background: rgba(48,15,42,.94); box-shadow: 0 5px 18px rgba(0,0,0,.3); color: #fff1d2; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; transform: translateX(50%); }
+.invite-home:focus-visible { outline: 3px solid #fff1d2; outline-offset: 3px; }
