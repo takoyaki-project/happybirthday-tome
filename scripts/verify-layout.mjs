@@ -511,7 +511,7 @@ try {
   let frame = await compactFrame();
   assert.ok(frame.frame.width >= 315 && frame.frame.width <= 325 && frame.frame.bottom <= frame.cake.top && frame.cake.top === 285, `frame clears cake at 390×646: ${JSON.stringify(frame)}`);
   assert.ok(frame.title.scrollHeight <= frame.title.clientHeight + 1 && frame.title.scrollHeight / frame.title.lineHeight <= 2.05 && frame.title.whiteSpace === 'pre-line' && frame.title.textOverflow === 'clip', `full long title remains in two lines: ${JSON.stringify(frame)}`);
-  assert.ok(frame.message.fontSize >= 25 && frame.message.scrollHeight <= frame.message.clientHeight + 1 && frame.scrollWidth <= 390 && frame.scrollHeight <= 646);
+  assert.ok(frame.message.fontSize >= 25 && frame.message.scrollHeight <= frame.message.clientHeight + 1 && frame.scrollWidth <= 390 && frame.scrollHeight <= 6);
   await screenshot('celebrate-frame-390x646.png', 646);
   await setCelebrationCopy('でんでんむしむしかたつむりさん\nおめでとう！', 'けいこさんの誕生日、本日より祝日に決定しました。');
   frame = await compactFrame();
