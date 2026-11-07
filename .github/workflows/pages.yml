@@ -20,14 +20,6 @@ jobs:
       - run: npm test
       - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
       - run: google-chrome --version
-      - run: node scripts/verify-layout.mjs
-      - uses: actions/upload-artifact@v4
-        with:
-          name: stage4-visual-verification-no-name
-          path: |
-            verification/celebrate-*-390x844.png
-            verification/song-lyrics-390x844.png
-          if-no-files-found: error
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -837,5 +837,11 @@ if (isInvitePage) {
   chosenAge = invitation.age;
   tapOnly = true;
 }
+if (isInvitePage) {
+  // 同じタブでリンクの # 部分だけが変わったとき（別の招待リンクを開いたとき）は、読み込み直して名前と年齢を反映する。
+  window.addEventListener('hashchange', () => window.location.reload());
+  // 戻る／進むで以前のページが復元されたときも、今の # に合わせて読み込み直す。
+  window.addEventListener('pageshow', (event) => { if (event.persisted) window.location.reload(); });
+}
 renderCake();
 controls();
