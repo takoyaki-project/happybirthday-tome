@@ -252,23 +252,30 @@ function element(tag, attrs, parent) {
   parent.append(node);
   return node;
 }
-function renderCake() {
-  ui.candles.replaceChildren();
-  candles = candleLayout(chosenAge).map(({x, y, size, height, width, flame: flameHeight}, i) => {
-    const group = element('g', {class: 'candle', transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`}, ui.candles);
+function renderCandles(container, prefix = '') {
+  container.replaceChildren();
+  return candleLayout(chosenAge).map(({x, y, size, height, width, flame: flameHeight}, i) => {
+    const group = element('g', {class: prefix ? 'invite-candle' : 'candle', transform: `translate(${x.toFixed(2)} ${y.toFixed(2)})`}, container);
     group.dataset.size = size;
     element('ellipse', {cx: 0, cy: 1.5, rx: width * .8, ry: 2.6, fill: 'rgba(47,19,35,.46)'}, group);
-    element('rect', {x: -width / 2, y: -height, width, height, rx: width / 2, fill: i % 2 ? 'url(#candle-purple)' : 'url(#candle-pink)'}, group);
+    element('rect', {x: -width / 2, y: -height, width, height, rx: width / 2, fill: i % 2 ? `url(#${prefix}candle-purple)` : `url(#${prefix}candle-pink)`}, group);
     const stripeOffset = Math.max(3, height * .3);
     const stripeGap = Math.max(4, height * .38);
     element('path', {d: `M${-width/2} ${-height+stripeOffset}l${width} ${-Math.max(2, height*.13)}m${-width} ${stripeGap}l${width} ${-Math.max(2, height*.13)}`, stroke: 'rgba(255,244,213,.88)', 'stroke-width': Math.max(.9, width / 5), 'stroke-linecap': 'round'}, group);
     element('path', {class: 'wick', d: `M0 ${-height}v-5`, stroke: '#4a2548', 'stroke-width': 1.5, 'stroke-linecap': 'round'}, group);
     const flame = element('g', {class: 'flame'}, group);
     const flameWidth = Math.max(3.2, width * .9);
-    element('path', {d: `M0 ${-height-flameHeight}C${-flameWidth} ${-height-flameHeight*.48} ${-flameWidth*.78} ${-height-2} 0 ${-height-2}C${flameWidth*.88} ${-height-2} ${flameWidth*.88} ${-height-flameHeight*.54} 0 ${-height-flameHeight}`, fill: 'url(#candle-flame)'}, flame);
+    element('path', {d: `M0 ${-height-flameHeight}C${-flameWidth} ${-height-flameHeight*.48} ${-flameWidth*.78} ${-height-2} 0 ${-height-2}C${flameWidth*.88} ${-height-2} ${flameWidth*.88} ${-height-flameHeight*.54} 0 ${-height-flameHeight}`, fill: `url(#${prefix}candle-flame)`}, flame);
     element('ellipse', {cx: 0, cy: -height-flameHeight*.42, rx: Math.max(.9, flameWidth*.22), ry: Math.max(1.8, flameHeight*.2), fill: '#fffbe6'}, flame);
     return group;
   });
+}
+function renderCake() {
+  candles = renderCandles(ui.candles);
+  if (isInvitePage && $('invite-candles')) {
+    renderCandles($('invite-candles'), 'invite-');
+    $('invite-cake-title').textContent = `${candles.length}本のろうそくが立ったケーキ`;
+  }
   total = candleCounts(chosenAge).total;
   remaining = total;
   updateCount();

@@ -619,3 +619,14 @@ test('invitation wishes stay age-neutral and work without a name', async () => {
   assert.ok(messageData.inviteMessages.includes(app.get('celebration-message').textContent));
   assert.doesNotMatch(app.get('celebration-message').textContent, /歳|\{name\}|わたし/);
 });
+
+test('invitation card previews the recipient age before opening the celebration', () => {
+  for (const [hash, expected, large] of [['#name=たろう&age=49', 13, 4], ['#name=はなこ&age=8', 8, 0], ['#name=たろう', 9, 3]]) {
+    const app = harness(() => { throw new Error('must not request microphone'); }, true, 0, 'https://example.com/invite.html' + hash);
+    const preview = app.get('invite-candles').children;
+    assert.equal(preview.length, expected);
+    assert.equal(preview.filter(candle => candle.dataset.size === 'large').length, large);
+    assert.equal(app.get('invite-card').hidden, false);
+    assert.equal(app.get('invite-cake-title').textContent, `${expected}本のろうそくが立ったケーキ`);
+  }
+});

@@ -44,7 +44,15 @@
         <p class="project-credit">TAKOYAKI PROJECT</p>
       </form>
       <details id="about-app" class="about-app"><summary>このアプリについて</summary><div class="about-app-copy"><p>名前と年齢を入れて、歌を聴いて、ろうそくを吹き消すと、お祝いが始まります。</p><p>ぬいぐるみモードでは、スマホの合図の音でmicro:bitが歌います。息はケーキの上のmicro:bitに吹きかけてください。お祝いはスマホで自動で始まります。</p><p>額縁画像：LittleDream（パブリックドメイン素材を加工して使用）</p></div></details>
-      <div id="invite-card" class="invite-card" hidden><p class="invite-kicker">A LITTLE CELEBRATION FOR YOU</p><h1 id="invite-recipient">あなたへ</h1><p class="invite-intro">お誕生日のお祝いが届いています</p><img class="invite-cake" src="./assets/cake-base-v2.png" alt="" aria-hidden="true"><button id="invite-open" class="primary" type="button">お祝いをひらく</button><p class="invite-sound-hint">音をオンにして楽しんでね</p></div>
+      <div id="invite-card" class="invite-card" hidden><p class="invite-kicker">A LITTLE CELEBRATION FOR YOU</p><h1 id="invite-recipient">あなたへ</h1><p class="invite-intro">お誕生日のお祝いが届いています</p><svg class="invite-cake" viewBox="0 0 360 235" role="img" aria-labelledby="invite-cake-title"><title id="invite-cake-title">5本のろうそくが立ったケーキ</title>
+            <defs>
+              <linearGradient id="invite-candle-pink" x1="0" x2="1"><stop stop-color="#ed5b86"/><stop offset=".45" stop-color="#ff9cb5"/><stop offset="1" stop-color="#bc376a"/></linearGradient>
+              <linearGradient id="invite-candle-purple" x1="0" x2="1"><stop stop-color="#5d368f"/><stop offset=".48" stop-color="#ae8be4"/><stop offset="1" stop-color="#3c2167"/></linearGradient>
+              <radialGradient id="invite-candle-flame" cx="50%" cy="82%"><stop stop-color="#fffbe6"/><stop offset=".38" stop-color="#ffdf75"/><stop offset="1" stop-color="#ff7a61"/></radialGradient>
+            </defs>
+            <image href="./assets/cake-base-v2.png" x="0" y="0" width="360" height="235" preserveAspectRatio="none"/>
+            <g id="invite-candles"></g>
+          </svg><button id="invite-open" class="primary" type="button">お祝いをひらく</button><p class="invite-sound-hint">音をオンにして楽しんでね</p></div>
       <div id="started" class="started" hidden>
         <div class="card-copy">
           <div class="card-heading"><p id="dedication">今日の主役へ</p><h2 id="cake-heading">願いごと、決まった？</h2></div>
